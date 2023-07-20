@@ -15,6 +15,7 @@ pymongo = "^4.4.1"
 rich = "^13.4.2"
 uvicorn = "^0.23.1"
 tzlocal = "^5.0.1"
+"discord.py" = "^2.3.1"
 
 [tool.poetry.group.dev.dependencies]
 bumpver = "^2023.1125"
