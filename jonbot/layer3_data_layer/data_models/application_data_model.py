@@ -2,8 +2,8 @@ from typing import Dict
 
 from pydantic import BaseModel, Field
 
-from jonbot.layer2_data_layer.data_models.conversation_models import ConversationModel
-from jonbot.layer2_data_layer.data_models.user_data_model import UserModel
+from jonbot.layer3_data_layer.data_models.conversation_models import ConversationModel
+from jonbot.layer3_data_layer.data_models.user_data_model import UserModel
 
 
 class SettingsModel:

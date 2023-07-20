@@ -4,7 +4,7 @@ import requests
 from rich import print
 from rich.prompt import Prompt
 
-from jonbot.layer2_data_layer.data_models.conversation_models import ChatInput, Timestamp
+from jonbot.layer3_data_layer.data_models.conversation_models import ChatInput, Timestamp
 
 
 def run_cli():
