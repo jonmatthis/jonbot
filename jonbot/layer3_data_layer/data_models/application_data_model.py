@@ -11,14 +11,14 @@ class SettingsModel(BaseModel):
 
 
 class ApplicationDataModel(BaseModel):
-
     users: Dict[str, UserModel] = Field(default_factory=dict,
-                                        description = "Dictionary of all users key is `user_id (str(uuid.uuid4()))` value is `UserModel`")
+                                        description="Dictionary of all users key is `user_id (str(uuid.uuid4()))` value is `UserModel`")
 
     conversations: Dict[str, ConversationModel] = Field(default_factory=dict,
-                                                        description = "Dictionary of all conversations key is `conversation_id (str(uuid.uuid4()))` value is `ConversationModel`")
+                                                        description="Dictionary of all conversations key is `conversation_id (str(uuid.uuid4()))` value is `ConversationModel`")
 
     settings: SettingsModel = Field(default_factory=SettingsModel,
-                                    description = "Settings for the application")
+                                    description="Settings for the application")
+
     class Config:
         arbitrary_types_allowed = True

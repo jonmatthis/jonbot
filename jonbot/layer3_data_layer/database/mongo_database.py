@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import traceback
 from collections import defaultdict
@@ -12,15 +13,14 @@ from pymongo import MongoClient
 from jonbot.layer3_data_layer.data_models.application_data_model import ApplicationDataModel
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatInteraction
 from jonbot.layer3_data_layer.database.abstract_database import AbstractDatabase
-
-import logging
-
 from jonbot.layer3_data_layer.system.filenames_and_paths import clean_path_string, get_default_database_json_save_path
 
 logger = logging.getLogger(__name__)
 
 BASE_COLLECTION_NAME = "all_data"
 DATABASE_NAME = "jonbot"
+
+
 def get_mongo_uri() -> str:
     remote_uri = os.getenv('MONGO_URI_MONGO_CLOUD')
     if remote_uri:
@@ -66,7 +66,6 @@ class MongoDatabase(AbstractDatabase):
         logger.info(f"Adding interaction {interaction.uuid} to conversation: {conversation_id}")
         self._database.conversations.update_one({"_id": conversation_id},
                                                 {"$push": {"interactions": interaction.model_dump_json()}})
-
 
     def load_data(self) -> ApplicationDataModel:
         logger.info(f"Loading data from database")

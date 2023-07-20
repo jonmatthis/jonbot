@@ -9,6 +9,8 @@ from jonbot.layer3_data_layer.data_models.user_data_model import UserModel
 
 BASE_DIRECTORY = 'jonbot_data'
 JSON_DATABASE_FILE_NAME = "jonbot_data.json"
+
+
 class JSONDatabase:
 
     def __init__(self):

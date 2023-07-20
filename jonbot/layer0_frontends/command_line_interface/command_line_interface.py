@@ -1,13 +1,15 @@
+import logging
 import uuid
 
 import requests
 from rich import print
-from rich.prompt import Prompt
 from rich.pretty import pprint
+from rich.prompt import Prompt
 
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatInput, Timestamp
-import logging
+
 logger = logging.getLogger(__name__)
+
 
 def run_cli():
     """
@@ -24,7 +26,6 @@ def run_cli():
             logger.info("Exiting command line interface")
             break
 
-
         chat_input = ChatInput(message=message,
                                metadata={'session_id': session_id,
                                          'timestamp': Timestamp().model_dump(),
@@ -36,6 +37,7 @@ def run_cli():
         print("[bold green]Response:[/bold green]")
         logger.info(f"Sending message: {message}")
         pprint(response.json())
+
 
 if __name__ == '__main__':
     logger.info("Starting command line interface")

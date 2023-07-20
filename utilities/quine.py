@@ -1,8 +1,8 @@
 import os
+import platform
 import subprocess
 from datetime import datetime
 from pathlib import Path
-import platform
 from typing import List
 
 
@@ -109,15 +109,17 @@ class Quine:
 
 
 if __name__ == "__main__":
-    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot"
+    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot"
     quine = Quine(
         base_directory=base_directory_in,
         excluded_directories=["__pycache__",
                               ".git",
-                                "discord_bot",
+                              "discord_bot",
+                              "utilities",
+                              "system"
                               ],
         included_extensions=[".py", ".html", ".js", ".css", ".md", ".json", ".csv", ".txt"],
-        excluded_file_names=[],
+        excluded_file_names=["poetry.lock", ".gitignore", "LICENSE", "json_database.py"]
     )
     quine.generate_quine()
     quine.open_file()

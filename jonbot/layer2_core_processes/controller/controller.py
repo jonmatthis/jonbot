@@ -1,7 +1,12 @@
-from typing import Optional
-from pydantic import Field, BaseModel
+import logging
 import uuid
+from typing import Optional
 
+from pydantic import Field, BaseModel
+
+from jonbot.layer2_core_processes.processing_sublayer.get_bot_response import (
+    get_bot_response,
+)
 from jonbot.layer3_data_layer.data_models.conversation_models import (
     ChatInput,
     ChatResponse,
@@ -9,13 +14,10 @@ from jonbot.layer3_data_layer.data_models.conversation_models import (
     Timestamp,
 )
 from jonbot.layer3_data_layer.database.abstract_database import AbstractDatabase
-from jonbot.layer2_core_processes.processing_sublayer.get_bot_response import (
-    get_bot_response,
-)
 from jonbot.layer3_data_layer.database.mongo_database import MongoDatabase
 
-import logging
 logger = logging.getLogger(__name__)
+
 
 def create_database() -> AbstractDatabase:
     """Factory function to create a MongoDatabase instance."""
@@ -33,6 +35,7 @@ class Controller(BaseModel):
     conversation_id: str = str(uuid.uuid4())
     user_id: str = str(uuid.uuid4())
     logger.info(f"Created controller with conversation_id: {conversation_id}, user_id: {user_id}")
+
     class Config:
         arbitrary_types_allowed = True
 

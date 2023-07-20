@@ -28,11 +28,13 @@ def get_logging_handlers(entry_point: str = None):
 
     return [file_handler]
 
+
 def get_log_file_path():
     log_folder_path = Path(get_base_data_folder_path()) / LOG_FILE_FOLDER_NAME
     log_folder_path.mkdir(exist_ok=True, parents=True)
     log_file_path = log_folder_path / create_log_file_name()
     return str(log_file_path)
+
 
 def build_file_handler():
     file_handler = logging.FileHandler(get_log_file_path(), encoding="utf-8")

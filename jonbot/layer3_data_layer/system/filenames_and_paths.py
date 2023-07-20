@@ -2,7 +2,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Union
 
-
 BASE_DATA_FOLDER_NAME = "jonbot_data"
 
 DATABASE_BACKUP = "database_backup"
@@ -55,6 +54,7 @@ def get_default_database_json_save_path(filename: str,
     save_path = Path(get_base_data_folder_path()) / DATABASE_BACKUP / f"{filename}"
     save_path.parent.mkdir(exist_ok=True, parents=True)
     return str(save_path)
+
 
 def get_chroma_vector_store_path() -> str:
     return str(Path(get_base_data_folder_path()) / "chroma_vectors")

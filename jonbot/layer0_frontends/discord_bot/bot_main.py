@@ -1,35 +1,58 @@
-import asyncio
-import logging as logging
-import os
+import discord
+import aiohttp
+from typing import Optional
 
-from dotenv import load_dotenv
+class DiscordBot(discord.Client):
+    """
+    Simple Discord bot for relaying user messages to an API endpoint and then back to the user.
+    """
 
-from golem_garden.backend.mongo_database.mongo_database_manager import MongoDatabaseManager
-from golem_garden.frontends.discord_bot.bot import DiscordBot
-from golem_garden.frontends.discord_bot.cogs.chat_cog.chat_cog import ChatCog
-from golem_garden.frontends.discord_bot.cogs.thread_scraper_cog.thread_scraper_cog import ThreadScraperCog
-from system.logging.configure_logging import configure_logging
+    def __init__(self, api_url: str, *args, **kwargs):
+        """
+        Initialize the Discord bot with the API endpoint URL.
 
-configure_logging(entry_point="discord")
+        Parameters
+        ----------
+        api_url : str
+            The API endpoint URL to which the bot should send user messages.
+        """
+        super().__init__(*args, **kwargs)
+        self.api_url = api_url
 
-load_dotenv()
+    async def on_ready(self) -> None:
+        """
+        Print a message when the bot has connected to Discord.
+        """
+        print(f"Logged in as {self.user} (ID: {self.user.id})")
+        print("------")
 
-logger = logging.getLogger(__name__)
+    async def on_message(self, message: discord.Message) -> None:
+        """
+        Handle a new message event from Discord.
 
+        Parameters
+        ----------
+        message : discord.Message
+            The message event data from Discord.
+        """
+        if message.author == self.user:
+            return
 
-async def bot_main():
-    mongo_database_manager = MongoDatabaseManager()
-    discord_bot = DiscordBot(mongo_database=mongo_database_manager)
-
-    discord_bot.add_cog(ChatCog(bot=discord_bot,
-                                mongo_database_manager=mongo_database_manager))
-
-    discord_bot.add_cog(ThreadScraperCog(bot=discord_bot,
-                                         mongo_database_manager=mongo_database_manager))
-
-    await discord_bot.start(os.getenv("DISCORD_TOKEN"))
+        async with aiohttp.ClientSession() as session:
+            payload = {"chat_input": {"message": message.content}}
+            async with session.post(self.api_url, json=payload) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    await message.channel.send(data["response"])
+                else:
+                    await message.channel.send("Sorry, I'm currently unable to process your request.")
 
 
 if __name__ == "__main__":
-    logger.info("Starting bot...")
-    asyncio.run(bot_main())
+    import os
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    bot = DiscordBot(api_url="http://localhost:8000/chat",
+                     intents=discord.Intents.all())
+    bot.run(os.getenv("DISCORD_TOKEN"))

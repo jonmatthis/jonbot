@@ -26,4 +26,3 @@ class AbstractDatabase(ABC):
     @abstractmethod
     def load_data(self) -> ApplicationDataModel:
         pass
-
