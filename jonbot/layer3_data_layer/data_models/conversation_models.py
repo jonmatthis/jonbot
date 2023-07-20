@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, model_validator, Field
+from tzlocal import get_localzone
 
 
 class ChatInput(BaseModel):
@@ -36,9 +37,10 @@ class ConversationModel(BaseModel):
 
 
 class Timestamp(BaseModel):
-    unix_timestamp_utc: Any = datetime.utcnow().timestamp()
-    unix_timestamp_local: Any = datetime.now().timestamp()
-    unix_timestamp_utc_isoformat: Any = datetime.utcnow().isoformat()
-    unix_timestamp_local_isoformat: Any = datetime.now().isoformat()
-    unix_timestamp_utc_string: Any = str(datetime.utcnow()),
-    perf_counter_ns: Any = time.perf_counter_ns()
+    unix_timestamp_utc: float = datetime.utcnow().timestamp()
+    unix_timestamp_local: float = datetime.now().timestamp()
+    unix_timestamp_utc_isoformat: str = datetime.utcnow().isoformat()
+    unix_timestamp_local_isoformat: str = datetime.now().isoformat()
+    perf_counter_ns: int = time.perf_counter_ns()
+    local_time_zone: str = get_localzone().key
+

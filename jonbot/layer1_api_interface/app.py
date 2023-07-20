@@ -8,12 +8,11 @@ from jonbot.layer3_data_layer.data_models.conversation_models import ChatInput, 
 app = FastAPI()
 controller = Controller()
 @app.post("/chat")
-def chat(message: str) -> ChatResponse:
+def chat(chat_input: ChatInput) -> ChatResponse:
     """
     Process the chat input
     """
-
-    response = controller.handle_chat_input(user_message=message)
+    response = controller.handle_chat_input(user_message=chat_input.message)
     return response
 
 if __name__ == '__main__':

@@ -4,26 +4,27 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from jonbot.layer3_data_layer.data_models.application_data_model import ApplicationDataModel
-from jonbot.layer3_data_layer.data_models.conversation_models import ChatInteraction
+from jonbot.layer3_data_layer.data_models.conversation_models import ChatInteraction, ConversationModel
+from jonbot.layer3_data_layer.data_models.user_data_model import UserModel
 
-JSON_DATABASE_FILENAME = 'jonbot_data.json'
+BASE_DIRECTORY = 'jonbot_data'
+JSON_DATABASE_FILE_NAME = "jonbot_data.json"
 class JSONDatabase:
+
     def __init__(self):
-        self.json_file_path = Path().home() / JSON_DATABASE_FILENAME
+        self.json_file_path = Path().home() / BASE_DIRECTORY / JSON_DATABASE_FILE_NAME
 
-        try:
-
-            if not self.json_file_path.exists():
-                self.json_file_path.touch()
-        except Exception as e:
-            print(f"Error creating JSON database file: {e}")
-            raise e
+        self.json_file_path.parent.mkdir(parents=True, exist_ok=True)
+        self.json_file_path.touch(exist_ok=True)
 
         self._application_data_model = self.load_data()
         self._users = self._application_data_model.users
         self._conversations = self._application_data_model.conversations
         self._settings = self._application_data_model.settings
 
+        # If the JSON file was empty, save the initialized model
+        if not self._users and not self._conversations and not self._settings:
+            self.save_data(self._application_data_model)
 
     def log_user(self, user_id: str):
         if user_id not in self._users:
@@ -44,7 +45,7 @@ class JSONDatabase:
         Save data to the JSON file
         """
         try:
-            self.json_file_path.write_text(json.dumps(data.model_dump_json(indent=4)))
+            self.json_file_path.write_text(data.model_dump_json(indent=4))
         except Exception as e:
             print(f"Error saving JSON database file: {e}")
             raise e

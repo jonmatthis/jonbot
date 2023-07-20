@@ -6,8 +6,8 @@ from jonbot.layer3_data_layer.data_models.conversation_models import Conversatio
 from jonbot.layer3_data_layer.data_models.user_data_model import UserModel
 
 
-class SettingsModel:
-    pass
+class SettingsModel(BaseModel):
+    hello: str = "wow"
 
 
 class ApplicationDataModel(BaseModel):
