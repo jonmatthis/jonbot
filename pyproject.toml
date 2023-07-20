@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "jonbot"
+version = "0.1.0"
+description = "a friendly machine 🤖❤️✨"
+authors = ["jonmatthis <jonmatthis@gmail.com>"]
+license = "AGPLv3+"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = "^0.100.0"
+mkdocs-material = "^9.1.19"
+pydantic = "^2.0.3"
+pymongo = "^4.4.1"
+rich = "^13.4.2"
+uvicorn = "^0.23.1"
+
+[tool.poetry.group.dev.dependencies]
+bumpver = "^2023.1125"
+black = "^23.7.0"
+pytest = "^7.4.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
