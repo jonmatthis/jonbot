@@ -1,6 +1,6 @@
-import discord
 import aiohttp
-from typing import Optional
+import discord
+
 
 class DiscordBot(discord.Client):
     """
