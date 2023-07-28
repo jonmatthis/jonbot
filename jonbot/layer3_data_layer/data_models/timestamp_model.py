@@ -70,9 +70,9 @@ class Timestamp(BaseModel):
 if __name__ == "__main__":
     from pprint import pprint as print
     print("Printing `Timestamp()` object:")
-    print(Timestamp())
-    print("\nPrinting `Timestamp(timezone.now())`:")
-    print(Timestamp(datetime.now()))
+    print(Timestamp().model_dump(), indent=4)
+    print("Printing `Timestamp(timezone.now())`:")
+    print(Timestamp(datetime.now()).model_dump(), indent=4)
 
 
 
