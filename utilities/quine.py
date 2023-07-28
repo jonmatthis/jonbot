@@ -114,9 +114,6 @@ if __name__ == "__main__":
         base_directory=base_directory_in,
         excluded_directories=["__pycache__",
                               ".git",
-                              "discord_bot",
-                              "utilities",
-                              "system"
                               ],
         included_extensions=[".py", ".html", ".js", ".css", ".md", ".json", ".csv", ".txt"],
         excluded_file_names=["poetry.lock", ".gitignore", "LICENSE", "json_database.py"]

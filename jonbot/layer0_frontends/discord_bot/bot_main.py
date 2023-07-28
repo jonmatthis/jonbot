@@ -1,5 +1,9 @@
+import uuid
+
 import aiohttp
 import discord
+
+from jonbot.layer3_data_layer.data_models.conversation_models import ChatInput
 
 
 class DiscordBot(discord.Client):
@@ -39,7 +43,10 @@ class DiscordBot(discord.Client):
             return
 
         async with aiohttp.ClientSession() as session:
-            payload = {"chat_input": {"message": message.content}}
+            chat_input = ChatInput(message=message.content,
+                                   uuid=str(uuid.uuid4()),
+                                   metadata={message.__dict__})
+
             async with session.post(self.api_url, json=payload) as response:
                 if response.status == 200:
                     data = await response.json()
@@ -48,11 +55,14 @@ class DiscordBot(discord.Client):
                     await message.channel.send("Sorry, I'm currently unable to process your request.")
 
 
-if __name__ == "__main__":
+def run_discord_bot():
     import os
     from dotenv import load_dotenv
-
     load_dotenv()
     bot = DiscordBot(api_url="http://localhost:8000/chat",
                      intents=discord.Intents.all())
     bot.run(os.getenv("DISCORD_TOKEN"))
+
+
+if __name__ == "__main__":
+    run_discord_bot()

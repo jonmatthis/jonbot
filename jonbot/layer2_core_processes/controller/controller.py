@@ -11,8 +11,8 @@ from jonbot.layer3_data_layer.data_models.conversation_models import (
     ChatInput,
     ChatResponse,
     ChatInteraction,
-    Timestamp,
 )
+from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 from jonbot.layer3_data_layer.database.abstract_database import AbstractDatabase
 from jonbot.layer3_data_layer.database.mongo_database import MongoDatabase
 

@@ -25,8 +25,13 @@ def chat(chat_input: ChatInput) -> ChatResponse:
     return response
 
 
-if __name__ == '__main__':
+def run_api():
+    """
+    Run the API for JonBot
+    """
+    logger.info("Starting API")
     import uvicorn
 
-    logger.info("Starting uvicorn server")
     uvicorn.run(app, host="localhost", port=8000)
+if __name__ == '__main__':
+    run_api()

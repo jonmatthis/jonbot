@@ -6,7 +6,8 @@ from rich import print
 from rich.pretty import pprint
 from rich.prompt import Prompt
 
-from jonbot.layer3_data_layer.data_models.conversation_models import ChatInput, Timestamp
+from jonbot.layer3_data_layer.data_models.conversation_models import ChatInput
+from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 
 logger = logging.getLogger(__name__)
 
