@@ -47,23 +47,24 @@ class DiscordBot(discord.Client):
             return
 
         try:
+
             async with aiohttp.ClientSession() as session:
                 chat_input = ChatInput(message=message.content,
                                        uuid=str(uuid.uuid4()),
-                                       metadata={'message_recieved': Timestamp().dict(),
-                                                 'discord_author_name': message.author.name,
-                                                 'discord_author_id': message.author.id,
-                                                 'discord_author_is_bot': message.author.bot,
-                                                 'discord_channel_name': message.channel.name,
-                                                 'discord_channel_id': message.channel.id,
-                                                 'discord_guild_name': message.guild.name,
-                                                 'discord_guild_id': message.guild.id,
-                                                 'discord_message_url': message.jump_url,
-                                                 'discord_message_created_at': message.created_at.isoformat(),
-                                                 },
+                                       # metadata={'message_recieved': Timestamp().dict(),
+                                       #           'discord_author_name': message.author.name,
+                                       #           'discord_author_id': message.author.id,
+                                       #           'discord_author_is_bot': message.author.bot,
+                                       #           'discord_channel_name': message.channel.name,
+                                       #           'discord_channel_id': message.channel.id,
+                                       #           'discord_guild_name': message.guild.name,
+                                       #           'discord_guild_id': message.guild.id,
+                                       #           'discord_message_url': message.jump_url,
+                                       #           'discord_message_created_at': message.created_at.isoformat(),
+                                       #           },
                                        )
-
-                async with session.post(self.api_url, json=chat_input.json()) as response:
+                logger.info(f"Sending chat input: {chat_input}")
+                async with session.post(self.api_url, json=chat_input.dict()) as response:
                     if response.status == 200:
                         data = await response.json()
                         chat_response = ChatResponse(**data)

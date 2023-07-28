@@ -9,6 +9,8 @@ from jonbot.layer3_data_layer.data_models.conversation_models import ChatInput, 
 
 logger = logging.getLogger(__name__)
 
+API_CHAT_URL = "http://localhost:8000/chat"
+
 app = FastAPI()
 controller = asyncio.run(Controller.initialize())
 
@@ -37,4 +39,3 @@ def run_api():
 
 if __name__ == '__main__':
     run_api()
-API_CHAT_URL = "http://localhost:8000/chat"
