@@ -109,7 +109,7 @@ class Quine:
 
 
 if __name__ == "__main__":
-    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot"
+    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\layer0_frontends\discord_bot"
     quine = Quine(
         base_directory=base_directory_in,
         excluded_directories=["__pycache__",

@@ -3,6 +3,7 @@ import uuid
 
 import aiohttp
 import discord
+from discord.ext.commands import Bot
 
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatInput, ChatResponse
 from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
@@ -10,7 +11,7 @@ from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 logger = logging.getLogger(__name__)
 
 
-class DiscordBot(discord.Client):
+class DiscordBot(Bot):
     """
     Simple Discord bot for relaying user messages to an API endpoint and then back to the user.
     """
@@ -24,7 +25,7 @@ class DiscordBot(discord.Client):
         api_chat_url : str
             The API endpoint URL to which the bot should send user messages.
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, command_prefix="!")
         self.api_url = api_chat_url
 
     async def on_ready(self) -> None:
@@ -79,3 +80,4 @@ class DiscordBot(discord.Client):
             error_message = f"An error occurred: {str(e)}"
             logger.info(error_message)
             await message.channel.send(f"Sorry, an error occurred while processing your request. {error_message}")
+
