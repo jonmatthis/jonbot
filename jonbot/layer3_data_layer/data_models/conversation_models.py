@@ -3,6 +3,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
+
 
 class ChatInput(BaseModel):
     message: str

@@ -5,7 +5,7 @@ from typing import Optional
 from pydantic import Field, BaseModel
 
 from jonbot.layer2_core_processes.processing_sublayer.ai.ai_response_handler import (
-    get_ai_response, AIResponseHandler,
+     AIResponseHandler,
 )
 from jonbot.layer3_data_layer.data_models.conversation_models import (
     ChatInput,
@@ -34,11 +34,16 @@ class Controller(BaseModel):
     database: Optional[AbstractDatabase] = Field(default_factory=create_database)
     ai_response_handler: AIResponseHandler = Field(default_factory=AIResponseHandler)
 
-
     class Config:
         arbitrary_types_allowed = True
 
-    def handle_chat_input(self, chat_input: ChatInput) -> ChatResponse:
+    @classmethod
+    async def initialize(cls, *args, **kwargs):
+        self = Controller(*args, **kwargs)
+        await self.ai_response_handler.init_chatbot()
+        return self
+
+    async def handle_chat_input(self, chat_input: ChatInput) -> ChatResponse:
         """
         Process the chat input
 
@@ -49,19 +54,10 @@ class Controller(BaseModel):
             ChatResponse: Response to user input
         """
         logger.info(f"Received chat input: {chat_input.message}")
-        # Log user and conversation
-        self.database.log_user(chat_input.metadata["user_id"])
 
         # Perform any necessary processing on the chat input
-        response_message = self.ai_response_handler.get_chat_response(chat_input.message)
-        bot_response = ChatResponse(
-            message=response_message,
-            metadata={
-                "conversation_id": self.conversation_id,
-                "user_id": self.user_id,
-                "timestamp": Timestamp().model_dump(),
-            },
-        )
+        bot_response = await self.ai_response_handler.get_chat_response(chat_input)
+
         logger.info(f"Returning chat response: {bot_response.message}")
         chat_interaction = ChatInteraction(
             human_input=chat_input,

@@ -2,6 +2,7 @@ import logging
 import concurrent.futures
 
 from jonbot.layer0_frontends.discord_bot.bot_main import run_discord_bot
+from jonbot.layer1_api_interface.app import run_api
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,6 @@ def main() -> None:
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
         try:
-            from jonbot.layer1_api_interface.app import run_api
 
             futures = [executor.submit(run_api), executor.submit(run_discord_bot)]
 

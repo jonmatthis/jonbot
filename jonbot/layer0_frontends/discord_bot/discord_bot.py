@@ -15,17 +15,17 @@ class DiscordBot(discord.Client):
     Simple Discord bot for relaying user messages to an API endpoint and then back to the user.
     """
 
-    def __init__(self, api_url: str, *args, **kwargs):
+    def __init__(self, api_chat_url: str, *args, **kwargs):
         """
         Initialize the Discord bot with the API endpoint URL.
 
         Parameters
         ----------
-        api_url : str
+        api_chat_url : str
             The API endpoint URL to which the bot should send user messages.
         """
         super().__init__(*args, **kwargs)
-        self.api_url = api_url
+        self.api_url = api_chat_url
 
     async def on_ready(self) -> None:
         """
@@ -50,7 +50,7 @@ class DiscordBot(discord.Client):
             async with aiohttp.ClientSession() as session:
                 chat_input = ChatInput(message=message.content,
                                        uuid=str(uuid.uuid4()),
-                                       metadata={'message_recieved': Timestamp().model_dump(),
+                                       metadata={'message_recieved': Timestamp().dict(),
                                                  'discord_author_name': message.author.name,
                                                  'discord_author_id': message.author.id,
                                                  'discord_author_is_bot': message.author.bot,
@@ -63,7 +63,7 @@ class DiscordBot(discord.Client):
                                                  },
                                        )
 
-                async with session.post(self.api_url, json=chat_input.model_dump()) as response:
+                async with session.post(self.api_url, json=chat_input.json()) as response:
                     if response.status == 200:
                         data = await response.json()
                         chat_response = ChatResponse(**data)

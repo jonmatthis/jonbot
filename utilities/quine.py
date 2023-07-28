@@ -109,14 +109,17 @@ class Quine:
 
 
 if __name__ == "__main__":
-    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot"
+    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot"
     quine = Quine(
         base_directory=base_directory_in,
         excluded_directories=["__pycache__",
                               ".git",
+                              "system",
+                              "layer3_data_layer",
+                              "layer2_core_processes"
                               ],
         included_extensions=[".py", ".html", ".js", ".css", ".md", ".json", ".csv", ".txt"],
-        excluded_file_names=["poetry.lock", ".gitignore", "LICENSE", "json_database.py"]
+        excluded_file_names=["poetry.lock", ".gitignore", "LICENSE", "chatbot_prompts.py", "json_database.py"]
     )
     quine.generate_quine()
     quine.open_file()

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import time
 
@@ -9,17 +10,17 @@ from jonbot.layer3_data_layer.data_models.conversation_models import ChatInput, 
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
-controller = Controller()
+controller = asyncio.run(Controller.initialize())
 
 
 @app.post("/chat")
-def chat(chat_input: ChatInput) -> ChatResponse:
+async def chat(chat_input: ChatInput) -> ChatResponse:
     """
     Process the chat input
     """
     logger.info(f"Received chat input: {chat_input}")
     tic = time.perf_counter()
-    response = controller.handle_chat_input(chat_input=chat_input)
+    response = await controller.handle_chat_input(chat_input=chat_input)
     toc = time.perf_counter()
     logger.info(f"Returning chat response: {response}, elapsed time: {toc - tic:0.4f} seconds")
     return response
@@ -36,3 +37,4 @@ def run_api():
 
 if __name__ == '__main__':
     run_api()
+API_CHAT_URL = "http://localhost:8000/chat"
