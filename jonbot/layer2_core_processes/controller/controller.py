@@ -49,7 +49,7 @@ class Controller(BaseModel):
         Returns:
             ChatResponse: Response to user input
         """
-        logger.info(f"Received chat input: {chat_input}")
+        logger.info(f"Received chat input: {chat_input.message}")
         # Log user and conversation
         self.database.log_user(self.user_id)
         self.database.log_conversation(conversation_id=self.conversation_id)
@@ -64,7 +64,7 @@ class Controller(BaseModel):
                 "timestamp": Timestamp().model_dump(),
             },
         )
-        logger.info(f"Returning chat response: {bot_response}")
+        logger.info(f"Returning chat response: {bot_response.message}")
         chat_interaction = ChatInteraction(
             human_input=chat_input,
             bot_response=bot_response,

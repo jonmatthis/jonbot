@@ -6,5 +6,5 @@ logger = logging.getLogger(__name__)
 
 
 def get_bot_response(chat_input: ChatInput) -> str:
-    logger.info(f"Received chat input: {chat_input}")
-    return f"I heard you say:  \n '{chat_input}'\n"
+    logger.info(f"Received chat input: {chat_input.message}")
+    return f"I heard you say:  \n '{chat_input.message}'\n"

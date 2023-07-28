@@ -33,5 +33,6 @@ def run_api():
     import uvicorn
 
     uvicorn.run(app, host="localhost", port=8000)
+
 if __name__ == '__main__':
     run_api()
