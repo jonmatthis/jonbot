@@ -4,8 +4,8 @@ from typing import Optional
 
 from pydantic import Field, BaseModel
 
-from jonbot.layer2_core_processes.processing_sublayer.get_bot_response import (
-    get_bot_response,
+from jonbot.layer2_core_processes.processing_sublayer.ai.ai_response_handler import (
+    get_ai_response, AIResponseHandler,
 )
 from jonbot.layer3_data_layer.data_models.conversation_models import (
     ChatInput,
@@ -32,9 +32,8 @@ class Controller(BaseModel):
     """
 
     database: Optional[AbstractDatabase] = Field(default_factory=create_database)
-    conversation_id: str = str(uuid.uuid4())
-    user_id: str = str(uuid.uuid4())
-    logger.info(f"Created controller with conversation_id: {conversation_id}, user_id: {user_id}")
+    ai_response_handler: AIResponseHandler = Field(default_factory=AIResponseHandler)
+
 
     class Config:
         arbitrary_types_allowed = True
@@ -51,11 +50,10 @@ class Controller(BaseModel):
         """
         logger.info(f"Received chat input: {chat_input.message}")
         # Log user and conversation
-        self.database.log_user(self.user_id)
-        self.database.log_conversation(conversation_id=self.conversation_id)
+        self.database.log_user(chat_input.metadata["user_id"])
 
         # Perform any necessary processing on the chat input
-        response_message = get_bot_response(chat_input=chat_input)
+        response_message = self.ai_response_handler.get_chat_response(chat_input.message)
         bot_response = ChatResponse(
             message=response_message,
             metadata={
