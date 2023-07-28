@@ -33,7 +33,7 @@ class Controller(BaseModel):
 
     database: Optional[AbstractDatabase] = Field(default_factory=create_database)
     ai_response_handler: AIResponseHandler = Field(default_factory=AIResponseHandler)
-
+    conversation_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     class Config:
         arbitrary_types_allowed = True
 

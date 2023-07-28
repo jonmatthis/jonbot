@@ -52,7 +52,7 @@ class MongoDatabase(AbstractDatabase):
     def add_interaction_to_conversation(self, conversation_id: str, interaction: ChatInteraction):
         logger.info(f"Adding interaction {interaction.uuid} to conversation: {conversation_id}")
         self._database.conversations.update_one({"_id": conversation_id},
-                                                {"$push": {"interactions": interaction.model_dump_json()}})
+                                                {"$push": {"interactions": interaction.dict()}})
 
     def load_data(self) -> ApplicationDataModel:
         logger.info(f"Loading data from database")
