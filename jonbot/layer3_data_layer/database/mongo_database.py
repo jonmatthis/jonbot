@@ -3,9 +3,8 @@ import logging
 import os
 import traceback
 from collections import defaultdict
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Union
+from typing import Union
 
 from pydantic import BaseModel
 from pymongo import MongoClient
@@ -34,7 +33,6 @@ def get_mongo_uri() -> str:
         return os.getenv('MONGO_URI_LOCAL')
 
 
-
 class MongoDatabase(AbstractDatabase):
     def __init__(self):
         logger.info(f"Connecting to MongoDB...")
@@ -53,7 +51,7 @@ class MongoDatabase(AbstractDatabase):
     def add_interaction_to_conversation(self, conversation_id: str, interaction: ChatInteraction):
         logger.info(f"Adding interaction {interaction.uuid} to conversation: {conversation_id}")
         self._collection.update_one({"_id": conversation_id},
-                                                {"$push": {"interactions": interaction.dict()}})
+                                    {"$push": {"interactions": interaction.dict()}})
 
     def load_data(self) -> ApplicationDataModel:
         logger.info(f"Loading data from database")

@@ -1,10 +1,9 @@
+import logging
 import random
 
+import discord
 from discord import client
 from discord.app_commands import commands
-import discord
-import logging
-
 from discord.ext.commands import Cog, Context, before_invoke
 
 from jonbot.layer0_frontends.discord_bot.cogs.voice_cog.native_voice_client import NativeVoiceClient
@@ -16,6 +15,7 @@ class VoiceCog(Cog):
     """
     A cog that handles voice recording in Discord.
     """
+
     @commands.command()
     async def join(self, ctx: Context) -> None:
         """

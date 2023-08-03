@@ -1,6 +1,4 @@
-import asyncio
 import logging
-import threading
 from multiprocessing import Process
 
 from jonbot.layer0_frontends.discord_bot.discord_main import run_discord_client

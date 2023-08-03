@@ -1,4 +1,4 @@
-#og from -= https://github.com/Shirataki2/discord-ext-audiorec
+# og from -= https://github.com/Shirataki2/discord-ext-audiorec
 import asyncio
 from typing import Callable, Dict
 

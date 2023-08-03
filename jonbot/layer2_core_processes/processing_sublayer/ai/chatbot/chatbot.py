@@ -87,7 +87,7 @@ class Chatbot(BaseModel):
 
         return chat_prompt
 
-    async def async_process_human_input_text(self, input_text:str):
+    async def async_process_human_input_text(self, input_text: str):
         print(f"Input: {input_text}")
         print("Streaming response...\n")
         ai_response = await self.chain.arun(human_input=input_text)
@@ -110,7 +110,7 @@ class Chatbot(BaseModel):
         )
         return chroma_vector_store
 
-    async def get_chat_response(self, chat_input:ChatInput) -> ChatResponse:
+    async def get_chat_response(self, chat_input: ChatInput) -> ChatResponse:
         response = await self.async_process_human_input_text(chat_input.message)
         return ChatResponse(message=response, )
 

@@ -1,4 +1,4 @@
-#og from -= https://github.com/Shirataki2/discord-ext-audiorec
+# og from -= https://github.com/Shirataki2/discord-ext-audiorec
 
 import asyncio
 import logging
@@ -12,6 +12,7 @@ from jonbot.layer0_frontends.discord_bot.cogs.voice_cog import ffi
 from jonbot.layer0_frontends.discord_bot.cogs.voice_cog.ffi import VoiceConnector, VoiceConnection
 
 logger = logging.getLogger(__name__)
+
 
 class NativeVoiceClient(VoiceProtocol):
     """Represent a Discord voice connection
@@ -31,7 +32,7 @@ class NativeVoiceClient(VoiceProtocol):
     Parameters
     ------------
     client: :class:`~discord.Client`
-        The client (or its subclasses) that started the connection request.
+        The events (or its subclasses) that started the connection request.
     channel: :class:`~discord.abc.Connectable`
         The voice channel that is being connected to.
 
@@ -135,7 +136,7 @@ class NativeVoiceClient(VoiceProtocol):
 
     async def voice_disconnect(self):
         logger.info('The voice handshake is being terminated for Channel ID %s (Guild ID %s)', self.channel.id,
-                 self._guild.id)
+                    self._guild.id)
         await self._guild.change_voice_state(channel=None)
 
     def play(self, input: str, *, after: Callable[[Exception], None] = lambda x: None) -> None:
@@ -210,7 +211,7 @@ class NativeVoiceClient(VoiceProtocol):
         Parameters
         -----------
         loop: :class:`asyncio.AbstractEventLoop`
-            The event loop that the voice client is running on.
+            The event loop that the voice events is running on.
 
         Returns
         --------
@@ -302,7 +303,7 @@ class NativeVoiceClient(VoiceProtocol):
     def latency(self) -> float:
         """:class:`float`: Latency between a HEARTBEAT and a HEARTBEAT_ACK in seconds.
         This could be referred to as the Discord Voice WebSocket latency and is
-        an analogue of user's voice latencies as seen in the Discord client.
+        an analogue of user's voice latencies as seen in the Discord events.
         """
         return self._connection.latency if self._connection else float('inf')
 

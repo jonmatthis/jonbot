@@ -1,9 +1,11 @@
+import calendar
+import time
 from datetime import datetime, timezone
 from typing import Optional
-from tzlocal import get_localzone
-import time
-import calendar
+
 from pydantic import BaseModel, Field
+from tzlocal import get_localzone
+
 
 class Timestamp(BaseModel):
     unix_timestamp_utc: float = Field(...,
@@ -17,8 +19,10 @@ class Timestamp(BaseModel):
     perf_counter_ns: Optional[int] = Field(None,
                                            description="The time elapsed since an arbitrary point (such as the start of the program or when the `time` module was loaded), measured in nanoseconds to avoid floating-point error. This provides a high-precision time useful for timing or profiling code execution.")
     local_time_zone: str = Field(..., description="The key or name representing the local timezone")
-    human_readable_utc: str = Field(..., description="The date and time in Coordinated Universal Time (UTC), presented in a more human-readable format, e.g., 'YYYY-MM-DD HH:MM:SS.ssssss'")
-    human_readable_local: str = Field(..., description="The date and time in the local timezone, presented in a more human-readable format, e.g., 'YYYY-MM-DD HH:MM:SS.ssssss'")
+    human_readable_utc: str = Field(...,
+                                    description="The date and time in Coordinated Universal Time (UTC), presented in a more human-readable format, e.g., 'YYYY-MM-DD HH:MM:SS.ssssss'")
+    human_readable_local: str = Field(...,
+                                      description="The date and time in the local timezone, presented in a more human-readable format, e.g., 'YYYY-MM-DD HH:MM:SS.ssssss'")
     day_of_week: str = Field(..., description="The day of the week, e.g., 'Monday'")
     calendar_week: int = Field(..., description="The calendar week of the year")
     day_of_year: int = Field(..., description="The day number of the year")
@@ -69,11 +73,8 @@ class Timestamp(BaseModel):
 
 if __name__ == "__main__":
     from pprint import pprint as print
+
     print("Printing `Timestamp()` object:")
     print(Timestamp().model_dump(), indent=4)
     print("Printing `Timestamp(timezone.now())`:")
     print(Timestamp(datetime.now()).model_dump(), indent=4)
-
-
-
-

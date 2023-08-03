@@ -5,14 +5,13 @@ from typing import Optional
 from pydantic import Field, BaseModel
 
 from jonbot.layer2_core_processes.processing_sublayer.ai.ai_response_handler import (
-     AIResponseHandler,
+    AIResponseHandler,
 )
 from jonbot.layer3_data_layer.data_models.conversation_models import (
     ChatInput,
     ChatResponse,
     ChatInteraction,
 )
-from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 from jonbot.layer3_data_layer.database.abstract_database import AbstractDatabase
 from jonbot.layer3_data_layer.database.mongo_database import MongoDatabase
 
@@ -34,6 +33,7 @@ class Controller(BaseModel):
     database: Optional[AbstractDatabase] = Field(default_factory=create_database)
     ai_response_handler: AIResponseHandler = Field(default_factory=AIResponseHandler)
     conversation_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+
     class Config:
         arbitrary_types_allowed = True
 

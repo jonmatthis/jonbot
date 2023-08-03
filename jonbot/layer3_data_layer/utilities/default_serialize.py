@@ -11,9 +11,6 @@ def default_serialize(o: Any) -> str:
         return o.dict()
     elif hasattr(o, "to_dict"):
         return o.to_dict()
-    elif hasattr(o,"__dict__") and not isinstance(o, dict):
+    elif hasattr(o, "__dict__") and not isinstance(o, dict):
         return o.__dict__
     return str(o)
-
-import json
-

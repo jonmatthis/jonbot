@@ -4,17 +4,12 @@ import uuid
 import aiohttp
 import discord
 
+from jonbot.layer0_frontends.discord_bot.discord_main import discord_client
 from jonbot.layer1_api_interface.app import API_CHAT_URL
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatInput, ChatResponse
-from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 
 logger = logging.getLogger(__name__)
 
-discord_client = discord.Client(intents=discord.Intents.all())
-
-@discord_client.event
-async def on_ready():
-    print(f'We have logged in as {discord_client.user}')
 
 @discord_client.event
 async def on_message(message: discord.Message) -> None:
@@ -62,4 +57,3 @@ async def on_message(message: discord.Message) -> None:
         error_message = f"An error occurred: {str(e)}"
         logger.info(error_message)
         await message.channel.send(f"Sorry, an error occurred while processing your request. {error_message}")
-

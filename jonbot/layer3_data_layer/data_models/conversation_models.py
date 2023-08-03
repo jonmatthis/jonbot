@@ -3,8 +3,6 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
-
 
 class ChatInput(BaseModel):
     message: str
@@ -33,5 +31,3 @@ class ConversationModel(BaseModel):
 
     def model_post_init(self, __context: Any) -> None:
         self.uuid = str(uuid.uuid4())
-
-
