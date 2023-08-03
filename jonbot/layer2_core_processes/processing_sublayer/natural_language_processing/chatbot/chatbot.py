@@ -12,7 +12,7 @@ from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTem
 from langchain.vectorstores import Chroma
 from pydantic import BaseModel
 
-from jonbot.layer2_core_processes.processing_sublayer.ai.chatbot.chatbot_prompts import CHATBOT_SYSTEM_PROMPT_TEMPLATE
+from jonbot.layer2_core_processes.processing_sublayer.natural_language_processing.chatbot.chatbot_prompts import CHATBOT_SYSTEM_PROMPT_TEMPLATE
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatResponse, ChatInput
 from jonbot.layer3_data_layer.system.filenames_and_paths import get_chroma_vector_store_path
 

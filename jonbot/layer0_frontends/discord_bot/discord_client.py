@@ -41,10 +41,15 @@ async def on_message(message: discord.Message) -> None:
 
                 async with session.post(API_VOICE_TO_TEXT_URL, json={"audio_file_url":message.attachments[0].url}) as response:
                     if response.status == 200:
-                        transcribed_text = response.text
-                        await message.channel.send(transcribed_text)
+                        data = await response.json()
+                        chat_response = ChatResponse(**data)
+                        await message.channel.send(chat_response.message)
+                        mongo_database_manager.insert_discord_message(message = message, bot_response = chat_response)
                     else:
-                        await message.channel.send("Sorry, I was unable to transcribe the audio.")
+                        error_message = f"Received non-200 response code: {response.status}"
+                        logger.exception(error_message)
+                        await message.channel.send(
+                            f"Sorry, I'm currently unable to process your (audio transcriptiopn) request. {error_message}")
 
             else:
 

@@ -1,6 +1,6 @@
 import logging
 
-from jonbot.layer2_core_processes.processing_sublayer.ai.chatbot.chatbot import Chatbot
+from jonbot.layer2_core_processes.processing_sublayer.natural_language_processing.chatbot.chatbot import Chatbot
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatInput, ChatResponse
 
 logger = logging.getLogger(__name__)
