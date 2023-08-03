@@ -13,6 +13,7 @@ from pymongo import MongoClient
 
 from jonbot.layer3_data_layer.data_models.application_data_model import ApplicationDataModel
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatInteraction, ChatResponse
+from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 from jonbot.layer3_data_layer.system.filenames_and_paths import clean_path_string, get_default_database_json_save_path
 from jonbot.layer3_data_layer.utilities.default_serialize import default_serialize
 
@@ -36,6 +37,7 @@ class MongoDatabaseManager:
                                bot_response: ChatResponse = None):
         self._collection.insert_one(document={
             "message_content": message.content,
+            "message_reference_dict": message.to_message_reference_dict(),
             "message_id": message.id,
             "message_author": message.author.name,
             "message_author_id": message.author.id,
@@ -48,6 +50,9 @@ class MongoDatabaseManager:
             "message_mentions": [mention.name for mention in message.mentions],
             "message_jump_url": message.jump_url,
             "message_dump": str(message),
+            "received_timestamp": Timestamp().dict(),
+            "message_reactions": [str(reaction) for reaction in message.reactions],
+            'parent_message_id': message.reference.message_id if message.reference else '',
             "bot_response": bot_response.dict() if bot_response is not None else None
         })
 
