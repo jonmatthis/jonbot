@@ -59,10 +59,14 @@ class Quine:
         """
         output_file.write("+++python\n")
         output_file.write(f"## {file_name}\n\n")
-        with open(os.path.join(root_directory, file_name), "r") as file:
-            file_content = file.read()
-            output_file.write(file_content)
-            print(file_content)  # Print the file content to the terminal
+        try:
+            with open(os.path.join(root_directory, file_name), "r",
+                      encoding="utf-8") as file:  # specifying utf-8 encoding
+                file_content = file.read()
+                output_file.write(file_content)
+                print(file_content)  # Print the file content to the terminal
+        except UnicodeDecodeError as e:
+            print(f"Failed to read the file {file_name} due to encoding issues: {e}")
         output_file.write("\n+++\n\n")
 
     def generate_quine(self) -> None:
@@ -77,7 +81,7 @@ class Quine:
         output_dir.mkdir(parents=True, exist_ok=True)  # Create the output directory if it doesn't exist
         file_path = output_dir / file_name  # Output file path
         self.output_file_path = str(file_path)  # Store the output file path
-        with open(file_path, "w") as output_file:
+        with open(file_path, "w", encoding="utf-8") as output_file:  # specifying utf-8 encoding
             for root_directory, directories, files in os.walk(self.base_directory):
                 directories[:] = [directory for directory in directories if directory not in self.excluded_directories]
                 if root_directory != ".":
@@ -109,16 +113,14 @@ class Quine:
 
 
 if __name__ == "__main__":
-    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\layer0_frontends\discord_bot"
+    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot"
     quine = Quine(
         base_directory=base_directory_in,
         excluded_directories=["__pycache__",
                               ".git",
-                              "system",
-
                               ],
         included_extensions=[".py", ".html", ".js", ".css", ".md", ".json", ".csv", ".txt"],
-        excluded_file_names=["poetry.lock", ".gitignore", "LICENSE", "chatbot_prompts.py", "json_database.py"]
+        excluded_file_names=["poetry.lock", ".gitignore", "LICENSE"]
     )
     quine.generate_quine()
     quine.open_file()
