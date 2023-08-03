@@ -12,16 +12,9 @@ from jonbot.layer3_data_layer.data_models.conversation_models import (
     ChatResponse,
     ChatInteraction,
 )
-from jonbot.layer3_data_layer.database.abstract_database import AbstractDatabase
-from jonbot.layer3_data_layer.database.mongo_database import MongoDatabase
 
 logger = logging.getLogger(__name__)
 
-
-def create_database() -> AbstractDatabase:
-    """Factory function to create a MongoDatabase instance."""
-    logger.info("Creating MongoDatabase instance")
-    return MongoDatabase()
 
 
 class Controller(BaseModel):
@@ -30,9 +23,7 @@ class Controller(BaseModel):
     to `processing` sublayer, and then returns results to the API and database layers.
     """
 
-    database: Optional[AbstractDatabase] = Field(default_factory=create_database)
     ai_response_handler: AIResponseHandler = Field(default_factory=AIResponseHandler)
-    conversation_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
     class Config:
         arbitrary_types_allowed = True
@@ -59,12 +50,5 @@ class Controller(BaseModel):
         bot_response = await self.ai_response_handler.get_chat_response(chat_input)
 
         logger.info(f"Returning chat response: {bot_response.message}")
-        chat_interaction = ChatInteraction(
-            human_input=chat_input,
-            bot_response=bot_response,
-        )
-        self.database.add_interaction_to_conversation(
-            conversation_id=self.conversation_id,
-            interaction=chat_interaction,
-        )
+
         return bot_response

@@ -6,12 +6,13 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Union
 
+import discord
+from dotenv import load_dotenv
 from pydantic import BaseModel
 from pymongo import MongoClient
 
 from jonbot.layer3_data_layer.data_models.application_data_model import ApplicationDataModel
-from jonbot.layer3_data_layer.data_models.conversation_models import ChatInteraction
-from jonbot.layer3_data_layer.database.abstract_database import AbstractDatabase
+from jonbot.layer3_data_layer.data_models.conversation_models import ChatInteraction, ChatResponse
 from jonbot.layer3_data_layer.system.filenames_and_paths import clean_path_string, get_default_database_json_save_path
 from jonbot.layer3_data_layer.utilities.default_serialize import default_serialize
 
@@ -21,52 +22,38 @@ BASE_COLLECTION_NAME = "jonbot_collection"
 DATABASE_NAME = "jonbot_database"
 
 
-def get_mongo_uri() -> str:
-    remote_uri = os.getenv('MONGO_URI_MONGO_CLOUD')
-    if remote_uri:
-        return remote_uri
 
-    is_docker = os.getenv('IS_DOCKER', False)
-    if is_docker:
-        return os.getenv('MONGO_URI_DOCKER')
-    else:
-        return os.getenv('MONGO_URI_LOCAL')
-
-
-class MongoDatabase(AbstractDatabase):
+class MongoDatabaseManager:
     def __init__(self):
         logger.info(f"Connecting to MongoDB...")
-        self._client = MongoClient(get_mongo_uri())
+        load_dotenv()
+        self._client = MongoClient( os.getenv('MONGO_URI_MONGO_CLOUD'))
         self._database = self._client[DATABASE_NAME]
         self._collection = self._database[BASE_COLLECTION_NAME]
 
-    def log_user(self, user_id: str):
-        logger.info(f"Logging user: {user_id}")
-        self._database.users.insert_one({"_id": user_id})
+    def insert_discord_message(self,
+                               message:discord.Message,
+                               bot_response: ChatResponse = None):
+        self._collection.insert_one(document={
+            "message_content": message.content,
+            "message_id": message.id,
+            "message_author": message.author.name,
+            "message_author_id": message.author.id,
+            "message_channel": message.channel.name,
+            "message_channel_id": message.channel.id,
+            "message_guild": message.guild.name,
+            "message_guild_id": message.guild.id,
+            "message_timestamp": message.created_at,
+            "message_edited_timestamp": message.edited_at,
+            "message_mentions": [mention.name for mention in message.mentions],
+            "message_jump_url": message.jump_url,
+            "message_dump": str(message),
+            "bot_response": bot_response.dict() if bot_response is not None else None
+        })
 
-    def log_conversation(self, conversation_id: str):
-        logger.info(f"Logging conversation: {conversation_id}")
-        self._database.conversations.insert_one({"_id": conversation_id})
-
-    def add_interaction_to_conversation(self, conversation_id: str, interaction: ChatInteraction):
-        logger.info(f"Adding interaction {interaction.uuid} to conversation: {conversation_id}")
-        self._collection.update_one({"_id": conversation_id},
-                                    {"$push": {"interactions": interaction.dict()}})
-
-    def load_data(self) -> ApplicationDataModel:
-        logger.info(f"Loading data from database")
-        users = list(self._database.users.find())
-        conversations = list(self._database.conversations.find())
-        settings = None
-        logger.info(f"Loaded {len(users)} users, {len(conversations)} conversations. Settings: {settings}")
-        return ApplicationDataModel(users=users,
-                                    conversations=conversations,
-                                    settings=settings)
-
-    def save_data(self,
-                  data: BaseModel,
-                  query: dict = None,
-                  save_path: Union[str, Path] = None):
+    def save_to_json(self,
+                     query: dict = None,
+                     save_path: Union[str, Path] = None):
 
         logger.info(f"Saving data to database")
 
@@ -100,3 +87,28 @@ class MongoDatabase(AbstractDatabase):
             raise e
 
         logger.info(f"Saved {len(data)} documents to {save_path}")
+
+
+mongo_database_manager = MongoDatabaseManager()
+
+if __name__ == "__main__":
+    try:
+        # Creating an instance of MongoDatabase to test the connection
+        mongo_database = MongoDatabaseManager()
+        logger.info("Successfully connected to MongoDB!")
+
+        # Creating a test user and conversation ID
+        test_user_id = "test_user_123"
+        test_conversation_id = "test_conversation_123"
+
+        # Logging the test user and conversation
+        mongo_database.log_user(user_id=test_user_id)
+        mongo_database.log_conversation(conversation_id=test_conversation_id)
+        logger.info(f"Successfully logged test user: {test_user_id} and test conversation: {test_conversation_id}")
+    except Exception as e:
+        # Log any exceptions that occur during the connection or logging
+        logger.error(f"Failed to connect or write to MongoDB: {e}")
+    finally:
+        # Close the connection to the MongoDB client
+        if 'mongo_database' in locals() and hasattr(mongo_database, '_client'):
+            mongo_database._client.close()
