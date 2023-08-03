@@ -3,4 +3,4 @@ services:
   jonbot:
     build: .
     ports:
-      - "8000:8000"
+      - "1235:1235"

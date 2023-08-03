@@ -1,36 +1,21 @@
+import asyncio
 import logging
-import concurrent.futures
+import threading
+from multiprocessing import Process
 
-from jonbot.layer0_frontends.discord_bot.bot_main import run_discord_bot
+from jonbot.layer0_frontends.discord_bot.discord_main import run_discord_client
 from jonbot.layer1_api_interface.app import run_api
 
 logger = logging.getLogger(__name__)
 
+if __name__ == "__main__":
+    # Start the Discord bot in a new thread
+    discord_bot_process = Process(target=run_discord_client)
+    discord_bot_process.start()
 
-def main() -> None:
-    """
-    Main function to start the bot and run API.
+    # Start the API server in a new process
+    api_server_process = Process(target=run_api)
+    api_server_process.start()
 
-    This function starts the bot and runs the API in a ThreadPool.
-
-    Returns:
-        None
-    """
-    logger.info("Starting JonBot")
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-        try:
-
-            futures = [executor.submit(run_api), executor.submit(run_discord_bot)]
-
-            for future in concurrent.futures.as_completed(futures):
-                try:
-                    future.result()
-                except Exception as e:
-                    logger.error(f"Exception occured in thread {e}")
-        except Exception as e:
-            logger.error(f"Failed to create thread: {e}")
-
-
-if __name__ == '__main__':
-    main()
+    discord_bot_process.join()
+    api_server_process.join()

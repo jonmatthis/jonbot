@@ -14,11 +14,12 @@ from jonbot.layer3_data_layer.data_models.application_data_model import Applicat
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatInteraction
 from jonbot.layer3_data_layer.database.abstract_database import AbstractDatabase
 from jonbot.layer3_data_layer.system.filenames_and_paths import clean_path_string, get_default_database_json_save_path
+from jonbot.layer3_data_layer.utilities.default_serialize import default_serialize
 
 logger = logging.getLogger(__name__)
 
-BASE_COLLECTION_NAME = "all_data"
-DATABASE_NAME = "jonbot"
+BASE_COLLECTION_NAME = "jonbot_collection"
+DATABASE_NAME = "jonbot_database"
 
 
 def get_mongo_uri() -> str:
@@ -51,7 +52,7 @@ class MongoDatabase(AbstractDatabase):
 
     def add_interaction_to_conversation(self, conversation_id: str, interaction: ChatInteraction):
         logger.info(f"Adding interaction {interaction.uuid} to conversation: {conversation_id}")
-        self._database.conversations.update_one({"_id": conversation_id},
+        self._collection.update_one({"_id": conversation_id},
                                                 {"$push": {"interactions": interaction.dict()}})
 
     def load_data(self) -> ApplicationDataModel:
