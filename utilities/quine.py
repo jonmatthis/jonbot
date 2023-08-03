@@ -115,8 +115,7 @@ if __name__ == "__main__":
         excluded_directories=["__pycache__",
                               ".git",
                               "system",
-                              "layer3_data_layer",
-                              "layer2_core_processes"
+
                               ],
         included_extensions=[".py", ".html", ".js", ".css", ".md", ".json", ".csv", ".txt"],
         excluded_file_names=["poetry.lock", ".gitignore", "LICENSE", "chatbot_prompts.py", "json_database.py"]

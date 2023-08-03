@@ -1,17 +1,17 @@
 import logging
 import os
 
-import discord
 from dotenv import load_dotenv
 
-logger = logging.getLogger(__name__)
+from jonbot.layer0_frontends.discord_bot.discord_client import discord_client
 
-discord_client = discord.Client(intents=discord.Intents.all())
+logger = logging.getLogger(__name__)
 
 
 def run_discord_client():
     load_dotenv()
     discord_client.run(os.getenv("DISCORD_TOKEN"))
+
 
 
 if __name__ == "__main__":
