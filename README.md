@@ -1,3 +1,3 @@
-# ottobot
+# jonbot
 
-there are many like it, but this one is mine 
+a friendly machine 🤖❤️✨
