@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "ottobot"
+name = "jonbot"
 version = "0.1.0"
 description = "a friendly machine 🤖❤️✨"
 authors = ["jonmatthis <jonmatthis@gmail.com>"]
