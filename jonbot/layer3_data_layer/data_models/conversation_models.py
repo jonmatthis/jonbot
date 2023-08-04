@@ -10,6 +10,13 @@ class ChatInput(BaseModel):
     metadata: dict = {}
 
 
+
+class ChatRequest(BaseModel):
+    chat_input: ChatInput
+    uuid: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    config: dict = {}
+
+
 class ChatResponse(BaseModel):
     message: str
     uuid: str = Field(default_factory=lambda: str(uuid.uuid4()))

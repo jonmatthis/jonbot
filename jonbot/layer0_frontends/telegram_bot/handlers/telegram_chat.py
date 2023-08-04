@@ -20,6 +20,7 @@ async def telegram_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_input = ChatInput(message=update.message.text,
                            uuid=str(uuid.uuid4()))
 
+
     await update.message.chat.send_action(action="typing")
 
     async with aiohttp.ClientSession() as session:

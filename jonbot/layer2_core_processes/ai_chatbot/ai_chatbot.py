@@ -19,11 +19,19 @@ from jonbot.layer3_data_layer.system.filenames_and_paths import get_chroma_vecto
 
 load_dotenv()
 
+from typing import Callable
+
+class CustomStreamingCallbackHandler(BaseCallbackHandler):
+    def __init__(self, token_handler: Callable[[str], None] = None):
+        self.token_handler = token_handler
+    def on_llm_new_token(self, token: str, **kwargs: Any) -> None:
+        self.token_handler(token)
+
 
 class AIChatBot(BaseModel):
     llm: ChatOpenAI = ChatOpenAI(
         streaming=True,
-        callbacks=[StreamingStdOutCallbackHandler()],
+        callbacks=[CustomStreamingCallbackHandler()],
         temperature=0.8,
         model_name="gpt-4")
     prompt: Any = None
@@ -94,6 +102,17 @@ class AIChatBot(BaseModel):
         ai_response = await self.chain.arun(human_input=input_text)
         return ai_response
 
+    async def async_process_human_input_text_streaming(self, input_text: str):
+        print(f"Input: {input_text}")
+        print("Streaming response...\n")
+
+        async def token_handler(token: str):
+            yield token
+
+        callback_handler = CustomStreamingCallbackHandler(token_handler=token_handler)
+        self.add_callback(callback_handler)
+        await self.chain.arun(human_input=input_text)
+        return token_handler
     async def load_memory_from_thread(self, thread, bot_name: str):
         async for message in thread.history(limit=None, oldest_first=True):
             if message.content == "":
