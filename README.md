@@ -54,29 +54,29 @@ pip install -r requirements.txt
 ```mermaid
 graph TD
 
-    classDef grey fill:#ddd,stroke:#fff,stroke-width:2px,color:#000;
-    classDef blue fill:#bbf,stroke:#333,stroke-width:2px,color:#000;
-    classDef green fill:#bfb,stroke:#333,stroke-width:4px,color:#000;
-    classDef orange fill:#ffc,stroke:#333,stroke-width:4px,color:#000;
+    classDef actor fill:#9E9E9E,stroke:#757575,stroke-width:2px,color:#000,rounding:5px;
+    classDef interface fill:#90A4AE,stroke:#757575,stroke-width:2px,color:#000,rounding:5px;
+    classDef api fill:#A5D6A7,stroke:#757575,stroke-width:2px,color:#000,rounding:5px;
+    classDef core fill:#FFE082,stroke:#757575,stroke-width:2px,color:#000,rounding:5px;
+    classDef data fill:#FFAB91,stroke:#757575,stroke-width:2px,color:#000,rounding:5px;
 
-
-        A(["External User"]):::actor
-    
+    A(["External User"]):::actor
 
     subgraph Layer 0 - Interface
-        B1["Frontend: Discord"]
-        B2["Frontend: Telegram"]
+        B1["Frontend: Discord"]:::interface
+        B2["Frontend: Telegram"]:::interface
     end
 
     subgraph Layer1 - API
-        C["API Interface (FastAPI)"]
+        C["API Interface (FastAPI)"]:::api
     end
 
     subgraph Layer2 - Core Processes
-        D["Chatbot - LangChain/OpenAI/Anthropic\n VoiceTranscription - Whisper"]
+        D["Chatbot\nLangChain/OpenAI/Anthropic\nVoiceTranscription - Whisper"]:::core
     end
+
     subgraph Layer3 - Data Layer
-        E["Database  - MongoDB \n DataModels - Pydantic"]
+        E["Database - MongoDB\nDataModels - Pydantic"]:::data
     end
 
     A --> B1
@@ -85,13 +85,6 @@ graph TD
     B2 --> C
     C --> D
     D --> E
-
-    class B1,B2 blue
-    class C,D green
-    class E orange
-
-
-
 ```
 **Layer 0 - Frontends**
 
