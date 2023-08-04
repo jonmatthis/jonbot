@@ -14,4 +14,3 @@ class VoiceToTextRequest(BaseModel):
 
 class VoiceToTextResponse(BaseModel):
     text: str
-    response_body: dict

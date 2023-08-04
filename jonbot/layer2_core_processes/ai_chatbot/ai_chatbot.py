@@ -13,14 +13,14 @@ from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTem
 from langchain.vectorstores import Chroma
 from pydantic import BaseModel
 
-from jonbot.layer2_core_processes.processing_sublayer.ai_chatbot.ai_chatbot_prompts import CHATBOT_SYSTEM_PROMPT_TEMPLATE
+from jonbot.layer2_core_processes.ai_chatbot.ai_chatbot_prompts import CHATBOT_SYSTEM_PROMPT_TEMPLATE
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatResponse, ChatInput
 from jonbot.layer3_data_layer.system.filenames_and_paths import get_chroma_vector_store_path
 
 load_dotenv()
 
 
-class AIChatbot(BaseModel):
+class AIChatBot(BaseModel):
     llm: ChatOpenAI = ChatOpenAI(
         streaming=True,
         callbacks=[StreamingStdOutCallbackHandler()],
@@ -132,7 +132,7 @@ class AIChatbot(BaseModel):
 
 async def ai_chatbot_demo():
     logging.getLogger(__name__).setLevel(logging.WARNING)
-    chatbot = await AIChatbot().create_chatbot()
+    chatbot = await AIChatBot().create_chatbot()
     await chatbot.demo()
 
 

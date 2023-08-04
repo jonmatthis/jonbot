@@ -1,15 +1,11 @@
 import logging
-import os
-import uuid
 
 import aiohttp
 import discord
-import requests
 
-from jonbot.layer1_api_interface.app import API_CHAT_URL, API_VOICE_TO_TEXT_URL
-from jonbot.layer3_data_layer.data_models.conversation_models import ChatInput, ChatResponse
-from jonbot.layer3_data_layer.data_models.voice_to_text_request import VoiceToTextRequest
-from jonbot.layer3_data_layer.database.mongo_database import mongo_database_manager
+from jonbot.layer0_frontends.discord_bot.event_handlers.handle_text_message import handle_text_message
+from jonbot.layer0_frontends.discord_bot.event_handlers.handle_voice_memo import handle_voice_memo, \
+    TRANSCRIBED_AUDIO_PREFIX
 
 discord_client = discord.Client(intents=discord.Intents.all())
 
@@ -29,48 +25,16 @@ async def on_message(message: discord.Message) -> None:
     message : discord.Message
         The message event data from Discord.
     """
-    if message.author == discord_client.user:
+
+    if message.author == discord_client.user and not message.content.startswith(TRANSCRIBED_AUDIO_PREFIX):
         return
-
-
-
 
     try:
         async with message.channel.typing():
-            async with aiohttp.ClientSession() as session:
-
                 if len(message.attachments) > 0 and message.attachments[0].content_type.startswith("audio"):
-
-                    voice_to_text_request = VoiceToTextRequest(audio_file_url=message.attachments[0].url)
-                    async with session.post(API_VOICE_TO_TEXT_URL, json=voice_to_text_request.dict()) as response:
-                        if response.status == 200:
-                            data = await response.json()
-                            chat_response = ChatResponse(**data)
-                            await message.channel.send(chat_response.message)
-                            mongo_database_manager.insert_discord_message(message = message, bot_response = chat_response)
-                        else:
-                            error_message = f"Received non-200 response code: {response.status}"
-                            logger.exception(error_message)
-                            await message.channel.send(
-                                f"Sorry, I'm currently unable to process your (audio transcriptiopn) request. {error_message}")
-
+                    await handle_voice_memo(message)
                 else:
-
-                    chat_input = ChatInput(message=message.content,
-                                           uuid=str(uuid.uuid4()),
-                                           )
-                    logger.info(f"Sending chat input: {chat_input}")
-                    async with session.post(API_CHAT_URL, json=chat_input.dict()) as response:
-                        if response.status == 200:
-                            data = await response.json()
-                            chat_response = ChatResponse(**data)
-                            await message.channel.send(chat_response.message)
-                            mongo_database_manager.insert_discord_message(message = message, bot_response = chat_response)
-                        else:
-                            error_message = f"Received non-200 response code: {response.status}"
-                            logger.exception(error_message)
-                            await message.channel.send(
-                                f"Sorry, I'm currently unable to process your request. {error_message}")
+                    await handle_text_message(message)
 
     except Exception as e:
         error_message = f"An error occurred: {str(e)}"

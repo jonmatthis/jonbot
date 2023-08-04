@@ -1,10 +1,13 @@
+import logging
 import os
 
 import aiofiles
 import aiohttp
 import openai
 from pydub import AudioSegment
+import logging
 
+logger = logging.getLogger(__name__)
 
 async def transcribe_audio(
     audio_file_url: str,
@@ -21,9 +24,9 @@ async def transcribe_audio(
             if response.status == 200:
                 async with aiofiles.open(ogg_file_path, mode='wb') as file:
                     await file.write(await response.read())
-                print("File downloaded successfully.")
+                logger.info("Audio file downloaded successfully.")
             else:
-                print("Failed to download file.")
+                logger.info("Audio file failed to download.")
                 return "Failed to download file."
 
     try:
@@ -47,7 +50,7 @@ async def transcribe_audio(
         os.remove(mp3_file_path)  # Optional: Remove the temporary mp3 file
 
         # Extracting the transcript
-        return transcription_response.text()
+        return transcription_response.text
     except Exception as e:
         print(f"An error occurred while transcribing: {str(e)}")
         return "An error occurred while transcribing."

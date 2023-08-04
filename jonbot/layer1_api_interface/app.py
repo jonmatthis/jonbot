@@ -3,8 +3,9 @@ import logging
 import time
 from fastapi import FastAPI
 
-from jonbot.layer2_core_processes.controller.controller import Controller
-from jonbot.layer2_core_processes.processing_sublayer.audio_transcription.transcribe_audio import transcribe_audio
+
+from jonbot.layer2_core_processes.ai_chatbot.ai_chatbot import AIChatBot
+from jonbot.layer2_core_processes.audio_transcription.transcribe_audio import transcribe_audio
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatInput, ChatResponse
 from jonbot.layer3_data_layer.data_models.voice_to_text_request import VoiceToTextRequest, VoiceToTextResponse
 
@@ -12,9 +13,23 @@ logger = logging.getLogger(__name__)
 
 API_CHAT_URL = "http://localhost:8000/chat"
 API_VOICE_TO_TEXT_URL = "http://localhost:8000/voice_to_text"
+API_CHAT_STREAM_URL = "http://localhost:8000/chat_stream"
 
 app = FastAPI()
-controller = asyncio.run(Controller.initialize())
+
+
+
+# @app.post("/chat_stream")
+# async def chat_stream(chat_input: ChatInput):
+#     """
+#     Stream the chat response
+#     """
+#     logger.info(f"Received chat input: {chat_input}")
+#
+#     stream_handler = StreamMessageHandler(controller=controller, chat_input=chat_input)
+#     generator = stream_handler.generate_messages()
+#
+#     return StreamingResponse(generator, media_type="text/plain")
 
 
 @app.post("/chat")
@@ -24,10 +39,12 @@ async def chat(chat_input: ChatInput) -> ChatResponse:
     """
     logger.info(f"Received chat input: {chat_input}")
     tic = time.perf_counter()
-    response = await controller.handle_chat_input(chat_input=chat_input)
+    bot = await AIChatBot().create_chatbot()
+    response_text = await bot.async_process_human_input_text(input_text=chat_input.message)
+    chat_response = ChatResponse(message=response_text)
     toc = time.perf_counter()
-    logger.info(f"Returning chat response: {response}, elapsed time: {toc - tic:0.4f} seconds")
-    return response
+    logger.info(f"Returning chat response: {chat_response}, elapsed time: {toc - tic:0.4f} seconds")
+    return chat_response
 
 
 @app.post("/voice_to_text")
