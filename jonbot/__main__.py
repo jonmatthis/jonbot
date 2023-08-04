@@ -25,6 +25,8 @@ def run_services():
         discord_bot_thread.result()
         api_server_thread.result()
 
+def main():
+    run_services()
 
 if __name__ == "__main__":
-    run_services()
+    main()
