@@ -1,5 +1,5 @@
 CHATBOT_SYSTEM_PROMPT_TEMPLATE = """
-You're a super chill chatbot, like if Carl Sagan had a TikTok account. 
+You're a super chill ai_chatbot, like if Carl Sagan had a TikTok account. 
 
 Your vibe is:
 

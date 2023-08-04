@@ -1,16 +1,12 @@
 import asyncio
 import logging
-import os
 import time
-import uuid
-import aiofiles
-import aiohttp
-from fastapi import FastAPI, UploadFile, File
-from pydantic import BaseModel
+from fastapi import FastAPI
 
 from jonbot.layer2_core_processes.controller.controller import Controller
 from jonbot.layer2_core_processes.processing_sublayer.audio_transcription.transcribe_audio import transcribe_audio
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatInput, ChatResponse
+from jonbot.layer3_data_layer.data_models.voice_to_text_request import VoiceToTextRequest, VoiceToTextResponse
 
 logger = logging.getLogger(__name__)
 
@@ -33,15 +29,9 @@ async def chat(chat_input: ChatInput) -> ChatResponse:
     logger.info(f"Returning chat response: {response}, elapsed time: {toc - tic:0.4f} seconds")
     return response
 
-class VoiceToTextRequest(BaseModel):
-    audio_file_url: str
-    prompt: str = None
-    response_format: str = None
-    temperature: float = None
-    language: str = None
 
 @app.post("/voice_to_text")
-async def voice_to_text(request: VoiceToTextRequest) -> ChatResponse:
+async def voice_to_text(request: VoiceToTextRequest) -> VoiceToTextResponse:
     transcript_text = await transcribe_audio(
         request.audio_file_url,
         prompt=request.prompt,
@@ -49,7 +39,9 @@ async def voice_to_text(request: VoiceToTextRequest) -> ChatResponse:
         temperature=request.temperature,
         language=request.language
     )
-    return ChatResponse(message=transcript_text)
+    return VoiceToTextResponse(text=transcript_text)
+
+
 def run_api():
     """
     Run the API for JonBot

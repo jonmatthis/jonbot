@@ -4,7 +4,7 @@ from typing import Optional
 
 from pydantic import Field, BaseModel
 
-from jonbot.layer2_core_processes.processing_sublayer.natural_language_processing.ai_response_handler import (
+from jonbot.layer2_core_processes.processing_sublayer.ai_nlp_llm_stuff.ai_response_handler import (
     AIResponseHandler,
 )
 from jonbot.layer3_data_layer.data_models.conversation_models import (

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import Any
 
 from dotenv import load_dotenv
@@ -12,14 +13,14 @@ from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTem
 from langchain.vectorstores import Chroma
 from pydantic import BaseModel
 
-from jonbot.layer2_core_processes.processing_sublayer.natural_language_processing.chatbot.chatbot_prompts import CHATBOT_SYSTEM_PROMPT_TEMPLATE
+from jonbot.layer2_core_processes.processing_sublayer.ai_chatbot.ai_chatbot_prompts import CHATBOT_SYSTEM_PROMPT_TEMPLATE
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatResponse, ChatInput
 from jonbot.layer3_data_layer.system.filenames_and_paths import get_chroma_vector_store_path
 
 load_dotenv()
 
 
-class Chatbot(BaseModel):
+class AIChatbot(BaseModel):
     llm: ChatOpenAI = ChatOpenAI(
         streaming=True,
         callbacks=[StreamingStdOutCallbackHandler()],
@@ -129,11 +130,11 @@ class Chatbot(BaseModel):
 
             print(f"Response: {chat_response.message}")
 
+async def ai_chatbot_demo():
+    logging.getLogger(__name__).setLevel(logging.WARNING)
+    chatbot = await AIChatbot().create_chatbot()
+    await chatbot.demo()
+
 
 if __name__ == "__main__":
-    async def main():
-        chatbot = await Chatbot().create_chatbot()
-        await chatbot.demo()
-
-
-    asyncio.run(main())
+    asyncio.run(ai_chatbot_demo())

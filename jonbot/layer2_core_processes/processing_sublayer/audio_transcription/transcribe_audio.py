@@ -34,7 +34,7 @@ async def transcribe_audio(
         # Open the audio file
         with open(mp3_file_path, "rb") as audio_file:
             # Call OpenAI's Whisper model for transcription
-            transcript = openai.Audio.transcribe(
+            transcription_response = openai.Audio.transcribe(
                 model="whisper-1",
                 file=audio_file,
                 prompt=prompt,
@@ -47,7 +47,7 @@ async def transcribe_audio(
         os.remove(mp3_file_path)  # Optional: Remove the temporary mp3 file
 
         # Extracting the transcript
-        return transcript['text']
+        return transcription_response.text()
     except Exception as e:
         print(f"An error occurred while transcribing: {str(e)}")
         return "An error occurred while transcribing."
