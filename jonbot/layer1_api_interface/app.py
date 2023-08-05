@@ -20,12 +20,10 @@ API_CHAT_STREAM_URL = "http://localhost:8000/chat_stream"
 
 app = FastAPI()
 
-
-
-
 class MyCustomHandler(BaseCallbackHandler):
     def on_llm_new_token(self, token: str, **kwargs) -> None:
         print(f"My custom handler, token: {token}")
+        
 @app.post("/chat")
 async def chat(chat_request: ChatRequest) -> ChatResponse:
     """
