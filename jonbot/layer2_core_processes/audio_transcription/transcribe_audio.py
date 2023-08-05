@@ -5,24 +5,27 @@ import aiofiles
 import aiohttp
 import openai
 from pydub import AudioSegment
-import logging
 
 logger = logging.getLogger(__name__)
 
+
 async def transcribe_audio(
-    audio_file_url: str,
-    prompt: str = None,
-    response_format: str = None,
-    temperature: float = None,
-    language: str = None
+        audio_file_url: str,
+        prompt: str = None,
+        response_format: str = None,
+        temperature: float = None,
+        language: str = None
 ) -> str:
-    ogg_file_path = f"/tmp/voice-message.ogg"
-    mp3_file_path = f"/tmp/voice-message.mp3"
+    TEMP_FILE_PATH = f"/tmp/voice-message"
+
+    file_extension = audio_file_url.split('.')[-1]  # Get the audio file extension from the URL
+    original_file_path = f"{TEMP_FILE_PATH}.{file_extension}"
+    mp3_file_path = f"{TEMP_FILE_PATH}.mp3"
 
     async with aiohttp.ClientSession() as session:
         async with session.get(audio_file_url) as response:
             if response.status == 200:
-                async with aiofiles.open(ogg_file_path, mode='wb') as file:
+                async with aiofiles.open(original_file_path, mode='wb') as file:
                     await file.write(await response.read())
                 logger.info("Audio file downloaded successfully.")
             else:
@@ -30,8 +33,17 @@ async def transcribe_audio(
                 return "Failed to download file."
 
     try:
-        # Convert ogg to mp3
-        audio = AudioSegment.from_ogg(ogg_file_path)
+        # Convert audio to mp3 based on its format
+        if file_extension == 'ogg':
+            audio = AudioSegment.from_ogg(original_file_path)
+        elif file_extension == 'wav':
+            audio = AudioSegment.from_wav(original_file_path)
+        elif file_extension == 'mp3':
+            audio = AudioSegment.from_mp3(original_file_path)
+        # Add more formats as needed
+        else:
+            raise ValueError(f"Unsupported file format: {file_extension}")
+
         audio.export(mp3_file_path, format="mp3")
 
         # Open the audio file
@@ -46,11 +58,20 @@ async def transcribe_audio(
                 language=language
             )
 
-        os.remove(ogg_file_path)  # Optional: Remove the temporary ogg file
-        os.remove(mp3_file_path)  # Optional: Remove the temporary mp3 file
+
+
+        try:
+            os.remove(original_file_path)  # Optional: Remove the original audio file
+        except FileNotFoundError:
+            pass
+
+        try:
+            os.remove(mp3_file_path)  # Optional: Remove the temporary mp3 file
+        except FileNotFoundError:
+            pass
 
         # Extracting the transcript
         return transcription_response.text
     except Exception as e:
-        print(f"An error occurred while transcribing: {str(e)}")
+        logger.exception(f"An error occurred while transcribing: {str(e)}")
         return "An error occurred while transcribing."

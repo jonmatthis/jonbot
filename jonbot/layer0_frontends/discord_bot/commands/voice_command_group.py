@@ -9,6 +9,7 @@ voice_connections  = {}
 @voice_command_group.command()
 async def join(ctx: discord.ApplicationContext):
     """Join the voice channel!"""
+    global voice_connections
     if ctx.author.voice:
         voice_channel_to_join = ctx.author.voice.channel
     else:
@@ -17,7 +18,7 @@ async def join(ctx: discord.ApplicationContext):
     await voice_channel_to_join.connect()
 
     await ctx.respond("Joined!")
-
+    voice_connections[ctx.guild.id] = ctx.guild.voice_client
     return voice_channel_to_join
 
 
@@ -33,7 +34,7 @@ async def leave_voice(ctx: discord.ApplicationContext):
 
     await ctx.respond("Left!")
 
-
+VOICE_RECORDING_PREFIX = "Finished! Recorded audio for"
 
 async def finished_callback(sink, channel: discord.TextChannel):
     recorded_users = [f"<@{user_id}>" for user_id, audio in sink.audio_data.items()]
@@ -43,7 +44,7 @@ async def finished_callback(sink, channel: discord.TextChannel):
         for user_id, audio in sink.audio_data.items()
     ]
     await channel.send(
-        f"Finished! Recorded audio for {', '.join(recorded_users)}.", files=files
+        f"{VOICE_RECORDING_PREFIX} {' '.join(recorded_users)}.", files=files
     )
 
 
@@ -61,9 +62,15 @@ class Sinks(Enum):
 @voice_command_group.command()
 async def start_recording(ctx: discord.ApplicationContext, sink:Sinks):
     """Record your voice!"""
-    voice_channel  = await join(ctx)
-    voice_connection = await voice_channel.connect()
-    voice_connections.update({ctx.guild.id: voice_connection})
+    global voice_connections
+    if not ctx.author.voice:
+        return await ctx.respond("You're not in a voice channel!")
+
+
+    voice_connection = voice_connections.get(ctx.guild.id, None)
+
+    if not voice_connection:
+        raise Exception("I'm not in a voice channel right now")
 
     voice_connection.start_recording(
         sink.value,
@@ -71,7 +78,7 @@ async def start_recording(ctx: discord.ApplicationContext, sink:Sinks):
         ctx.channel,
     )
 
-    await ctx.respond("The recording has started!")
+    await ctx.channel.send("The recording has started!")
 
 
 @voice_command_group.command()

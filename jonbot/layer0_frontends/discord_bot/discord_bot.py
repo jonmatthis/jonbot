@@ -3,7 +3,7 @@ import logging
 import discord
 
 from jonbot.layer0_frontends.discord_bot.commands.cogs.thread_scraper_cog.server_scraper_cog import ServerScraperCog
-from jonbot.layer0_frontends.discord_bot.commands.voice_command_group import voice_command_group
+from jonbot.layer0_frontends.discord_bot.commands.voice_command_group import voice_command_group, VOICE_RECORDING_PREFIX
 from jonbot.layer0_frontends.discord_bot.event_handlers.handle_text_message import handle_text_message
 from jonbot.layer0_frontends.discord_bot.event_handlers.handle_voice_memo import handle_voice_memo, \
     TRANSCRIBED_AUDIO_PREFIX
@@ -30,8 +30,10 @@ async def on_message(message: discord.Message) -> None:
         The message event data from Discord.
     """
 
-    if message.author == discord_bot.user and not message.content.startswith(TRANSCRIBED_AUDIO_PREFIX):
-        return
+
+    if message.author == discord_bot.user:
+        if not  message.content.startswith(TRANSCRIBED_AUDIO_PREFIX) and not message.content.startswith(VOICE_RECORDING_PREFIX):
+            return
 
     try:
         async with message.channel.typing():
