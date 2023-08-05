@@ -113,14 +113,6 @@ class AIChatBot(BaseModel):
         self.add_callback(callback_handler)
         await self.chain.arun(human_input=input_text)
         return token_handler
-    async def load_memory_from_thread(self, thread, bot_name: str):
-        async for message in thread.history(limit=None, oldest_first=True):
-            if message.content == "":
-                continue
-            if str(message.author) == bot_name:
-                self.memory.memories[0].chat_memory.add_ai_message(message.content)
-            else:
-                self.memory.memories[0].chat_memory.add_user_message(message.content)
 
     async def _create_vector_store(self, collection_name: str = "test_collection"):
         chroma_vector_store = Chroma(

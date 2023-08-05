@@ -220,23 +220,6 @@ typing-inspect = ">=0.4.0"
 dev = ["flake8", "hypothesis", "ipython", "mypy (>=0.710)", "portray", "pytest (>=7.2.0)", "setuptools", "simplejson", "twine", "types-dataclasses", "wheel"]
 
 [[package]]
-name = "discord.py"
-version = "2.3.1"
-description = "A Python wrapper for the Discord API"
-category = "main"
-optional = false
-python-versions = ">=3.8.0"
-
-[package.dependencies]
-aiohttp = ">=3.7.4,<4"
-
-[package.extras]
-docs = ["sphinx (==4.4.0)", "sphinxcontrib-trio (==1.1.2)", "sphinxcontrib-websupport", "typing-extensions (>=4.3,<5)"]
-speed = ["Brotli", "aiodns (>=1.1)", "cchardet (==2.1.7)", "orjson (>=3.5.4)"]
-test = ["coverage[toml]", "pytest", "pytest-asyncio", "pytest-cov", "pytest-mock", "typing-extensions (>=4.3,<5)"]
-voice = ["PyNaCl (>=1.3.0,<1.6)"]
-
-[[package]]
 name = "dnspython"
 version = "2.4.0"
 description = "DNS toolkit"
@@ -893,6 +876,23 @@ avro = ["fastavro (==1.7.3)"]
 functions = ["apache-bookkeeper-client (>=4.16.1)", "grpcio (>=1.8.2)", "prometheus-client", "protobuf (>=3.6.1,<=3.20.3)", "ratelimit"]
 
 [[package]]
+name = "py-cord"
+version = "2.4.1"
+description = "A Python wrapper for the Discord API"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.dependencies]
+aiohttp = ">=3.6.0,<3.9.0"
+typing-extensions = {version = ">=4,<5", markers = "python_version < \"3.11\""}
+
+[package.extras]
+docs = ["furo", "myst-parser (==0.18.1)", "sphinx (==5.3.0)", "sphinx-autodoc-typehints (==1.22)", "sphinx-copybutton (==0.5.1)", "sphinxcontrib-trio (==1.1.2)", "sphinxcontrib-websupport (==1.2.4)", "sphinxext-opengraph (==0.8.1)"]
+speed = ["aiohttp[speedups]", "orjson (>=3.5.4)"]
+voice = ["PyNaCl (>=1.3.0,<1.6)"]
+
+[[package]]
 name = "pydantic"
 version = "1.10.12"
 description = "Data validation and settings management using python type hints"
@@ -1381,7 +1381,7 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "d80f820ab6d3985e33beb15d4908dc844bc978792daa5f15a607e91255829a16"
+content-hash = "08b2147d30b9654a92fa716067da3b70f07ddda36e6f25178a3ab1f1cd7439ec"
 
 [metadata.files]
 aiohttp = [
@@ -1625,10 +1625,6 @@ coloredlogs = [
 dataclasses-json = [
     {file = "dataclasses-json-0.5.9.tar.gz", hash = "sha256:e9ac87b73edc0141aafbce02b44e93553c3123ad574958f0fe52a534b6707e8e"},
     {file = "dataclasses_json-0.5.9-py3-none-any.whl", hash = "sha256:1280542631df1c375b7bc92e5b86d39e06c44760d7e3571a537b3b8acabf2f0c"},
-]
-"discord.py" = [
-    {file = "discord.py-2.3.1-py3-none-any.whl", hash = "sha256:149652f24da299706270bf8c03c2fcf80cf1caf3a480744c61d5b001688b380d"},
-    {file = "discord.py-2.3.1.tar.gz", hash = "sha256:8eb4fe66b5d503da6de3a8425e23012711dc2fbcd7a782107a92beac15ee3459"},
 ]
 dnspython = [
     {file = "dnspython-2.4.0-py3-none-any.whl", hash = "sha256:46b4052a55b56beea3a3bdd7b30295c292bd6827dd442348bc116f2d35b17f0a"},
@@ -2233,6 +2229,10 @@ pulsar-client = [
     {file = "pulsar_client-3.2.0-cp39-cp39-musllinux_1_1_aarch64.whl", hash = "sha256:be6d3a9b2e1db3b6d1a7db5e13f7b4ed420674cf072cdb520fb004c4cd54c0af"},
     {file = "pulsar_client-3.2.0-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:b6b733e6239ffb505f7084df0175baf9d0215f14d0a02e9bbd1fdf71a2d6ea17"},
     {file = "pulsar_client-3.2.0-cp39-cp39-win_amd64.whl", hash = "sha256:edc2135d02b4793efb086edca0ffaa6e8ac9133961c2cdc17ae487e0a53da481"},
+]
+py-cord = [
+    {file = "py-cord-2.4.1.tar.gz", hash = "sha256:0266c9d9a9d2397622a0e5ead09826690e688ba3cf14c470167b81e6cd2d8a56"},
+    {file = "py_cord-2.4.1-py3-none-any.whl", hash = "sha256:862a372c364cd263e2c8e696c64887f969c02cbdf0fdd6b09f0283e9dd67a290"},
 ]
 pydantic = [
     {file = "pydantic-1.10.12-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:a1fcb59f2f355ec350073af41d927bf83a63b50e640f4dbaa01053a28b7a7718"},

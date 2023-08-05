@@ -75,6 +75,6 @@ if __name__ == "__main__":
     from pprint import pprint as print
 
     print("Printing `Timestamp()` object:")
-    print(Timestamp().model_dump(), indent=4)
+    print(Timestamp().dict(), indent=4)
     print("Printing `Timestamp(timezone.now())`:")
-    print(Timestamp(datetime.now()).model_dump(), indent=4)
+    print(Timestamp(datetime.now()).dict(), indent=4)

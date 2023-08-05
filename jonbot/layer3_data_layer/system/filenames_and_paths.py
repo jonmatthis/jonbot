@@ -22,6 +22,10 @@ def get_base_data_folder_path(parent_folder: Union[str, Path] = os_independent_h
     return str(base_folder_path)
 
 
+def get_new_attachments_folder_path():
+    return str(Path(get_base_data_folder_path()) / "attachments" / f"{get_current_date_time_string()}")
+
+
 def get_log_file_path():
     log_folder_path = Path(get_base_data_folder_path()) / LOG_FILE_FOLDER_NAME
     log_folder_path.mkdir(exist_ok=True, parents=True)

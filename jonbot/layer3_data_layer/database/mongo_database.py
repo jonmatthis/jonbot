@@ -32,30 +32,16 @@ class MongoDatabaseManager:
         self._database = self._client[DATABASE_NAME]
         self._collection = self._database[BASE_COLLECTION_NAME]
 
-    def insert_discord_message(self,
-                               message:discord.Message,
-                               bot_response: ChatResponse = None):
-        self._database["messages"].insert_one(document={
-            "content": message.content,
-            "reference_dict": message.to_message_reference_dict(),
-            "id": message.id,
-            "attachments": [attachment.url for attachment in message.attachments],
-            "author": message.author.name,
-            "author_id": message.author.id,
-            "channel": message.channel.name,
-            "channel_id": message.channel.id,
-            "guild": message.guild.name,
-            "guild_id": message.guild.id,
-            "timestamp": message.created_at,
-            "edited_timestamp": message.edited_at,
-            "mentions": [mention.name for mention in message.mentions],
-            "jump_url": message.jump_url,
-            "dump": str(message),
-            "received_timestamp": Timestamp().dict(),
-            "reactions": [str(reaction) for reaction in message.reactions],
-            'parent_message_id': message.reference.message_id if message.reference else '',
-            "bot_response": bot_response.dict() if bot_response is not None else None
-        })
+    def upsert(self, data:dict, collection_name:str= None, query:dict= None):
+        logger.debug(f"Upserting data to database")
+
+        if not query:
+            query = {}
+
+        if collection_name:
+            return self._collection.update_one(query, data, upsert=True)
+        else:
+            return self._database[collection_name].update_one(query, data, upsert=True)
 
     def save_to_json(self,
                      query: dict = None,

@@ -35,7 +35,9 @@ pip install -e .
 ## Setup
 
 - Create a `.env` file with your API keys for OpenAI, Discord, Telegram etc. See `.env.example`
-- Add all relevant numbers and ids for the Discord and Telegram bot (google around about how to make those bots, plenty of tutorials out there for ya)
+- Add all relevant numbers and ids for the Discord and Telegram bot 
+  - Discord - https://guide.pycord.dev/getting-started/creating-your-first-bot
+  - Telegram - https://core.telegram.org/bots#how-do-i-create-a-bot
 
 ## Run with: `python -m jonbot`  🤖❤️✨
 

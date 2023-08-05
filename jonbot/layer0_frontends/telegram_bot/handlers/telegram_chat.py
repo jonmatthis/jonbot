@@ -30,9 +30,9 @@ async def telegram_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 chat_response = ChatResponse(**data)
 
 
-                await context.bot.send_message(chat_id=update.effective_chat.id, text=chat_response.message)
+                await context.discord_bot.send_message(chat_id=update.effective_chat.id, text=chat_response.message)
                 mongo_database_manager.insert_telegram_message(update.message, chat_response)
             else:
                 error_message = f"Received non-200 response code: {response.status}"
                 logger.error(error_message)
-                await context.bot.send_message(chat_id=update.effective_chat.id, text=error_message)
+                await context.discord_bot.send_message(chat_id=update.effective_chat.id, text=error_message)

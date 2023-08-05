@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from jonbot.layer0_frontends.discord_bot.discord_main import run_discord_client
+from jonbot.layer0_frontends.discord_bot.discord_main import run_discord_bot
 from jonbot.layer0_frontends.telegram_bot.telegram_bot import run_telegram_bot, run_telegram_bot_async
 from jonbot.layer1_api_interface.app import run_api
 
@@ -13,7 +13,7 @@ def run_services():
     """
     with ThreadPoolExecutor() as executor:
         # Start the Discord bot in a new thread
-        discord_bot_thread = executor.submit(run_discord_client)
+        discord_bot_thread = executor.submit(run_discord_bot)
 
         # Start the API server in a new thread
         api_server_thread = executor.submit(run_api)
@@ -24,6 +24,7 @@ def run_services():
         # Wait for the threads to complete
         discord_bot_thread.result()
         api_server_thread.result()
+        telegram_bot_thread.result()
 
 def main():
     run_services()

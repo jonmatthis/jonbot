@@ -23,5 +23,5 @@ async def handle_voice_memo(message:discord.Message):
             else:
                 error_message = f"Received non-200 response code: {response.status}"
                 logger.exception(error_message)
-                await message.channel.send(
+                await message.reply(
                     f"Sorry, I'm currently unable to process your (audio transcriptiopn) request. {error_message}")
