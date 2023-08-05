@@ -4,6 +4,8 @@ from pathlib import Path
 
 import discord
 from discord import Forbidden
+from discord.ext import commands
+
 
 from jonbot.layer3_data_layer.data_models.discord_message import DiscordMessageDocument
 from jonbot.layer3_data_layer.database.mongo_database import mongo_database_manager, BASE_COLLECTION_NAME
@@ -13,9 +15,11 @@ logger = logging.getLogger(__name__)
 logging.getLogger('discord').setLevel(logging.INFO)
 
 
-class ServerScraper:
+
+class ServerScraperCog(commands.Cog):
     """A cog for scraping server data and storing it in a MongoDB database."""
 
+    @commands.slash_command(name="scrape_server", description="Scrape all messages from all channels and threads in the server.")
     async def scrape_server(self, ctx: discord.ApplicationContext):
         """Scrape all messages from all channels and threads in the server.
 

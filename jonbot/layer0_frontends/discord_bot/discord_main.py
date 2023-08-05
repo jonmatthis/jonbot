@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import os
 
@@ -12,7 +11,6 @@ logger = logging.getLogger(__name__)
 def run_discord_bot():
     load_dotenv()
     logger.info("Discord client started.")
-    # discord_bot.add_cog(ServerScraperCog(mongo_database_manager=mongo_database_manager))
     discord_bot.run(os.getenv("DISCORD_TOKEN"))
 
 

@@ -2,7 +2,8 @@ import logging
 
 import discord
 
-from jonbot.layer0_frontends.discord_bot.cogs.thread_scraper_cog.server_scraper_cog import ServerScraper
+from jonbot.layer0_frontends.discord_bot.commands.cogs.thread_scraper_cog.server_scraper_cog import ServerScraperCog
+from jonbot.layer0_frontends.discord_bot.commands.voice_command_group import voice_command_group
 from jonbot.layer0_frontends.discord_bot.event_handlers.handle_text_message import handle_text_message
 from jonbot.layer0_frontends.discord_bot.event_handlers.handle_voice_memo import handle_voice_memo, \
     TRANSCRIBED_AUDIO_PREFIX
@@ -10,6 +11,7 @@ from jonbot.layer0_frontends.discord_bot.event_handlers.handle_voice_memo import
 logger = logging.getLogger(__name__)
 
 discord_bot = discord.Bot(intents=discord.Intents.all())
+connections = {}
 
 
 @discord_bot.listen()
@@ -44,10 +46,6 @@ async def on_message(message: discord.Message) -> None:
         await message.reply(f"Sorry, an error occurred while processing your request. {error_message}")
 
 
-@discord_bot.slash_command(name="scrape", description="Scrape the server into a MongoDB database")
-async def scrape(ctx):
-    if not ctx.author.guild_permissions.administrator:
-        await ctx.respond("You do not have permission to use this command!", ephemeral=True)
-        return
-    await ctx.respond("Scraping server...", ephemeral=True)
-    await ServerScraper().scrape_server(ctx=ctx)
+discord_bot.add_application_command(voice_command_group)
+discord_bot.add_cog(ServerScraperCog())
+
