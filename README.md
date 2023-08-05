@@ -4,7 +4,7 @@ a friendly machine whats nice to talk to
 
 This is a template repo, clone it and make your own friendo! Or use mine or whatever! No kings, no masters!
 
-This bot helped me build this bot 🤖❤️✨
+this bot helped me build this bot 🤖❤️✨
  
 
 ---
