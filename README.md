@@ -9,46 +9,41 @@ this bot helped me build this bot 🤖❤️✨
 
 ---
 
-JonBot is a chatbot with multiple frontends (Discord, Telegram) powered by AI through [LangChain](https://langchain.readthedocs.io/en/latest/).
+JonBot is a chatbot with multiple frontends (Discord, Telegram) powered by AI through [LangChain](https://langchain.readthedocs.io/en/latest/) and connected to a [MongDB](mongodb.com) database.
 
-## Overview
-
-The codebase is structured into layers:
-
-**Layer 0 - Frontends**: Interface layers to interact with the bot (Discord, Telegram)
-
-**Layer 1 - API Interface**: API route definitions powered by FastAPI 
-
-**Layer 2 - Core Processes**: Main logic for natural language processing and audio transcription
-
-**Layer 3 - Data Layer**: Database and data models
-
-The main entry point is `__main__.py` which starts up the API server and frontend clients.
 
 ## Installation
-
+Create and activate an environment:
+e.g. 
+```
+conda create -n jonbot-env python=3.11
+conda activate jonbot-env
+```
 Clone the repo:
 
 ```
-git clone <repo url>
+git clone https://github.com/jonmatthis/jonbot
+cd jonbot
 ```
 
 Install dependencies:
 
 ```
-pip install -r requirements.txt
+pip install -e .
 ```
 
 ## Setup
 
 - Create a `.env` file with your API keys for OpenAI, Discord, Telegram etc. See `.env.example`
-- Run `python -m jonbot` to start the bot
+- Add all relevant numbers and ids for the Discord and Telegram bot (google around about how to make those bots, plenty of tutorials out there for ya)
+
+## Run with: `python -m jonbot`  🤖❤️✨
 
 ## Usage
 
-- Interact with the bot through Discord/Telegram
+- Interact with the bot through Discord (text and voice memos)/Telegram(text only for now) 
 - API endpoints provide programmatic access to core functionality
-- `__main__.py` starts up all services
+- `__main__.py` starts up all services 
 
 ## Architecture
 ```mermaid
@@ -86,6 +81,8 @@ graph TD
     C --> D
     D --> E
 ```
+
+
 **Layer 0 - Frontends**
 
 - `discord_bot`: Discord bot client and event handlers 
