@@ -3,7 +3,7 @@ import logging
 from typing import Any, OrderedDict
 
 from dotenv import load_dotenv
-from langchain import LLMChain, OpenAI
+from langchain import LLMChain, OpenAI, PromptTemplate
 from langchain.callbacks import StreamingStdOutCallbackHandler
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.chat_models import ChatOpenAI
@@ -90,20 +90,23 @@ class AIChatBot(BaseModel):
                         )
 
     def _create_prompt(self, system_prompt_template: str):
+        system_prompt = PromptTemplate(template=system_prompt_template,
+                                       input_variables=["timestamp",
+                                                        "rules_for_living",
+                                                        "context_route",
+                                                        "context_description",
+                                                        "chat_memory",
+                                                        "vectorstore_memory"
+                                                        ],
+                                       )
+        partial_system_prompt = system_prompt.partial(timestamp=str(Timestamp()),
+                              rules_for_living=RULES_FOR_LIVING,
+                              context_route=self.context_route,
+                              context_description=self.context_description, )
+
         system_message_prompt = SystemMessagePromptTemplate(
-            template=system_prompt_template,
-            input_variables=["timestamp",
-                             "rules_for_living",
-                             "context_route",
-                             "context_description",
-                             "chat_memory",
-                             "vectorstore_memory"
-                             ]
+            prompt = partial_system_prompt,
         )
-        system_message_prompt.prompt.partial(timestamp = Timestamp(),
-                                             rules_for_living = RULES_FOR_LIVING,
-                                             context_route = self.context_route,
-                                             context_description = self.context_description,)
 
 
         human_template = "{human_input}"
