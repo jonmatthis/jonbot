@@ -27,9 +27,10 @@ load_dotenv()
 from telegram import __version__ as TG_VER
 
 try:
+    from jonbot.layer0_frontends.telegram_bot.utilities.check_version_compatibility import __version_info__
     from telegram import __version_info__
 except ImportError:
-    __version_info__ = (0, 0, 0, 0, 0)  # type: ignore[assignment]
+    pass
 
 if __version_info__ < (20, 0, 0, "alpha", 1):
     raise RuntimeError(
