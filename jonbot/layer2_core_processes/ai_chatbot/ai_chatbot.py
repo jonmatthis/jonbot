@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Any
+from typing import Any, OrderedDict
 
 from dotenv import load_dotenv
 from langchain import LLMChain, OpenAI
@@ -13,34 +13,46 @@ from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTem
 from langchain.vectorstores import Chroma
 from pydantic import BaseModel
 
-from jonbot.layer2_core_processes.ai_chatbot.ai_chatbot_prompts import CHATBOT_SYSTEM_PROMPT_TEMPLATE
+from jonbot.layer2_core_processes.ai_chatbot.ai_chatbot_prompts import CHATBOT_SYSTEM_PROMPT_TEMPLATE, RULES_FOR_LIVING, \
+    BOT_NAME
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatResponse, ChatInput
+from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 from jonbot.layer3_data_layer.system.filenames_and_paths import get_chroma_vector_store_path
 
 load_dotenv()
 
 from typing import Callable
 
+
 class CustomStreamingCallbackHandler(BaseCallbackHandler):
     def __init__(self, token_handler: Callable[[str], None] = None):
         self.token_handler = token_handler
+
     def on_llm_new_token(self, token: str, **kwargs: Any) -> None:
         self.token_handler(token)
+
+
+class ChatHistory(BaseModel):
+    chat_history: OrderedDict = OrderedDict()
 
 
 class AIChatBot(BaseModel):
     llm: ChatOpenAI = ChatOpenAI(
         streaming=True,
-        callbacks=[CustomStreamingCallbackHandler()],
+        callbacks=[StreamingStdOutCallbackHandler()],
         temperature=0.8,
         model_name="gpt-4")
+    chat_history: str = []
     prompt: Any = None
     memory: Any = None
     chain: Any = None
+    context_route: str = "The human is talking to your through an unknown interface."
+    context_description= "You are having a conversation with a human."
+
 
     async def create_chatbot(self):
         if self.prompt is None:
-            self.prompt = self._create_prompt(prompt_template=CHATBOT_SYSTEM_PROMPT_TEMPLATE)
+            self.prompt = self._create_prompt(system_prompt_template=CHATBOT_SYSTEM_PROMPT_TEMPLATE)
         if self.memory is None:
             self.memory = await self._configure_memory()
         if self.chain is None:
@@ -80,10 +92,24 @@ class AIChatBot(BaseModel):
                         verbose=True,
                         )
 
-    def _create_prompt(self, prompt_template: str):
-        system_message_prompt = SystemMessagePromptTemplate.from_template(
-            prompt_template
+    def _create_prompt(self, system_prompt_template: str):
+        system_message_prompt = SystemMessagePromptTemplate(
+            template=system_prompt_template,
+            input_variables=["timestamp",
+                             "rules_for_living",
+                             "bot_name",
+                             "context_route",
+                             "context_description",
+                             "chat_memory",
+                             "vectorstore_memory"
+                             ]
         )
+        system_message_prompt.prompt.partial(timestamp = Timestamp(),
+                                             rules_for_living = RULES_FOR_LIVING,
+                                             bot_name = BOT_NAME,
+                                             context_route = self.context_route,
+                                             context_description = self.context_description,)
+
 
         human_template = "{human_input}"
         human_message_prompt = HumanMessagePromptTemplate.from_template(
@@ -114,6 +140,15 @@ class AIChatBot(BaseModel):
         await self.chain.arun(human_input=input_text)
         return token_handler
 
+    async def load_memory_from_history(self, history=ChatHistory):
+        async for message in history    :
+            if message.content == "":
+                continue
+            if str(message.author) == bot_name:
+                self.memory.memories[0].chat_memory.add_ai_message(message.content)
+            else:
+                self.memory.memories[0].chat_memory.add_user_message(message.content)
+
     async def _create_vector_store(self, collection_name: str = "test_collection"):
         chroma_vector_store = Chroma(
             embedding_function=OpenAIEmbeddings(),
@@ -140,6 +175,7 @@ class AIChatBot(BaseModel):
             chat_response = await self.get_chat_response(chat_input=ChatInput(message=input_text))
 
             print(f"Response: {chat_response.message}")
+
 
 async def ai_chatbot_demo():
     logging.getLogger(__name__).setLevel(logging.WARNING)

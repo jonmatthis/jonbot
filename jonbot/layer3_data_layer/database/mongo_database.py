@@ -6,14 +6,9 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Union
 
-import discord
 from dotenv import load_dotenv
-from pydantic import BaseModel
 from pymongo import MongoClient
 
-from jonbot.layer3_data_layer.data_models.application_data_model import ApplicationDataModel
-from jonbot.layer3_data_layer.data_models.conversation_models import ChatInteraction, ChatResponse
-from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 from jonbot.layer3_data_layer.system.filenames_and_paths import clean_path_string, get_default_database_json_save_path
 from jonbot.layer3_data_layer.utilities.default_serialize import default_serialize
 
@@ -32,16 +27,28 @@ class MongoDatabaseManager:
         self._database = self._client[DATABASE_NAME]
         self._collection = self._database[BASE_COLLECTION_NAME]
 
-    def upsert(self, data:dict, collection_name:str= None, query:dict= None):
+    def upsert(self, data: dict, collection_name: str = None, query: dict = None):
+        """
+        Upsert data into the database.
+
+        Args:
+            data (dict): The data to upsert.
+            collection_name (str, optional): The name of the collection. Defaults to None.
+            query (dict, optional): The query to filter data. Defaults to {}.
+
+        Returns:
+            UpdateResult: Result of the upsert operation.
+        """
         logger.debug(f"Upserting data to database")
 
         if not query:
             query = {}
 
+        update_data = {"$set": data}
         if collection_name:
-            return self._collection.update_one(query, data, upsert=True)
+            return self._collection.update_one(query, update_data, upsert=True)
         else:
-            return self._database[collection_name].update_one(query, data, upsert=True)
+            return self._database[collection_name].update_one(query, update_data, upsert=True)
 
     def save_to_json(self,
                      query: dict = None,
