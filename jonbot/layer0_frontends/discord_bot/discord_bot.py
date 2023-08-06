@@ -38,9 +38,13 @@ async def on_message(message: discord.Message) -> None:
     try:
         async with message.channel.typing():
             if len(message.attachments) > 0 and message.attachments[0].content_type.startswith("audio"):
+                # HANDLE VOICE MEMO
                 await handle_voice_memo(message)
             else:
-                await handle_text_message(message, streaming=False)
+                # HANDLE TEXT MESSAGE
+                await handle_text_message(message,
+                                          streaming=False,
+                                          discord_bot=discord_bot,)
 
     except Exception as e:
         error_message = f"An error occurred: {str(e)}"

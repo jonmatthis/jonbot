@@ -3,6 +3,8 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
+from jonbot.layer0_frontends.discord_bot.utilities.get_context.get_context_from_message import \
+    determine_if_message_is_happening_in_a_thread, get_context_route_from_message
 from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 
 logger = logging.getLogger(__name__)
@@ -33,21 +35,6 @@ class DiscordMessageDocument(BaseModel):
 
     @classmethod
     def from_message(cls, message):
-        if message.id == 1134222381758558411:
-            print("wow")
-        in_thread = True if message.thread else False
-        try:
-            if not message.guild:
-                context_route = f"frontend_discord/dm_{message.channel.recipient.name}/message_{message.id}"
-            else:
-                if in_thread:
-                    context_route = f"frontend_discord/server_{message.guild.name}/channel_{message.channel.name}/threads/{message.thread.name}/message_{message.id}"
-                else:
-                    context_route = f"frontend_discord/server_{message.guild.name}/channel_{message.channel.name}/messages/message_{message.id}"
-        except Exception as e:
-            logger.info(f"Failed to get context route for message: {message.id}")
-            logger.exception(e)
-            context_route = 'unknown'
 
         return cls(
             content=message.content,
@@ -70,7 +57,9 @@ class DiscordMessageDocument(BaseModel):
             reactions=[str(reaction) for reaction in message.reactions],
             parent_message_id=message.reference.message_id if message.reference else None,
             parent_message_jump_url=message.reference.jump_url if message.reference else None,
-            in_thread=in_thread,
+            in_thread=determine_if_message_is_happening_in_a_thread(message),
             thread_id=message.thread.id if message.thread else None,
-            context_route=context_route
+            context_route=get_context_route_from_message(message)
         )
+
+

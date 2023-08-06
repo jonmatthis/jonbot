@@ -13,9 +13,8 @@ from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTem
 from langchain.vectorstores import Chroma
 from pydantic import BaseModel
 
-from jonbot.layer2_core_processes.ai_chatbot.ai_chatbot_prompts import CHATBOT_SYSTEM_PROMPT_TEMPLATE, RULES_FOR_LIVING, \
-    BOT_NAME
-from jonbot.layer3_data_layer.data_models.conversation_models import ChatResponse, ChatInput
+from jonbot.layer2_core_processes.ai_chatbot.ai_chatbot_prompts import CHATBOT_SYSTEM_PROMPT_TEMPLATE, RULES_FOR_LIVING
+from jonbot.layer3_data_layer.data_models.conversation_models import ChatResponse, ChatInput, ConversationHistory
 from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 from jonbot.layer3_data_layer.system.filenames_and_paths import get_chroma_vector_store_path
 
@@ -31,9 +30,6 @@ class CustomStreamingCallbackHandler(BaseCallbackHandler):
     def on_llm_new_token(self, token: str, **kwargs: Any) -> None:
         self.token_handler(token)
 
-
-class ChatHistory(BaseModel):
-    chat_history: OrderedDict = OrderedDict()
 
 
 class AIChatBot(BaseModel):
@@ -72,11 +68,12 @@ class AIChatBot(BaseModel):
     async def _configure_vectorstore_memory(self, ):
         chroma_vector_store = await self._create_vector_store()
 
-        retriever = chroma_vector_store.as_retriever(search_kwargs=dict(k=1))
+        retriever = chroma_vector_store.as_retriever(search_kwargs=dict(k=4))
 
         return VectorStoreRetrieverMemory(retriever=retriever,
                                           memory_key="vectorstore_memory",
-                                          input_key="human_input", )
+                                          input_key="human_input",
+                                          )
 
     @staticmethod
     def _configure_conversation_memory():
@@ -97,7 +94,6 @@ class AIChatBot(BaseModel):
             template=system_prompt_template,
             input_variables=["timestamp",
                              "rules_for_living",
-                             "bot_name",
                              "context_route",
                              "context_description",
                              "chat_memory",
@@ -106,7 +102,6 @@ class AIChatBot(BaseModel):
         )
         system_message_prompt.prompt.partial(timestamp = Timestamp(),
                                              rules_for_living = RULES_FOR_LIVING,
-                                             bot_name = BOT_NAME,
                                              context_route = self.context_route,
                                              context_description = self.context_description,)
 
@@ -140,14 +135,12 @@ class AIChatBot(BaseModel):
         await self.chain.arun(human_input=input_text)
         return token_handler
 
-    async def load_memory_from_history(self, history=ChatHistory):
-        async for message in history    :
-            if message.content == "":
-                continue
-            if str(message.author) == bot_name:
-                self.memory.memories[0].chat_memory.add_ai_message(message.content)
-            else:
-                self.memory.memories[0].chat_memory.add_user_message(message.content)
+    def load_memory_from_history(self, conversation_history=ConversationHistory):
+        for entry in conversation_history.get_all_messages():
+            if isinstance(entry, ChatInput):
+                self.memory.memories[0].chat_memory.add_user_message(entry.message)
+            elif isinstance(entry, ChatResponse):
+                self.memory.memories[0].chat_memory.add_ai_message(entry.message)
 
     async def _create_vector_store(self, collection_name: str = "test_collection"):
         chroma_vector_store = Chroma(
