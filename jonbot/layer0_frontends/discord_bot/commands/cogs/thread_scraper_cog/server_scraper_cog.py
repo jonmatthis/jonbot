@@ -94,7 +94,7 @@ class ServerScraperCog(commands.Cog):
             message_id (int): ID of the message.
             message_data (dict): Data of the message to upsert.
         """
-        mongo_database_manager.upsert(
+        await mongo_database_manager.upsert(
             collection_name=collection_name,
             query={"message_id": message_id},
             data={"$set": message_document.dict()},

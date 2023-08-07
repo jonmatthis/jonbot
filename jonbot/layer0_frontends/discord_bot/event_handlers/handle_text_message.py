@@ -65,7 +65,7 @@ async def handle_text_message(message: discord.Message,
                 chat_response = ChatResponse(**data)
                 await message.reply(chat_response.message)
                 discord_message_document = DiscordMessageDocument.from_message(message=message).dict()
-                mongo_database_manager.upsert(collection_name="discord_messages",
+                await mongo_database_manager.upsert(collection_name="discord_messages",
                                               data=discord_message_document, )
                 logger.info(f"ChatRequest payload sent: \n {chat_request.dict()}\n "
                             f"ChatResponse payload received: \n {chat_response.dict()}")

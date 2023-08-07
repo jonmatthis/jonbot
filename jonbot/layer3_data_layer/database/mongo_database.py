@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Union
 
 from dotenv import load_dotenv
+from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import MongoClient
 
 from jonbot.layer3_data_layer.system.filenames_and_paths import clean_path_string, get_default_database_json_save_path
@@ -23,11 +24,12 @@ class MongoDatabaseManager:
     def __init__(self):
         logger.info(f"Connecting to MongoDB...")
         load_dotenv()
-        self._client = MongoClient( os.getenv('MONGO_URI_MONGO_CLOUD'))
+        # self._client = MongoClient( os.getenv('MONGO_URI_MONGO_CLOUD'))
+        self._client = AsyncIOMotorClient(os.getenv('MONGO_URI_MONGO_CLOUD'))
         self._database = self._client[DATABASE_NAME]
         self._collection = self._database[BASE_COLLECTION_NAME]
 
-    def upsert(self, data: dict, collection_name: str = None, query: dict = None):
+    async def upsert(self, data: dict, collection_name: str = None, query: dict = None):
         """
         Upsert data into the database.
 
@@ -50,7 +52,7 @@ class MongoDatabaseManager:
         else:
             return self._database[collection_name].update_one(query, update_data, upsert=True)
 
-    def save_to_json(self,
+    async def save_to_json(self,
                      query: dict = None,
                      save_path: Union[str, Path] = None):
 
