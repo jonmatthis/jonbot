@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from typing import Any
+from typing import Callable
 
 from dotenv import load_dotenv
 from langchain import LLMChain, OpenAI, PromptTemplate
@@ -20,9 +21,10 @@ from jonbot.layer3_data_layer.data_models.conversation_models import ChatRespons
 from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 from jonbot.layer3_data_layer.system.filenames_and_paths import get_chroma_vector_store_path
 
-load_dotenv()
+PRUNE_TOKEN_THRESHOLD = 2000
 
-from typing import Callable
+load_dotenv()
+logger = logging.getLogger(__name__)
 
 
 class CustomStreamingCallbackHandler(BaseCallbackHandler):
@@ -143,14 +145,22 @@ class AIChatBot(BaseModel):
         await self.chain.arun(human_input=input_text)
         return token_handler
 
-    def load_memory_from_history(self, conversation_history=ConversationHistory):
+    def load_memory_from_history(self,
+                                 conversation_history=ConversationHistory,
+                                 prune_token_threshold=2000):
+
+        logger.info(f"Loading {len(conversation_history.get_all_messages())} messages into memory.")
+
         for chat_message in conversation_history.get_all_messages():
             if chat_message.speaker.type == "human":
                 self.memory.memories[0].chat_memory.add_user_message(
-                    f"The human {chat_message.speaker.dict()} said: {chat_message.message}")
+                    f"The human {chat_message.speaker.name} said: {chat_message.message}")
             elif chat_message.speaker.type == "bot":
                 self.memory.memories[0].chat_memory.add_ai_message(
-                    f"The AI (you) {chat_message.speaker.dict()} said: {chat_message.message}")
+                    f"The AI (you) {chat_message.speaker.name} said: {chat_message.message}")
+            if self.llm.get_num_tokens_from_messages(
+                    messages=self.memory.memories[0].chat_memory.messages) > prune_token_threshold:
+                self.memory.memories[0].prune()
 
     async def _create_vector_store(self, collection_name: str = "test_collection"):
         chroma_vector_store = Chroma(
