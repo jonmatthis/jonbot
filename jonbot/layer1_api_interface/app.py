@@ -24,14 +24,13 @@ class MyCustomHandler(BaseCallbackHandler):
     def on_llm_new_token(self, token: str, **kwargs) -> None:
         print(f"My custom handler, token: {token}")
         
+
+
 @app.post("/chat")
 async def chat(chat_request: ChatRequest) -> ChatResponse:
-    """
-    Process the chat input
-    """
     logger.info(f"Received chat request: {chat_request}")
     tic = time.perf_counter()
-    bot = await AIChatBot().create_chatbot()
+    bot = AIChatBot()
     response_text = await bot.async_process_human_input_text(input_text=chat_request.chat_input.message)
     chat_response = ChatResponse(message=response_text)
     toc = time.perf_counter()
@@ -41,7 +40,7 @@ async def chat(chat_request: ChatRequest) -> ChatResponse:
 @app.post("/chat_stream", response_model=None)
 async def chat_stream(chat_request: ChatRequest):
     logger.info(f"Received chat request for streaming: {chat_request}")
-    bot = await AIChatBot().create_chatbot()
+    bot = await AIChatBot(**chat_request.conversational_context.dict()).create_chatbot()
     response_stream = await bot.async_process_human_input_text_streaming(input_text=chat_request.chat_input.message)
 
     return StreamingResponse(response_stream(), media_type="text/plain")

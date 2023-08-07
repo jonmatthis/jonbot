@@ -13,7 +13,7 @@ def get_context_route_from_message(message: discord.Message) -> str:
     in_thread = determine_if_message_is_happening_in_a_thread(message)
     try:
         if not message.guild:
-            context_route = f"frontend|discord/direct_messages||{message.channel.recipient.name}/message||{message.id}"
+            context_route = f"frontend|discord/direct_messages||{message.author.name}/message||{message.id}"
         else:
             if in_thread:
                 context_route = f"frontend|discord/server||{message.guild.name}/channel||{message.channel.name}/threads/{message.thread.name}/message_id||{message.id}"
@@ -39,7 +39,7 @@ def get_context_description_from_message(message: discord.Message) -> str:
 
     # Direct message context
     if not message.guild:
-        server = f"It is happening via direct message with {message.channel.recipient.name}"
+        server = f"It is happening via direct message with {message.author.name}"
         return f"{frontend} {server}"
 
     channel = f"It is happening in the channel: {message.channel.name} with Description: {message.channel.topic or 'None'}"

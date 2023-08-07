@@ -29,7 +29,7 @@ class DiscordMessageDocument(BaseModel):
     jump_url: str
     dump: str
     reactions: List[str]
-    parent_message_id: Optional[str]
+    parent_message_id: Optional[int]
     parent_message_jump_url: Optional[str]
     context_route: str
 
@@ -44,10 +44,10 @@ class DiscordMessageDocument(BaseModel):
             attachment_local_paths=[],
             author=message.author.name,
             author_id=message.author.id,
-            channel=message.channel.name,
+            channel=message.channel.name if message.guild else f"DM_with_{message.author.name}",
             channel_id=message.channel.id,
-            server=message.guild.name if message.guild else 'DM',
-            server_id=message.guild.id if message.guild else None,
+            server=message.guild.name if message.guild else f"DM_with_{message.author.name}",
+            server_id=message.guild.id if message.guild else 0,
             timestamp=Timestamp(date_time=message.created_at),
             edited_timestamp=Timestamp(date_time=message.edited_at),
             mentions=[mention.name for mention in message.mentions],
@@ -55,10 +55,10 @@ class DiscordMessageDocument(BaseModel):
             dump=str(message),
             received_timestamp=Timestamp().dict(),
             reactions=[str(reaction) for reaction in message.reactions],
-            parent_message_id=message.reference.message_id if message.reference else None,
-            parent_message_jump_url=message.reference.jump_url if message.reference else None,
+            parent_message_id=message.reference.message_id if message.reference else 0,
+            parent_message_jump_url=message.reference.jump_url if message.reference else '',
             in_thread=determine_if_message_is_happening_in_a_thread(message),
-            thread_id=message.thread.id if message.thread else None,
+            thread_id=message.thread.id if message.thread else 0,
             context_route=get_context_route_from_message(message)
         )
 

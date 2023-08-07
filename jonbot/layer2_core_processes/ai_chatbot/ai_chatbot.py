@@ -1,15 +1,18 @@
 import asyncio
 import logging
-from typing import Any, OrderedDict
+from typing import Any
 
 from dotenv import load_dotenv
 from langchain import LLMChain, OpenAI, PromptTemplate
 from langchain.callbacks import StreamingStdOutCallbackHandler
 from langchain.callbacks.base import BaseCallbackHandler
+from langchain.chains.base import Chain
 from langchain.chat_models import ChatOpenAI
+from langchain.chat_models.base import BaseChatModel
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.memory import CombinedMemory, VectorStoreRetrieverMemory, ConversationSummaryBufferMemory
 from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate, ChatPromptTemplate
+from langchain.schema import BaseMemory
 from langchain.vectorstores import Chroma
 from pydantic import BaseModel
 
@@ -31,29 +34,30 @@ class CustomStreamingCallbackHandler(BaseCallbackHandler):
         self.token_handler(token)
 
 
-
 class AIChatBot(BaseModel):
-    llm: ChatOpenAI = ChatOpenAI(
-        streaming=True,
-        callbacks=[StreamingStdOutCallbackHandler()],
-        temperature=0.8,
-        model_name="gpt-4")
-    chat_history: str = []
-    prompt: Any = None
-    memory: Any = None
-    chain: Any = None
+    llm: BaseChatModel = None
+    conversation_history: ConversationHistory = None
+    prompt: ChatPromptTemplate = None
+    memory: BaseMemory = None
+    chain: Chain = None
     context_route: str = "The human is talking to your through an unknown interface."
-    context_description= "You are having a conversation with a human."
+    context_description: str = "You are having a conversation with a human."
 
+    async def intialize(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
-    async def create_chatbot(self):
-        if self.prompt is None:
-            self.prompt = self._create_prompt(system_prompt_template=CHATBOT_SYSTEM_PROMPT_TEMPLATE)
-        if self.memory is None:
-            self.memory = await self._configure_memory()
-        if self.chain is None:
-            self.chain = self._create_llm_chain()
-        return self
+        self.llm = ChatOpenAI(
+            streaming=True,
+            callbacks=[StreamingStdOutCallbackHandler()],
+            temperature=0.8,
+            model_name="gpt-4") if self.llm is None else self.llm
+
+        self.conversation_history = [] if self.conversation_history is None else self.conversation_history
+        self.prompt = self._create_prompt(
+            system_prompt_template=CHATBOT_SYSTEM_PROMPT_TEMPLATE) if self.prompt is None else self.prompt
+        self.memory = await self._configure_memory() if self.memory is None else self.memory
+        self.chain = self._create_llm_chain()
 
     def add_callback(self, callback: BaseCallbackHandler):
         self.llm.callbacks.append(callback)
@@ -100,14 +104,13 @@ class AIChatBot(BaseModel):
                                                         ],
                                        )
         partial_system_prompt = system_prompt.partial(timestamp=str(Timestamp()),
-                              rules_for_living=RULES_FOR_LIVING,
-                              context_route=self.context_route,
-                              context_description=self.context_description, )
+                                                      rules_for_living=RULES_FOR_LIVING,
+                                                      context_route=self.context_route,
+                                                      context_description=self.context_description, )
 
         system_message_prompt = SystemMessagePromptTemplate(
-            prompt = partial_system_prompt,
+            prompt=partial_system_prompt,
         )
-
 
         human_template = "{human_input}"
         human_message_prompt = HumanMessagePromptTemplate.from_template(
@@ -175,7 +178,8 @@ class AIChatBot(BaseModel):
 
 async def ai_chatbot_demo():
     logging.getLogger(__name__).setLevel(logging.WARNING)
-    chatbot = await AIChatBot().create_chatbot()
+    chatbot = AIChatBot()
+    await chatbot.intialize()
     await chatbot.demo()
 
 

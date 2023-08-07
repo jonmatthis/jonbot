@@ -48,9 +48,9 @@ async def handle_text_message(message: discord.Message,
             conversations[conversational_context.context_route] = conversation_history
 
         chat_request = ChatRequest(chat_input=chat_input,
-                                   # conversational_context=conversational_context,
-                                   # conversation_history=conversation_history,
-                                   # config=get_chat_request_config(discord_bot=discord_bot)
+                                   conversational_context=conversational_context,
+                                   conversation_history=conversation_history,
+                                   config=get_chat_request_config(discord_bot=discord_bot)
                                    )
 
         if streaming:
@@ -67,9 +67,12 @@ async def handle_text_message(message: discord.Message,
                 discord_message_document = DiscordMessageDocument.from_message(message=message).dict()
                 mongo_database_manager.upsert(collection_name="discord_messages",
                                               data=discord_message_document, )
+                logger.info(f"ChatRequest payload sent: \n {chat_request.dict()}\n "
+                            f"ChatResponse payload received: \n {chat_response.dict()}")
             else:
                 error_message = f"Received non-200 response code: {response.status} - {await response.text()}"
                 logger.exception(error_message)
 
                 await message.reply(
-                    f"Sorry, I'm currently unable to process your request. \n > {error_message}")
+                    f"Sorry, I'm currently unable to process your request. \n  > {error_message}")
+
