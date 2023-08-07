@@ -56,6 +56,6 @@ def get_conversational_context_from_discord_message(message: discord.Message) ->
 def get_speaker_from_discord_message(message: discord.Message):
     speaker = Speaker(name=str(message.author),
                       id=message.author.id,
-                      type="Bot" if message.author.bot else "Human")
+                      type="bot" if message.author.bot else "human")
 
     return speaker

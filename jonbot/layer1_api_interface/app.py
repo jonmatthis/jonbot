@@ -45,7 +45,7 @@ async def chat(chat_request: ChatRequest) -> ChatResponse:
 
     tic = time.perf_counter()
     ai_chat_bot = AIChatBot()
-    await ai_chat_bot.intialize_bot(**chat_request.conversational_context.dict())
+    await ai_chat_bot.intialize_bot(conversation_history=conversation_history, **chat_request.conversational_context.dict())
     response_text = await ai_chat_bot.async_process_human_input_text(input_text=chat_request.chat_input.message)
     chat_response = ChatResponse(message=response_text)
     toc = time.perf_counter()
@@ -53,13 +53,13 @@ async def chat(chat_request: ChatRequest) -> ChatResponse:
     return chat_response
 
 
-@app.post("/chat_stream", response_model=None)
-async def chat_stream(chat_request: ChatRequest):
-    logger.info(f"Received chat request for streaming: {chat_request}")
-    bot = await AIChatBot(**chat_request.conversational_context.dict()).create_chatbot()
-    response_stream = await bot.async_process_human_input_text_streaming(input_text=chat_request.chat_input.message)
-
-    return StreamingResponse(response_stream(), media_type="text/plain")
+# @app.post("/chat_stream", response_model=None)
+# async def chat_stream(chat_request: ChatRequest):
+#     logger.info(f"Received chat request for streaming: {chat_request}")
+#     bot = await AIChatBot(**chat_request.conversational_context.dict()).create_chatbot()
+#     response_stream = await bot.async_process_human_input_text_streaming(input_text=chat_request.chat_input.message)
+#
+#     return StreamingResponse(response_stream(), media_type="text/plain")
 
 
 @app.post("/voice_to_text")

@@ -1,6 +1,6 @@
 import uuid
 from collections import OrderedDict
-from typing import Union, Optional
+from typing import Union, Optional, List, Literal
 
 from pydantic import BaseModel, Field
 
@@ -28,8 +28,7 @@ class ChatResponse(BaseModel):
 class Speaker(BaseModel):
     name: str
     id: Optional[Union[int, str]]
-    type: str
-
+    type: Literal['bot', 'human']
 
 class ChatMessage(BaseModel):
     message: str
@@ -46,8 +45,8 @@ class ConversationHistory(BaseModel):
         speaker = chat_message.speaker
         self.history[f"{speaker.type}||{speaker.name}||{chat_message.uuid}"] = chat_message
 
-    def get_all_messages(self) -> OrderedDict[str, ChatMessage]:
-        return self.history
+    def get_all_messages(self) -> List[ChatMessage]:
+        return list(self.history.values())
 
     def __len__(self):
         return len(self.history)

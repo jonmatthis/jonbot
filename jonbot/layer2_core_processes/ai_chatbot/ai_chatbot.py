@@ -12,7 +12,6 @@ from langchain.chat_models.base import BaseChatModel
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.memory import CombinedMemory, VectorStoreRetrieverMemory, ConversationSummaryBufferMemory
 from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate, ChatPromptTemplate
-from langchain.schema import BaseMemory
 from langchain.vectorstores import Chroma
 from pydantic import BaseModel
 
@@ -38,7 +37,7 @@ class AIChatBot(BaseModel):
     llm: BaseChatModel = None
     conversation_history: ConversationHistory = None
     prompt: ChatPromptTemplate = None
-    memory: BaseMemory = None
+    memory: CombinedMemory = None
     chain: Chain = None
     context_route: str = "The human is talking to your through an unknown interface."
     context_description: str = "You are having a conversation with a human."
@@ -53,10 +52,13 @@ class AIChatBot(BaseModel):
             temperature=0.8,
             model_name="gpt-4") if self.llm is None else self.llm
 
-        self.conversation_history = [] if self.conversation_history is None else self.conversation_history
         self.prompt = self._create_prompt(
             system_prompt_template=CHATBOT_SYSTEM_PROMPT_TEMPLATE) if self.prompt is None else self.prompt
         self.memory = await self._configure_memory() if self.memory is None else self.memory
+
+        if self.conversation_history:
+            self.load_memory_from_history(conversation_history=self.conversation_history)
+
         self.chain = self._create_llm_chain()
 
     def add_callback(self, callback: BaseCallbackHandler):
@@ -142,11 +144,13 @@ class AIChatBot(BaseModel):
         return token_handler
 
     def load_memory_from_history(self, conversation_history=ConversationHistory):
-        for entry in conversation_history.get_all_messages():
-            if isinstance(entry, ChatInput):
-                self.memory.memories[0].chat_memory.add_user_message(entry.message)
-            elif isinstance(entry, ChatResponse):
-                self.memory.memories[0].chat_memory.add_ai_message(entry.message)
+        for chat_message in conversation_history.get_all_messages():
+            if chat_message.speaker.type == "human":
+                self.memory.memories[0].chat_memory.add_user_message(
+                    f"The human {chat_message.speaker.dict()} said: {chat_message.message}")
+            elif chat_message.speaker.type == "bot":
+                self.memory.memories[0].chat_memory.add_ai_message(
+                    f"The AI (you) {chat_message.speaker.dict()} said: {chat_message.message}")
 
     async def _create_vector_store(self, collection_name: str = "test_collection"):
         chroma_vector_store = Chroma(
