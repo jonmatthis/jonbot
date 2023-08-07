@@ -21,7 +21,7 @@ class StreamMessageHandler(AsyncCallbackHandler):
         return self._current_message
 
     @current_message.setter
-    def current_message(self, message:discord.Message):
+    def current_message(self, message: discord.Message):
         self.message_content = ""
         self._current_message = message
 

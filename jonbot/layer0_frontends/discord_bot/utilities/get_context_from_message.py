@@ -1,5 +1,4 @@
 import logging
-from typing import Tuple
 
 import discord
 
@@ -9,20 +8,16 @@ from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 logger = logging.getLogger(__name__)
 
 
+
 def get_context_route_from_discord_message(message: discord.Message) -> str:
-    in_thread = determine_if_discord_message_is_from_a_thread(message)
-    try:
-        if not message.guild:
-            context_route = f"frontend|discord/direct_messages||{message.author.name}/message||{message.id}"
-        else:
-            if in_thread:
-                context_route = f"frontend|discord/server||{message.guild.name}/channel||{message.channel.name}/threads/{message.thread.name}/message_id||{message.id}"
-            else:
-                context_route = f"frontend|discord/server||{message.guild.name}/channel||{message.channel.name}/messages/message_id||{message.id}"
-    except Exception as e:
-        logger.info(f"Failed to get context route for message: {message.id}")
-        logger.exception(e)
-        context_route = 'unknown'
+    frontend: str = 'discord'
+    server: str = f"{message.guild.name}_{message.guild.id}" if message.guild else 'DirectMessage'
+    channel: str = f"{message.channel.name}_{message.channel.id}" if message.channel.type != discord.ChannelType.private else f"DirectMessage_{message.channel.id}"
+
+    if determine_if_discord_message_is_from_a_thread(message):
+        context_route = f"frontend-{frontend}/server-{server}/channel-{channel}/thread-{message.thread.name}/messages/message_id-{message.id}"
+    else:
+        context_route = f"frontend-{frontend}/server-{server}/channel-{channel}/messages/message_id-{message.id}"
 
     return context_route
 
@@ -53,14 +48,14 @@ def get_context_description_from_discord_message(message: discord.Message) -> st
 
 
 def get_conversational_context_from_discord_message(message: discord.Message) -> ConversationalContext:
-    return ConversationalContext(context_route=get_context_route_from_discord_message(message),
+    return ConversationalContext(context_route= get_context_route_from_discord_message(message),
                                  context_description=get_context_description_from_discord_message(message),
                                  timestamp=Timestamp(date_time=message.created_at))
+
 
 def get_speaker_from_discord_message(message: discord.Message):
     speaker = Speaker(name=str(message.author),
                       id=message.author.id,
-                      type="Bot" if message.author.bot  else "Human")
+                      type="Bot" if message.author.bot else "Human")
 
     return speaker
-

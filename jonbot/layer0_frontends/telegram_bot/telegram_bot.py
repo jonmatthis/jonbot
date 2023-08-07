@@ -21,6 +21,7 @@ import os
 from dotenv import load_dotenv
 
 from jonbot.layer0_frontends.telegram_bot.handlers.telegram_chat import telegram_chat
+from jonbot.layer3_data_layer.database.get_mongo_database_manager import get_mongo_database_manager
 
 load_dotenv()
 
@@ -77,18 +78,25 @@ def run_telegram_bot() -> None:
     application.add_handler(CommandHandler("help", help_command))
 
     # on non command i.e message - echo the message on Telegram
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, telegram_chat))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND,
+                                           telegram_chat))
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
-def run_telegram_bot_async():
+
+async def run_telegram_bot_async():
     # Create a new loop for this thread
     loop = asyncio.new_event_loop()
     # Set it as the default event loop for this context
     asyncio.set_event_loop(loop)
     # Now you can run your async code using this loop
     loop.run_until_complete(run_telegram_bot())
+
+
+def run_telegram_bot_sync():
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(run_telegram_bot_async())
 
 if __name__ == "__main__":
     run_telegram_bot()

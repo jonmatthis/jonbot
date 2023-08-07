@@ -58,8 +58,6 @@ async def transcribe_audio(
                 language=language
             )
 
-
-
         try:
             os.remove(original_file_path)  # Optional: Remove the original audio file
         except FileNotFoundError:

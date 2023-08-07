@@ -3,55 +3,53 @@ import logging
 import discord
 
 from jonbot.layer0_frontends.discord_bot.commands.cogs.thread_scraper_cog.server_scraper_cog import ServerScraperCog
-from jonbot.layer0_frontends.discord_bot.commands.voice_command_group import voice_command_group, VOICE_RECORDING_PREFIX
+from jonbot.layer0_frontends.discord_bot.commands.voice_command_group import voice_command_group
 from jonbot.layer0_frontends.discord_bot.event_handlers.handle_text_message import handle_text_message
-from jonbot.layer0_frontends.discord_bot.event_handlers.handle_voice_memo import handle_voice_memo, \
-    TRANSCRIBED_AUDIO_PREFIX
+from jonbot.layer0_frontends.discord_bot.event_handlers.handle_voice_memo import handle_voice_memo
+from jonbot.layer0_frontends.discord_bot.utilities.should_process_message import should_process_message
+from jonbot.layer3_data_layer.data_models.discord_message import DiscordMessageDocument
+from jonbot.layer3_data_layer.database.mongo_database import MongoDatabaseManager
 
 logger = logging.getLogger(__name__)
 
-discord_bot = discord.Bot(intents=discord.Intents.all())
-connections = {}
+class DiscordBot(discord.Bot):
+    def __init__(self, mongo_database_manager: MongoDatabaseManager):
+        super().__init__(command_prefix="!", intents=discord.Intents.all())
+        self.mongo_database_manager = mongo_database_manager
+        self.add_application_command(voice_command_group)
+        self.add_cog(ServerScraperCog(mongo_database_manager=self.mongo_database_manager))
 
 
-@discord_bot.listen()
-async def on_ready():
-    print(f'We have logged in as {discord_bot.user}')
+    @discord.Cog.listener()
+    async def on_ready(self):
+        print(f'We have logged in as {self.user}')
 
 
-@discord_bot.listen()
-async def on_message(message: discord.Message) -> None:
-    """
-    Handle a new message event from Discord.
+    @discord.Cog.listener()
+    async def on_message(self, message: discord.Message) -> None:
 
-    Parameters
-    ----------
-    message : discord.Message
-        The message event data from Discord.
-    """
-
-
-    if message.author == discord_bot.user:
-        if not  message.content.startswith(TRANSCRIBED_AUDIO_PREFIX) and not message.content.startswith(VOICE_RECORDING_PREFIX):
+        if not should_process_message(message):
             return
 
-    try:
-        async with message.channel.typing():
-            if len(message.attachments) > 0 and message.attachments[0].content_type.startswith("audio"):
-                # HANDLE VOICE MEMO
-                await handle_voice_memo(message)
-            else:
-                # HANDLE TEXT MESSAGE
-                await handle_text_message(message,
-                                          streaming=False,
-                                          discord_bot=discord_bot,)
+        discord_message_document = await DiscordMessageDocument.from_message(message=message)
+        await self.mongo_database_manager.upsert(
+            data={"$push": {"discord": {"messages": discord_message_document.dict()}}}
+        )
+        try:
+            async with message.channel.typing():
+                if len(message.attachments) > 0 and message.attachments[0].content_type.startswith("audio"):
+                    # HANDLE VOICE MEMO
+                    await handle_voice_memo(message)
+                else:
+                    # HANDLE TEXT MESSAGE
+                    await handle_text_message(message,
+                                                mongo_database_manager=self.mongo_database_manager,
+                                              streaming=False )
 
-    except Exception as e:
-        error_message = f"An error occurred: {str(e)}"
-        logger.exception(error_message)
-        await message.reply(f"Sorry, an error occurred while processing your request. {error_message}")
+        except Exception as e:
+            error_message = f"An error occurred: {str(e)}"
+            logger.exception(error_message)
+            await message.reply(f"Sorry, an error occurred while processing your request. {error_message}")
 
 
-discord_bot.add_application_command(voice_command_group)
-discord_bot.add_cog(ServerScraperCog())
 

@@ -1,24 +1,27 @@
 # jonbot
 
-a friendly machine whats nice to talk to 
+a friendly machine whats nice to talk to
 
 This is a template repo, clone it and make your own friendo! Or use mine or whatever! No kings, no masters!
 
 this bot helped me build this bot 🤖❤️✨
- 
+
 
 ---
 
-JonBot is a chatbot with multiple frontends (Discord, Telegram) powered by AI through [LangChain](https://langchain.readthedocs.io/en/latest/) and connected to a [MongDB](mongodb.com) database.
-
+JonBot is a chatbot with multiple frontends (Discord, Telegram) powered by AI
+through [LangChain](https://langchain.readthedocs.io/en/latest/) and connected to a [MongDB](mongodb.com) database.
 
 ## Installation
+
 Create and activate an environment:
-e.g. 
+e.g.
+
 ```
 conda create -n jonbot-env python=3.11
 conda activate jonbot-env
 ```
+
 Clone the repo:
 
 ```
@@ -35,19 +38,20 @@ pip install -e .
 ## Setup
 
 - Create a `.env` file with your API keys for OpenAI, Discord, Telegram etc. See `.env.example`
-- Add all relevant numbers and ids for the Discord and Telegram bot 
-  - Discord - https://guide.pycord.dev/getting-started/creating-your-first-bot
-  - Telegram - https://core.telegram.org/bots#how-do-i-create-a-bot
+- Add all relevant numbers and ids for the Discord and Telegram bot
+    - Discord - https://guide.pycord.dev/getting-started/creating-your-first-bot
+    - Telegram - https://core.telegram.org/bots#how-do-i-create-a-bot
 
 ## Run with: `python -m jonbot`  🤖❤️✨
 
 ## Usage
 
-- Interact with the bot through Discord (text and voice memos)/Telegram(text only for now) 
+- Interact with the bot through Discord (text and voice memos)/Telegram(text only for now)
 - API endpoints provide programmatic access to core functionality
-- `__main__.py` starts up all services 
+- `__main__.py` starts up all services
 
 ## Architecture
+
 ```mermaid
 graph TD
 
@@ -84,17 +88,16 @@ graph TD
     D --> E
 ```
 
-
 **Layer 0 - Frontends**
 
-- `discord_bot`: Discord bot client and event handlers 
+- `discord_bot`: Discord bot client and event handlers
 - `telegram_bot`: Telegram bot client and handlers
 
 **Layer 1 - API Interface**
 
 - `app.py`: FastAPI application with endpoints
 
-**Layer 2 - Core Processes** 
+**Layer 2 - Core Processes**
 
 - `ai_chatbot`: LangChain setup and processing
 - `audio_transcription`: Transcribing audio to text with Whisper

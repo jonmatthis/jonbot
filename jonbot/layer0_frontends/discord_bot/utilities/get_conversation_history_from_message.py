@@ -1,7 +1,7 @@
 import discord
 
-from jonbot.layer0_frontends.discord_bot.utilities.get_context.get_context_from_message import \
-    get_speaker_from_discord_message
+from jonbot.layer0_frontends.discord_bot.utilities.get_context_from_message import \
+    get_speaker_from_discord_message, get_context_route_from_discord_message
 from jonbot.layer3_data_layer.data_models.conversation_models import ConversationHistory, ChatMessage
 from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 
@@ -17,9 +17,11 @@ async def get_conversation_history_from_message(message: discord.Message) -> Con
         ConversationHistory: An object containing the conversation history.
     """
 
-    conversation_history = ConversationHistory()
+    context_route = get_context_route_from_discord_message(message)
+    conversation_history = ConversationHistory(context_route=context_route)
 
     # Define a helper function to add a message to the history
+
     def add_to_history(msg: discord.Message):
         speaker = get_speaker_from_discord_message(msg)
 

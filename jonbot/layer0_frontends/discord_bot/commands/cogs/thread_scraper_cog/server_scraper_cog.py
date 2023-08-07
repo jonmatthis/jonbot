@@ -6,20 +6,20 @@ import discord
 from discord import Forbidden
 from discord.ext import commands
 
-
 from jonbot.layer3_data_layer.data_models.discord_message import DiscordMessageDocument
-from jonbot.layer3_data_layer.database.mongo_database import mongo_database_manager, BASE_COLLECTION_NAME
-from jonbot.layer3_data_layer.system.filenames_and_paths import get_new_attachments_folder_path
+from jonbot.layer3_data_layer.database.mongo_database import  MongoDatabaseManager
 
 logger = logging.getLogger(__name__)
 logging.getLogger('discord').setLevel(logging.INFO)
 
 
-
 class ServerScraperCog(commands.Cog):
     """A cog for scraping server data and storing it in a MongoDB database."""
+    def __init__(self, mongo_database_manager:MongoDatabaseManager):
+        self.mongo_database_manager = mongo_database_manager
 
-    @commands.slash_command(name="scrape_server", description="Scrape all messages from all channels and threads in the server.")
+    @commands.slash_command(name="scrape_server",
+                            description="Scrape all messages from all channels and threads in the server.")
     async def scrape_server(self, ctx: discord.ApplicationContext):
         """Scrape all messages from all channels and threads in the server.
 
@@ -58,34 +58,15 @@ class ServerScraperCog(commands.Cog):
             message (discord.Message): Message to save.
             collection_name (str): Name of the MongoDB collection to store data in.
         """
-        message_document = DiscordMessageDocument.from_message(message=message)
+        message_document = await DiscordMessageDocument.from_message(message=message)
         await self._add_attachments_to_message(message, message_document)
-        await self._upsert_message_data_to_database( message_id = message.id,
-                                                     message_document = message_document)
+        await self._upsert_message_data_to_database(message_id=message.id,
+                                                    message_document=message_document)
 
-    async def _add_attachments_to_message(self,
-                                          message: discord.Message,
-                                          message_document: DiscordMessageDocument):
-        """Save attachments from a message and add their paths to the message data.
-
-        Args:
-            message (discord.Message): Message to save attachments from.
-            message_data (dict): Data of the message to add attachments to.
-        """
-        attachments_folder = Path(get_new_attachments_folder_path())
-        attachments_folder.mkdir(parents=True, exist_ok=True)
-        for attachment in message.attachments:
-            try:
-                file_path = attachments_folder / f'{message.id}_{attachment.filename}'
-                await attachment.save(file_path)
-                message_document.attachment_local_paths.append(str(file_path))
-            except Exception as e:
-                logger.warning(f"Failed to save attachment: {attachment.filename}. Error: {e}")
 
     async def _upsert_message_data_to_database(self,
                                                message_id: int,
-                                               message_document: DiscordMessageDocument,
-                                               collection_name: str = BASE_COLLECTION_NAME ):
+                                               message_document: DiscordMessageDocument):
 
         """Update the message data in the database if it exists, else insert it.
 
@@ -94,8 +75,7 @@ class ServerScraperCog(commands.Cog):
             message_id (int): ID of the message.
             message_data (dict): Data of the message to upsert.
         """
-        await mongo_database_manager.upsert(
-            collection_name=collection_name,
+        await self.mongo_database_manager.upsert(
             query={"message_id": message_id},
             data={"$set": message_document.dict()},
         )

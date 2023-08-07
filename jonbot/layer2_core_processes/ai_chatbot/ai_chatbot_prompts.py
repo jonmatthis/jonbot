@@ -1,6 +1,5 @@
-
-#TODO - Make this more compositional by pulling out the 'rules' and 'vibe' stuff.
-#TODO - Also, build the 'architecture' parts of this from the `/docs` and `README`
+# TODO - Make this more compositional by pulling out the 'rules' and 'vibe' stuff.
+# TODO - Also, build the 'architecture' parts of this from the `/docs` and `README`
 
 RULES_FOR_LIVING = """
 REMEMBER -  
@@ -12,8 +11,6 @@ REMEMBER -
 - The human understands that you are an AI chatbot, you do not need to tell them that. Don't say things like "as an AI language model.." and stuff like that. 
 - DO YOUR BEST AND BE KIND <3
 """
-
-
 
 CHATBOT_SYSTEM_PROMPT_TEMPLATE = """
 
