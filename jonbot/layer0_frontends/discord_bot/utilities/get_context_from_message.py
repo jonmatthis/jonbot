@@ -50,7 +50,7 @@ def get_context_description_from_discord_message(message: discord.Message) -> st
 def get_conversational_context_from_discord_message(message: discord.Message) -> ConversationalContext:
     return ConversationalContext(context_route= get_context_route_from_discord_message(message),
                                  context_description=get_context_description_from_discord_message(message),
-                                 timestamp=Timestamp(date_time=message.created_at))
+                                 timestamp=Timestamp.from_datetime(message.created_at),)
 
 
 def get_speaker_from_discord_message(message: discord.Message):

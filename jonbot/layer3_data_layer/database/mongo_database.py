@@ -101,7 +101,7 @@ class MongoDatabaseManager:
         query = {"context_route": context_route_key}
         result = await self._conversation_history_collection.find_one(query)
 
-        return result
+        return ConversationHistory(**result) if result is not None else None
 
     async def save_to_json(self,
                            query: dict = None,

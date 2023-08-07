@@ -45,6 +45,7 @@ async def chat(chat_request: ChatRequest) -> ChatResponse:
 
     tic = time.perf_counter()
     ai_chat_bot = AIChatBot()
+    await ai_chat_bot.intialize_bot(**chat_request.conversational_context.dict())
     response_text = await ai_chat_bot.async_process_human_input_text(input_text=chat_request.chat_input.message)
     chat_response = ChatResponse(message=response_text)
     toc = time.perf_counter()

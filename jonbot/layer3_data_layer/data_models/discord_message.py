@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import discord
 from pydantic import BaseModel
@@ -28,7 +28,7 @@ class DiscordMessageDocument(BaseModel):
     server: str
     server_id: int
     timestamp: Timestamp
-    edited_timestamp: Timestamp
+    edited_timestamp: Union[Timestamp, str]
     mentions: List[str]
     jump_url: str
     dump: str
@@ -51,12 +51,12 @@ class DiscordMessageDocument(BaseModel):
             channel_id=message.channel.id,
             server=message.guild.name if message.guild else f"DM_with_{message.author.name}",
             server_id=message.guild.id if message.guild else 0,
-            timestamp=Timestamp(date_time=message.created_at),
-            edited_timestamp=Timestamp(date_time=message.edited_at),
+            timestamp=Timestamp.from_datetime(message.created_at),
+            edited_timestamp=Timestamp.from_datetime(message.edited_at) if message.edited_at else '',
             mentions=[mention.name for mention in message.mentions],
             jump_url=message.jump_url,
             dump=str(message),
-            received_timestamp=Timestamp().dict(),
+            received_timestamp=Timestamp.now().dict(),
             reactions=[str(reaction) for reaction in message.reactions],
             parent_message_id=message.reference.message_id if message.reference else 0,
             parent_message_jump_url=message.reference.jump_url if message.reference else '',

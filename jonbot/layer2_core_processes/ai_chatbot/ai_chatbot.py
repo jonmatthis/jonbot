@@ -43,7 +43,7 @@ class AIChatBot(BaseModel):
     context_route: str = "The human is talking to your through an unknown interface."
     context_description: str = "You are having a conversation with a human."
 
-    async def intialize(self, **kwargs):
+    async def intialize_bot(self, **kwargs):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -103,7 +103,7 @@ class AIChatBot(BaseModel):
                                                         "vectorstore_memory"
                                                         ],
                                        )
-        partial_system_prompt = system_prompt.partial(timestamp=str(Timestamp()),
+        partial_system_prompt = system_prompt.partial(timestamp=str(Timestamp.now()),
                                                       rules_for_living=RULES_FOR_LIVING,
                                                       context_route=self.context_route,
                                                       context_description=self.context_description, )

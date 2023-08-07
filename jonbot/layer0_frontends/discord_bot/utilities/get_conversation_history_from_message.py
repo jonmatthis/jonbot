@@ -27,7 +27,7 @@ async def get_conversation_history_from_message(message: discord.Message) -> Con
 
         chat_message = ChatMessage(message=msg.content,
                                    speaker=speaker,
-                                   timestamp=Timestamp(date_time=message.created_at))
+                                   timestamp=Timestamp.from_datetime(message.created_at))
 
         conversation_history.add_message(chat_message)
 
