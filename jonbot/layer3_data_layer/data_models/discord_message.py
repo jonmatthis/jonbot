@@ -4,7 +4,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 from jonbot.layer0_frontends.discord_bot.utilities.get_context.get_context_from_message import \
-    determine_if_message_is_happening_in_a_thread, get_context_route_from_message
+    determine_if_discord_message_is_from_a_thread, get_context_route_from_discord_message
 from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 
 logger = logging.getLogger(__name__)
@@ -57,9 +57,9 @@ class DiscordMessageDocument(BaseModel):
             reactions=[str(reaction) for reaction in message.reactions],
             parent_message_id=message.reference.message_id if message.reference else 0,
             parent_message_jump_url=message.reference.jump_url if message.reference else '',
-            in_thread=determine_if_message_is_happening_in_a_thread(message),
+            in_thread=determine_if_discord_message_is_from_a_thread(message),
             thread_id=message.thread.id if message.thread else 0,
-            context_route=get_context_route_from_message(message)
+            context_route=get_context_route_from_discord_message(message)
         )
 
 

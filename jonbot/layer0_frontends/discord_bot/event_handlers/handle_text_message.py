@@ -5,7 +5,7 @@ import aiohttp
 import discord
 
 from jonbot.layer0_frontends.discord_bot.utilities.get_context.get_context_from_message import \
-    get_conversational_context_from_message
+    get_conversational_context_from_discord_message
 from jonbot.layer0_frontends.discord_bot.utilities.get_context.get_conversation_history_from_message import \
     get_conversation_history_from_message
 from jonbot.layer1_api_interface.app import API_CHAT_URL, API_CHAT_STREAM_URL
@@ -39,7 +39,7 @@ async def handle_text_message(message: discord.Message,
                                uuid=str(uuid.uuid4()),
                                )
 
-        conversational_context = get_conversational_context_from_message(message=message)
+        conversational_context = get_conversational_context_from_discord_message(message=message)
 
         if conversational_context.context_route in conversations.keys():
             conversation_history = conversations[conversational_context.context_route]
