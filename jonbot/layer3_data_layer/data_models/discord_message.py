@@ -5,8 +5,7 @@ from typing import List, Optional, Union
 import discord
 from pydantic import BaseModel
 
-from jonbot.layer0_frontends.discord_bot.utilities.get_context_from_message import \
-    determine_if_discord_message_is_from_a_thread, get_context_route_from_discord_message
+from jonbot.layer3_data_layer.data_models.conversation_models import ConversationalContext
 from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 from jonbot.layer3_data_layer.system.filenames_and_paths import get_new_attachments_folder_path
 
@@ -29,17 +28,18 @@ class DiscordMessageDocument(BaseModel):
     server_id: int
     timestamp: Timestamp
     edited_timestamp: Union[Timestamp, str]
+    received_timestamp: Timestamp
     mentions: List[str]
     jump_url: str
     dump: str
     reactions: List[str]
     parent_message_id: Optional[int]
     parent_message_jump_url: Optional[str]
-    context_route: str
+    conversational_context: ConversationalContext
 
     @classmethod
-    async def from_message(cls, message):
-        discord_message_document =  cls(
+    async def from_message(cls, message: discord.Message):
+        discord_message_document = cls(
             content=message.content,
             reference_dict=message.to_message_reference_dict(),
             message_id=message.id,
@@ -56,19 +56,20 @@ class DiscordMessageDocument(BaseModel):
             mentions=[mention.name for mention in message.mentions],
             jump_url=message.jump_url,
             dump=str(message),
-            received_timestamp=Timestamp.now().dict(),
+            received_timestamp=Timestamp.now(),
             reactions=[str(reaction) for reaction in message.reactions],
             parent_message_id=message.reference.message_id if message.reference else 0,
             parent_message_jump_url=message.reference.jump_url if message.reference else '',
-            in_thread=determine_if_discord_message_is_from_a_thread(message),
+            in_thread=True if message.thread else False,
             thread_id=message.thread.id if message.thread else 0,
-            context_route= get_context_route_from_discord_message(message)
+            conversational_context=ConversationalContext.from_discord_message(message),
         )
         await discord_message_document._add_attachments_to_message(message)
         return discord_message_document
 
     async def _add_attachments_to_message(self,
                                           message: discord.Message,
+                                          attachment_local_path: Optional[Union[str, Path]] = get_new_attachments_folder_path(),
                                           ):
         """Save attachments from a message and add their paths to the message data.
 
@@ -76,7 +77,7 @@ class DiscordMessageDocument(BaseModel):
             message (discord.Message): Message to save attachments from.
             message_data (dict): Data of the message to add attachments to.
         """
-        attachments_folder = Path(get_new_attachments_folder_path())
+        attachments_folder = Path(attachment_local_path)
         attachments_folder.mkdir(parents=True, exist_ok=True)
         for attachment in message.attachments:
             try:

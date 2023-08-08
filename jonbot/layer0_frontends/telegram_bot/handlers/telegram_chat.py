@@ -7,7 +7,7 @@ from telegram.ext import ContextTypes
 
 from jonbot.layer1_api_interface.app import API_CHAT_URL
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatInput, ChatResponse
-from jonbot.layer3_data_layer.database.get_mongo_database_manager import get_mongo_database_manager
+from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 from jonbot.layer3_data_layer.database.mongo_database import MongoDatabaseManager
 
 logger = logging.getLogger('httpcore')
@@ -32,7 +32,7 @@ async def telegram_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 chat_response = ChatResponse(**data)
 
                 await context.bot.send_message(chat_id=update.effective_chat.id, text=chat_response.message)
-                mongo_database_manager = await get_mongo_database_manager()
+                mongo_database_manager = await get_or_create_mongo_database_manager()
                 await mongo_database_manager.upsert(update.message, chat_response)
             else:
                 error_message = f"Received non-200 response code: {response.status}"

@@ -2,17 +2,15 @@ import asyncio
 import logging
 import time
 
-
 from fastapi import FastAPI
 from langchain.callbacks.base import BaseCallbackHandler
-from starlette.responses import StreamingResponse
 from uvicorn import Config, Server
 
 from jonbot.layer2_core_processes.ai_chatbot.ai_chatbot import AIChatBot
 from jonbot.layer2_core_processes.audio_transcription.transcribe_audio import transcribe_audio
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatResponse, ChatRequest
 from jonbot.layer3_data_layer.data_models.voice_to_text_request import VoiceToTextRequest, VoiceToTextResponse
-from jonbot.layer3_data_layer.database.get_mongo_database_manager import get_mongo_database_manager
+from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +20,15 @@ API_CHAT_STREAM_URL = "http://localhost:8000/chat_stream"
 
 app = FastAPI()
 
+
 class MyCustomHandler(BaseCallbackHandler):
     def on_llm_new_token(self, token: str, **kwargs) -> None:
         print(f"My custom handler, token: {token}")
+
+
+@app.on_event("startup")
+async def startup_event():
+    await get_or_create_mongo_database_manager()
 
 
 @app.post("/chat")
@@ -32,21 +36,23 @@ async def chat(chat_request: ChatRequest) -> ChatResponse:
     logger.info(f"Received chat request: {chat_request}")
 
     tic = time.perf_counter()
-    mongo_database = await get_mongo_database_manager()
+    mongo_database = await get_or_create_mongo_database_manager()
     conversation_history = await mongo_database.get_conversation_history(
-        context_route_key=chat_request.conversational_context.context_route)
+        context_route=chat_request.conversational_context.context_route)
 
     toc = time.perf_counter()
     if conversation_history is None:
         logger.info(f"No conversation history found, elapsed time: {toc - tic:0.4f} seconds")
     else:
         logger.info(
-        f"Retrieved conversation history(length: {len(conversation_history)} documents), elapsed time: {toc - tic:0.4f} seconds")
+            f"Retrieved conversation history(length: {len(conversation_history)} documents), elapsed time: {toc - tic:0.4f} seconds")
 
     tic = time.perf_counter()
-    ai_chat_bot = AIChatBot()
-    await ai_chat_bot.intialize_bot(conversation_history=conversation_history, **chat_request.conversational_context.dict())
+    ai_chat_bot = AIChatBot.from_chat_request(chat_request=chat_request,
+                                              conversation_history=conversation_history, )
+
     response_text = await ai_chat_bot.async_process_human_input_text(input_text=chat_request.chat_input.message)
+
     chat_response = ChatResponse(message=response_text["text"], uuid=chat_request.chat_input.uuid)
     toc = time.perf_counter()
     logger.info(f"Returning chat response: {chat_response}, elapsed time: {toc - tic:0.4f} seconds")
@@ -93,10 +99,11 @@ async def run_api_async():
     server = Server(config)
     await server.serve()
 
+
 def run_api_sync():
     loop = asyncio.get_event_loop()
     loop.run_until_complete(run_api_async())
 
+
 if __name__ == '__main__':
     asyncio.run(run_api_async())
-

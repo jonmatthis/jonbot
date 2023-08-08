@@ -17,7 +17,8 @@ from langchain.vectorstores import Chroma
 from pydantic import BaseModel
 
 from jonbot.layer2_core_processes.ai_chatbot.ai_chatbot_prompts import CHATBOT_SYSTEM_PROMPT_TEMPLATE, RULES_FOR_LIVING
-from jonbot.layer3_data_layer.data_models.conversation_models import ChatResponse, ChatInput, ConversationHistory
+from jonbot.layer3_data_layer.data_models.conversation_models import ChatResponse, ChatInput, ConversationHistory, \
+    ChatRequest
 from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 from jonbot.layer3_data_layer.system.filenames_and_paths import get_chroma_vector_store_path
 
@@ -45,24 +46,31 @@ class AIChatBot(BaseModel):
     context_route: str = "The human is talking to your through an unknown interface."
     context_description: str = "You are having a conversation with a human."
 
-    async def intialize_bot(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+    @classmethod
+    async def from_chat_request(cls,
+                                chat_request: ChatRequest,
+                                conversation_history: ConversationHistory = None,):
 
-        self.llm = ChatOpenAI(
+        cls.context_route = chat_request.conversational_context.context_route
+        cls.context_description = chat_request.conversational_context.context_description
+
+        cls.llm = ChatOpenAI(
             streaming=True,
             callbacks=[StreamingStdOutCallbackHandler()],
             temperature=0.8,
-            model_name="gpt-4") if self.llm is None else self.llm
+            model_name="gpt-4") if cls.llm is None else cls.llm
 
-        self.prompt = self._create_prompt(
-            system_prompt_template=CHATBOT_SYSTEM_PROMPT_TEMPLATE) if self.prompt is None else self.prompt
-        self.memory = await self._configure_memory() if self.memory is None else self.memory
+        cls.prompt = cls._create_prompt(
+            system_prompt_template=CHATBOT_SYSTEM_PROMPT_TEMPLATE) if cls.prompt is None else cls.prompt
 
-        if self.conversation_history:
-            self.load_memory_from_history(conversation_history=self.conversation_history)
+        cls.memory = await cls._configure_memory() if cls.memory is None else cls.memory
 
-        self.chain = self._create_llm_chain()
+        if conversation_history is not None:
+            cls.load_memory_from_history(conversation_history=conversation_history)
+
+        cls.chain = cls._create_llm_chain()
+
+        return cls
 
     def add_callback(self, callback: BaseCallbackHandler):
         self.llm.callbacks.append(callback)

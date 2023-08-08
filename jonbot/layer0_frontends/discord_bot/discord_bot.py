@@ -31,10 +31,7 @@ class DiscordBot(discord.Bot):
         if not should_process_message(message):
             return
 
-        discord_message_document = await DiscordMessageDocument.from_message(message=message)
-        await self.mongo_database_manager.upsert(
-            data={"$push": {"discord": {"messages": discord_message_document.dict()}}}
-        )
+        log_message_in_database(message=message)
         try:
             async with message.channel.typing():
                 if len(message.attachments) > 0 and message.attachments[0].content_type.startswith("audio"):
@@ -53,3 +50,14 @@ class DiscordBot(discord.Bot):
 
 
 
+
+async def log_message_in_database(message: discord.Message):
+    """
+    Log a message in the database.
+
+    Parameters
+    ----------
+    message : discord.Message
+        The message event data from Discord.
+    """
+    discord_message_document = DiscordMessageDocument(message=message)

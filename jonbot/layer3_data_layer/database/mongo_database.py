@@ -11,7 +11,7 @@ from typing import Union
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from jonbot.layer3_data_layer.data_models.conversation_models import ConversationHistory
+from jonbot.layer3_data_layer.data_models.conversation_models import ConversationHistory, ContextRoute
 from jonbot.layer3_data_layer.data_models.user_id_models import TelegramID, DiscordID, UserID
 from jonbot.layer3_data_layer.system.filenames_and_paths import clean_path_string, get_default_database_json_save_path
 from jonbot.layer3_data_layer.utilities.default_serialize import default_serialize
@@ -97,8 +97,8 @@ class MongoDatabaseManager:
 
 
     async def get_conversation_history(self,
-                                       context_route_key: str)->dict:
-        query = {"context_route": context_route_key}
+                                       context_route: ContextRoute)->dict:
+        query = {"context_route": context_route.dict()}
         result = await self._conversation_history_collection.find_one(query)
 
         return ConversationHistory(**result) if result is not None else None
