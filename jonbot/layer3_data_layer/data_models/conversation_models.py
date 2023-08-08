@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from typing import Union, Optional, List, Literal
 
 import discord
@@ -32,12 +33,10 @@ class ContextRoute(BaseModel):
         else:
             parent = f"frontend-{frontend}/server-{server}/channel-{channel}/messages/"
 
-
         if parent_route_only:
             full = parent
         else:
             full = f"{parent}message-{message_id}/"
-
 
         return cls(full=full,
                    parent=parent,
@@ -56,7 +55,7 @@ NOTE THAT CONVERSATIONS IN THIS CHANNEL ARE STILL LOGGED AND MAY BE USED AS PART
 """
 
 
-class ConversationalContext(BaseModel):
+class ConversationContext(BaseModel):
     context_route: ContextRoute
     context_description: str
     timestamp: Timestamp
@@ -129,12 +128,14 @@ class ChatRequestConfig(BaseModel):
 
 class ChatRequest(BaseModel):
     chat_input: ChatInput
-    conversational_context: ConversationalContext
+    conversation_context: ConversationContext
     config: ChatRequestConfig = ChatRequestConfig()
     uuid: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
     @classmethod
     def from_discord_message(cls, message):
         return cls(chat_input=ChatInput(message=message.content),
-                   conversational_context=ConversationalContext.from_discord_message(message=message)
+                   conversation_context=ConversationContext.from_discord_message(message=message)
                    )
+
+

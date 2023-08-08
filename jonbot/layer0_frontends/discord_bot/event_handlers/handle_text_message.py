@@ -16,12 +16,12 @@ logger = logging.getLogger(__name__)
 conversations = {}
 
 
-async def send_request_to_api(api_route: str, chat_request: ChatRequest) -> aiohttp.ClientResponse:
+async def send_request_to_api(api_route: str, chat_request: ChatRequest):
     async with aiohttp.ClientSession() as session:
         response = await session.post(api_route, json=chat_request.dict())
 
         if response.status == 200:
-            return await response
+            return await response.json()
         else:
             error_message = await error_message_from_response(response)
             logger.exception(error_message)

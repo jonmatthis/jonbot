@@ -38,7 +38,7 @@ async def chat(chat_request: ChatRequest) -> ChatResponse:
     tic = time.perf_counter()
     mongo_database = await get_or_create_mongo_database_manager()
     conversation_history = await mongo_database.get_conversation_history(
-        context_route=chat_request.conversational_context.context_route)
+        context_route=chat_request.conversation_context.context_route)
 
     toc = time.perf_counter()
     if conversation_history is None:
@@ -48,10 +48,10 @@ async def chat(chat_request: ChatRequest) -> ChatResponse:
             f"Retrieved conversation history(length: {len(conversation_history)} documents), elapsed time: {toc - tic:0.4f} seconds")
 
     tic = time.perf_counter()
-    ai_chat_bot = AIChatBot.from_chat_request(chat_request=chat_request,
-                                              conversation_history=conversation_history, )
+    ai_chat_bot = await AIChatBot.create(chat_request=chat_request,
+                                         conversation_history=conversation_history, )
 
-    response_text = await ai_chat_bot.async_process_human_input_text(input_text=chat_request.chat_input.message)
+    response_text = await ai_chat_bot.get_chat_response(chat_input_string=chat_request.chat_input.message)
 
     chat_response = ChatResponse(message=response_text["text"], uuid=chat_request.chat_input.uuid)
     toc = time.perf_counter()

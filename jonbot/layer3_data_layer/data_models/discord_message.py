@@ -5,7 +5,7 @@ from typing import List, Optional, Union
 import discord
 from pydantic import BaseModel
 
-from jonbot.layer3_data_layer.data_models.conversation_models import ConversationalContext
+from jonbot.layer3_data_layer.data_models.conversation_models import ConversationContext
 from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 from jonbot.layer3_data_layer.system.filenames_and_paths import get_new_attachments_folder_path
 
@@ -35,7 +35,7 @@ class DiscordMessageDocument(BaseModel):
     reactions: List[str]
     parent_message_id: Optional[int]
     parent_message_jump_url: Optional[str]
-    conversational_context: ConversationalContext
+    conversational_context: ConversationContext
 
     @classmethod
     async def from_message(cls, message: discord.Message):
@@ -62,7 +62,7 @@ class DiscordMessageDocument(BaseModel):
             parent_message_jump_url=message.reference.jump_url if message.reference else '',
             in_thread=True if message.thread else False,
             thread_id=message.thread.id if message.thread else 0,
-            conversational_context=ConversationalContext.from_discord_message(message),
+            conversational_context=ConversationContext.from_discord_message(message),
         )
         await discord_message_document._add_attachments_to_message(message)
         return discord_message_document

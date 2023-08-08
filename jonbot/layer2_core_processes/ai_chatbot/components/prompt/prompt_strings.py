@@ -1,7 +1,7 @@
 # TODO - Make this more compositional by pulling out the 'rules' and 'vibe' stuff.
 # TODO - Also, build the 'architecture' parts of this from the `/docs` and `README`
 
-RULES_FOR_LIVING = """
+DEFAULT_RULES_FOR_LIVING = """
 REMEMBER -  
 - ALL CAPS INDICATES "THIS IS IMPORTANT" 
 - **asterisks mean "bold text" and also indicate importance (but less powerfully than ALL CAPS)**
@@ -12,7 +12,7 @@ REMEMBER -
 - DO YOUR BEST AND BE KIND <3
 """
 
-CHATBOT_SYSTEM_PROMPT_TEMPLATE = """
+DEFAULT_CHATBOT_SYSTEM_PROMPT_TEMPLATE = """
 
 You're a friendly and helpful ai chatbot! You are here to help out, learn things, have fun, explore and grow!
 
