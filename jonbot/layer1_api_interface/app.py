@@ -47,7 +47,7 @@ async def chat(chat_request: ChatRequest) -> ChatResponse:
     ai_chat_bot = AIChatBot()
     await ai_chat_bot.intialize_bot(conversation_history=conversation_history, **chat_request.conversational_context.dict())
     response_text = await ai_chat_bot.async_process_human_input_text(input_text=chat_request.chat_input.message)
-    chat_response = ChatResponse(message=response_text)
+    chat_response = ChatResponse(message=response_text["text"], uuid=chat_request.chat_input.uuid)
     toc = time.perf_counter()
     logger.info(f"Returning chat response: {chat_response}, elapsed time: {toc - tic:0.4f} seconds")
     return chat_response

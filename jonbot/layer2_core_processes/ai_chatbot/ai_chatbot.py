@@ -67,10 +67,10 @@ class AIChatBot(BaseModel):
         self.llm.callbacks.append(callback)
 
     async def _configure_memory(self):
-        conversation_memory = self._configure_conversation_memory()
-        vectorstore_memory = await self._configure_vectorstore_memory()
-        combined_memory = CombinedMemory(memories=[conversation_memory,
-                                                   vectorstore_memory])
+
+        combined_memory = CombinedMemory(memories=[self._configure_conversation_memory(),
+                                                   await self._configure_vectorstore_memory()])
+
         return combined_memory
 
     async def _configure_vectorstore_memory(self, ):
@@ -128,9 +128,10 @@ class AIChatBot(BaseModel):
         return chat_prompt
 
     async def async_process_human_input_text(self, input_text: str):
-        print(f"Input: {input_text}")
-        print("Streaming response...\n")
-        ai_response = await self.chain.arun(human_input=input_text)
+        logger.info(f"Input: {input_text}")
+        logger.info("Streaming response...\n")
+        ai_response = await self.chain.acall(inputs={"human_input": input_text})
+
         return ai_response
 
     async def async_process_human_input_text_streaming(self, input_text: str):
