@@ -5,7 +5,6 @@ import os
 from dotenv import load_dotenv
 
 from jonbot.layer0_frontends.discord_bot.discord_bot import DiscordBot
-from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +12,7 @@ logger = logging.getLogger(__name__)
 async def run_discord_bot_async():
     load_dotenv()
     try:
-        discord_bot = DiscordBot(mongo_database_manager=await get_or_create_mongo_database_manager())
+        discord_bot = DiscordBot()
     except Exception as e:
         logger.exception(f"An error occurred while starting the Discord bot: {str(e)}")
         raise e

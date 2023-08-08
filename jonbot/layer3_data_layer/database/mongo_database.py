@@ -82,18 +82,25 @@ class MongoDatabaseManager:
         if user is not None:
             return UserID(**user)
 
-    async def upsert(self, data: dict, collection_name: str = None, query: dict = None):
+    async def upsert(self,
+                     data: dict,
+                     collection: str = None,
+                     query: dict = None)->bool:
 
         if not query:
             query = {}
 
         update_data = {"$set": data}
-        if  collection_name:
-            return self._database[collection_name].update_one(query, update_data, upsert=True)
-        else:
-            return self._data_collection.update_one(query, update_data, upsert=True)
 
-
+        try:
+            if  collection:
+                await self._database[collection].update_one(query, update_data, upsert=True)
+            else:
+                await self._data_collection.update_one(query, update_data, upsert=True)
+            return True
+        except Exception as e:
+            logging.error(f'Error occurred while upserting. Error: {e}')
+            return False
 
 
     async def get_conversation_history(self,

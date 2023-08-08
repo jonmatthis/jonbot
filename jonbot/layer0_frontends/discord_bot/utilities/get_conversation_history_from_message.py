@@ -4,15 +4,15 @@ from jonbot.layer3_data_layer.data_models.conversation_models import Conversatio
 
 
 async def get_conversation_history_from_message(message: discord.Message,
-                                                message_limit: int = 100) -> ConversationHistory:
-
-    conversation_history = ConversationHistory()
+                                          message_limit: int = 100) -> ConversationHistory:
 
     # Check if the message is in a thread
     if message.thread:
         message_history = message.thread.history(limit=message_limit, oldest_first=False)
     else:
         message_history = message.channel.history(limit=message_limit, oldest_first=False)
+
+    conversation_history = ConversationHistory()
 
     async for msg in message_history:
         if msg.content:
