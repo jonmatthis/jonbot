@@ -6,7 +6,8 @@ from jonbot.layer3_data_layer.data_models.conversation_models import Conversatio
 from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 
 
-async def get_conversation_history_from_message(message: discord.Message) -> ConversationHistory:
+async def get_conversation_history_from_message(message: discord.Message,
+                                                message_limit: int = 100) -> ConversationHistory:
     """
     Fetch the conversation history from a given message.
 
@@ -22,23 +23,17 @@ async def get_conversation_history_from_message(message: discord.Message) -> Con
 
     # Define a helper function to add a message to the history
 
-    def add_to_history(msg: discord.Message):
-        speaker = get_speaker_from_discord_message(msg)
-
-        chat_message = ChatMessage(message=msg.content,
-                                   speaker=speaker,
-                                   timestamp=Timestamp.from_datetime(message.created_at))
-
-        conversation_history.add_message(chat_message)
-
     # Check if the message is in a thread
     if message.thread:
-        async for msg in message.thread.history(limit=None, oldest_first=True):
-            if msg.content:
-                add_to_history(msg)
+        message_history = message.thread.history(limit=message_limit, oldest_first=False)
     else:
-        async for msg in message.channel.history(limit=None, oldest_first=True):
-            if msg.content:
-                add_to_history(msg)
+        message_history = message.channel.history(limit=message_limit, oldest_first=False)
+
+    async for msg in message_history:
+        if msg.content:
+            conversation_history.add_message(chat_message=ChatMessage(message=msg.content,
+                                                                      speaker=get_speaker_from_discord_message(msg),
+                                                                      timestamp=Timestamp.from_datetime(
+                                                                          msg.created_at)))
 
     return conversation_history

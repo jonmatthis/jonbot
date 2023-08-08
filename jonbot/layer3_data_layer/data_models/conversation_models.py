@@ -39,14 +39,14 @@ class ChatMessage(BaseModel):
 
 
 class ConversationHistory(BaseModel):
-    history: OrderedDict[str, ChatMessage] = Field(default_factory=OrderedDict)
+    history: List[ChatMessage] = Field(default_factory=list)
     context_route: Optional[str] = ''
+
     def add_message(self, chat_message: ChatMessage):
-        speaker = chat_message.speaker
-        self.history[f"{speaker.type}||{speaker.name}||{chat_message.uuid}"] = chat_message
+        self.history.append(chat_message)
 
     def get_all_messages(self) -> List[ChatMessage]:
-        return list(self.history.values())
+        return self.history
 
     def __len__(self):
         return len(self.history)

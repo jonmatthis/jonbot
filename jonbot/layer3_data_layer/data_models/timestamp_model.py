@@ -41,6 +41,9 @@ class Timestamp(BaseModel):
     def now(cls):
         return cls.from_datetime(datetime.now())
 
+    def __str__(self):
+        return f"{self.day_of_week}, {self.human_readable_local} (local timezone: {self.local_time_zone})"
+
 
 if __name__ == "__main__":
     from pprint import pprint as print

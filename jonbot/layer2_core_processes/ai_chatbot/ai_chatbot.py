@@ -21,7 +21,8 @@ from jonbot.layer3_data_layer.data_models.conversation_models import ChatRespons
 from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 from jonbot.layer3_data_layer.system.filenames_and_paths import get_chroma_vector_store_path
 
-PRUNE_TOKEN_THRESHOLD = 2000
+CONVERSATION_HISTORY_MAX_TOKENS = 1000
+
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -88,7 +89,7 @@ class AIChatBot(BaseModel):
         return ConversationSummaryBufferMemory(memory_key="chat_memory",
                                                input_key="human_input",
                                                llm=OpenAI(temperature=0),
-                                               max_token_limit=1000)
+                                               max_token_limit=CONVERSATION_HISTORY_MAX_TOKENS)
 
     def _create_llm_chain(self):
         return LLMChain(llm=self.llm,
@@ -148,20 +149,21 @@ class AIChatBot(BaseModel):
 
     def load_memory_from_history(self,
                                  conversation_history=ConversationHistory,
-                                 prune_token_threshold=2000):
+                                 max_tokens=CONVERSATION_HISTORY_MAX_TOKENS):
 
         logger.info(f"Loading {len(conversation_history.get_all_messages())} messages into memory.")
 
         for chat_message in conversation_history.get_all_messages():
             if chat_message.speaker.type == "human":
                 self.memory.memories[0].chat_memory.add_user_message(
-                    f"The human {chat_message.speaker.name} said: {chat_message.message}")
+                    f"On {str(chat_message.timestamp)} the human {chat_message.speaker.name} said: {chat_message.message}")
             elif chat_message.speaker.type == "bot":
                 self.memory.memories[0].chat_memory.add_ai_message(
-                    f"The AI (you) {chat_message.speaker.name} said: {chat_message.message}")
+                    f"On {str(chat_message.timestamp)}, the AI (you) {chat_message.speaker.name} said: {chat_message.message}")
             if self.llm.get_num_tokens_from_messages(
-                    messages=self.memory.memories[0].chat_memory.messages) > prune_token_threshold:
+                    messages=self.memory.memories[0].chat_memory.messages) > max_tokens:
                 self.memory.memories[0].prune()
+                break
 
     async def _create_vector_store(self, collection_name: str = "test_collection"):
         chroma_vector_store = Chroma(
