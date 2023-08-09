@@ -26,14 +26,14 @@ async def send_chat_response(chat_response:ChatResponse,
     if len(chat_response.text) > comfy_message_length:
         await handle_long_message(chat_response, max_message_length, message)
     else:
-        await message.reply(chat_response.text)
+        await message.edit(content=chat_response.text)
 
 
 async def handle_long_message(chat_response, max_message_length, message):
     message_chunks = [chat_response.text[index:index + max_message_length] for index in
                       range(0, len(chat_response.text), max_message_length)]
     for chunk_number, message_chunk in enumerate(message_chunks):
-        message = await message.reply(f"`Message {chunk_number + 1} out of {len(message_chunks)}` {message_chunk}")
+        message = await message.edit(content= f"`Message {chunk_number + 1} out of {len(message_chunks)}` {message_chunk}")
 
 
 
