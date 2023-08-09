@@ -136,7 +136,7 @@ class ChatRequest(BaseModel):
     def from_discord_message(cls, message):
         return cls(chat_input=ChatInput(message=message.content),
                    conversation_context=ConversationContext.from_discord_message(message=message),
-                   ChatRequestConfig=ChatRequestConfig.from_discord_message(message=message),
+                   ChatRequestConfig=ChatRequestConfig(),
                    )
 
 

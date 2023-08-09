@@ -35,16 +35,12 @@ async def handle_text_message(message: discord.Message,
 
         response = await send_request_to_api(api_route=api_route, data=chat_request.dict())
 
-        if response:
-            chat_response = ChatResponse(**response)
-            await message.reply(chat_response.message)
-            logger.info(f"ChatRequest payload sent: \n {chat_request.dict()}\n "
-                        f"ChatResponse payload received: \n {chat_response.dict()}"
-                        f"Successfully sent chat request payload to API!")
+        chat_response = ChatResponse(**response)
+        await message.reply(chat_response.message)
+        logger.info(f"ChatRequest payload sent: \n {chat_request.dict()}\n "
+                    f"ChatResponse payload received: \n {chat_response.dict()}"
+                    f"Successfully sent chat request payload to API!")
 
-        else:
-            await message.reply(
-                f"Sorry, I'm currently unable to process your request. \n  > {error_message_from_response(response)}")
 
 
 async def update_conversation_history_in_database(message: discord.Message):

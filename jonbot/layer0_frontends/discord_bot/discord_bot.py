@@ -45,7 +45,7 @@ class DiscordBot(discord.Bot):
         except Exception as e:
             error_message = f"An error occurred: {str(e)}"
             logger.exception(error_message)
-            await message.reply(f"Sorry, an error occurred while processing your request. {error_message}")
+            await message.reply(f"Sorry, an error occurred while processing your request. \n >  {error_message}")
 
 
 async def log_message_in_database(message: discord.Message):

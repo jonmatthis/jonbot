@@ -11,7 +11,6 @@ from jonbot.layer2_core_processes.ai_chatbot.components.memory.sub_memory_builde
 from jonbot.layer3_data_layer.data_models.conversation_models import ConversationHistory
 
 logger = logging.getLogger(__name__)
-CONVERSATION_HISTORY_MAX_TOKENS = 1000
 
 
 class ChatbotMemoryBuilder(CombinedMemory):
