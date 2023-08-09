@@ -4,6 +4,7 @@ import time
 
 from fastapi import FastAPI
 from langchain.callbacks.base import BaseCallbackHandler
+from starlette.responses import StreamingResponse
 from uvicorn import Config, Server
 
 from jonbot.layer2_core_processes.ai_chatbot.ai_chatbot import AIChatBot
@@ -17,12 +18,12 @@ logger = logging.getLogger(__name__)
 
 CHAT_ENDPOINT = "/chat"
 VOICE_TO_TEXT_ENDPOINT = "/voice_to_text"
-CHAT_STREAM_ENDPOINT = "/chat_stream"
+CHAT_STREAM_URL = "/chat_stream"
 DATABASE_UPSERT_ENDPOINT = "/database_upsert"
 
 API_CHAT_URL = f"http://localhost:8000{CHAT_ENDPOINT}"
 API_VOICE_TO_TEXT_URL = f"http://localhost:8000{VOICE_TO_TEXT_ENDPOINT}"
-API_CHAT_STREAM_URL = f"http://localhost:8000{CHAT_STREAM_ENDPOINT}"
+API_CHAT_STREAM_URL = f"http://localhost:8000{CHAT_STREAM_URL}"
 API_DATABASE_UPSERT_URL = f"http://localhost:8000{DATABASE_UPSERT_ENDPOINT}"
 
 app = FastAPI()
@@ -65,14 +66,14 @@ async def chat(chat_request: ChatRequest) -> ChatResponse:
     return chat_response
 
 
-# @app.post("/chat_stream", response_model=None)
-# async def chat_stream(chat_request: ChatRequest):
-#     logger.info(f"Received chat request for streaming: {chat_request}")
-#     bot = await AIChatBot(**chat_request.conversational_context.dict()).create_chatbot()
-#     response_stream = await bot.async_process_human_input_text_streaming(input_text=chat_request.chat_input.message)
-#
-#     return StreamingResponse(response_stream(), media_type="text/plain")
+@app.get(CHAT_STREAM_URL)
+async def chat_stream():
+    async def generate():
+        for chunk in range(10):
+            yield f"Data {chunk}\n"
+            await asyncio.sleep(1)  # simulate some delay
 
+    return StreamingResponse(generate(), media_type="text/plain")
 
 @app.post(VOICE_TO_TEXT_ENDPOINT, response_model=VoiceToTextResponse)
 async def voice_to_text(request: VoiceToTextRequest) -> VoiceToTextResponse:
