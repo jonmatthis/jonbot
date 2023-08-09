@@ -61,4 +61,4 @@ def get_default_database_json_save_path(filename: str,
 
 
 def get_chroma_vector_store_path() -> str:
-    return str(Path(get_base_data_folder_path()) / "chroma_vectors")
+    return str(Path(get_base_data_folder_path()) / "chroma_vectorstore_persistence")

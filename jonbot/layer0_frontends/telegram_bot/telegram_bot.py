@@ -21,7 +21,6 @@ import os
 from dotenv import load_dotenv
 
 from jonbot.layer0_frontends.telegram_bot.handlers.telegram_chat import telegram_chat
-from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 
 load_dotenv()
 

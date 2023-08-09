@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 import os
@@ -26,6 +25,7 @@ DATABASE_NAME = "jonbot_database"
 
 class MongoDatabaseManager:
     def __init__(self):
+        logger.info(f'Initializing MongoDatabaseManager...')
         load_dotenv()
         # self._client = MongoClient( os.getenv('MONGO_URI_MONGO_CLOUD'))
         self._client = AsyncIOMotorClient(os.getenv('MONGO_URI_MONGO_CLOUD'))

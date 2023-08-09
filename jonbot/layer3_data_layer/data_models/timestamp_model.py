@@ -2,8 +2,10 @@ import calendar
 from datetime import datetime, timezone
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from tzlocal import get_localzone
+
+
 class Timestamp(BaseModel):
     unix_timestamp_utc: float
     unix_timestamp_local: float

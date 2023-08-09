@@ -1,10 +1,10 @@
 import uuid
-from datetime import datetime
 from typing import Union, Optional, List, Literal
 
 import discord
 from pydantic import BaseModel, Field
 
+from jonbot.layer3_data_layer.data_models.ai_chatbot_models import VectorStoreMemoryConfig
 from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 
 
@@ -124,7 +124,7 @@ class ConversationHistory(BaseModel):
 
 class ChatRequestConfig(BaseModel):
     dummy: str = "hi:D"
-
+    vector_store_memory_config: VectorStoreMemoryConfig = VectorStoreMemoryConfig()
 
 class ChatRequest(BaseModel):
     chat_input: ChatInput
@@ -135,7 +135,8 @@ class ChatRequest(BaseModel):
     @classmethod
     def from_discord_message(cls, message):
         return cls(chat_input=ChatInput(message=message.content),
-                   conversation_context=ConversationContext.from_discord_message(message=message)
+                   conversation_context=ConversationContext.from_discord_message(message=message),
+                   ChatRequestConfig=ChatRequestConfig.from_discord_message(message=message),
                    )
 
 

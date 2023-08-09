@@ -8,7 +8,6 @@ from telegram.ext import ContextTypes
 from jonbot.layer1_api_interface.app import API_CHAT_URL
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatInput, ChatResponse
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
-from jonbot.layer3_data_layer.database.mongo_database import MongoDatabaseManager
 
 logger = logging.getLogger('httpcore')
 logger.setLevel(logging.INFO)

@@ -14,10 +14,10 @@ from langchain.memory import CombinedMemory
 from langchain.prompts import ChatPromptTemplate
 from pydantic import BaseModel
 
-from jonbot.layer2_core_processes.ai_chatbot.components.memory import ChatbotMemory
+from jonbot.layer2_core_processes.ai_chatbot.components.memory.chatbot_memory_builder import ChatbotMemoryBuilder
 from jonbot.layer2_core_processes.ai_chatbot.components.prompt.prompt_builder import ChatbotPromptBuilder
-from jonbot.layer3_data_layer.data_models.conversation_models import ChatResponse, ChatInput, ConversationHistory, \
-    ChatRequest, ConversationContext
+from jonbot.layer3_data_layer.data_models.conversation_models import ChatResponse, ConversationHistory, \
+    ConversationContext
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ class AIChatBot(BaseModel):
 
         prompt = ChatbotPromptBuilder.create(conversation_context=conversation_context)
 
-        memory = await ChatbotMemory.create(conversation_history=conversation_history)
+        memory = await ChatbotMemoryBuilder.build(conversation_history=conversation_history)
 
         chain = LLMChain(llm=llm,
                          prompt=prompt,

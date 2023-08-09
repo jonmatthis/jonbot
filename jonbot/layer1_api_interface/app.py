@@ -6,10 +6,10 @@ from fastapi import FastAPI
 from langchain.callbacks.base import BaseCallbackHandler
 from uvicorn import Config, Server
 
-from jonbot.layer3_data_layer.data_models.database_upsert_models import DatabaseUpsertResponse, DatabaseUpsertRequest
 from jonbot.layer2_core_processes.ai_chatbot.ai_chatbot import AIChatBot
 from jonbot.layer2_core_processes.audio_transcription.transcribe_audio import transcribe_audio
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatResponse, ChatRequest
+from jonbot.layer3_data_layer.data_models.database_upsert_models import DatabaseUpsertResponse, DatabaseUpsertRequest
 from jonbot.layer3_data_layer.data_models.voice_to_text_request import VoiceToTextRequest, VoiceToTextResponse
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 

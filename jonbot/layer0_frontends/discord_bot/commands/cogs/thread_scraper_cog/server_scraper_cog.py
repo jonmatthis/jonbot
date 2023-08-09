@@ -1,13 +1,12 @@
 import logging
 from datetime import datetime
-from pathlib import Path
 
 import discord
 from discord import Forbidden
 from discord.ext import commands
 
 from jonbot.layer3_data_layer.data_models.discord_message import DiscordMessageDocument
-from jonbot.layer3_data_layer.database.mongo_database import  MongoDatabaseManager
+from jonbot.layer3_data_layer.database.mongo_database import MongoDatabaseManager
 
 logger = logging.getLogger(__name__)
 logging.getLogger('discord').setLevel(logging.INFO)

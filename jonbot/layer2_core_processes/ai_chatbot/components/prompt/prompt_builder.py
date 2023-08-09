@@ -3,7 +3,7 @@ from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, H
 
 from jonbot.layer2_core_processes.ai_chatbot.components.prompt.prompt_strings import DEFAULT_RULES_FOR_LIVING, \
     DEFAULT_CHATBOT_SYSTEM_PROMPT_TEMPLATE
-from jonbot.layer3_data_layer.data_models.conversation_models import ChatRequest, ConversationContext
+from jonbot.layer3_data_layer.data_models.conversation_models import ConversationContext
 from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 
 
