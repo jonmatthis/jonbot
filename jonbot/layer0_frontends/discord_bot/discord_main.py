@@ -6,7 +6,10 @@ from dotenv import load_dotenv
 
 from jonbot.layer0_frontends.discord_bot.discord_bot import DiscordBot
 
+logging.getLogger("discord").setLevel(logging.INFO)
+
 logger = logging.getLogger(__name__)
+
 
 
 async def run_discord_bot_async():

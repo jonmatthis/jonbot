@@ -21,8 +21,13 @@ async def send_request_to_api(api_route: str,
 
 
 async def send_request_to_api_streaming(api_route: str,
-                                        data: dict,
-                                        callbacks: Union[Callable, Coroutine]) -> dict:
+                                        data: dict=None,
+                                        callbacks: Union[Callable, Coroutine]=None) -> dict:
+    if not data:
+        data = {}
+    if not callbacks:
+        callbacks = []
+
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(api_route, data=data) as response:

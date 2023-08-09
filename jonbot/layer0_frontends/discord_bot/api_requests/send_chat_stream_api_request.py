@@ -7,22 +7,37 @@ from jonbot.layer1_api_interface.send_request_to_api import send_request_to_api_
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatRequest
 
 
+class DiscordStreamUpdater:
+    def __init__(self):
+        self.message_content = ""
+        self.reply_message = None
+        self.max_message_length = 2000
+
+    async def initialize_reply(self, message: discord.Message):
+        self.reply_message = await message.reply("`awaiting bot response...`")
+
+    async def update_discord_reply(self, token: str):
+        comfy_message_length = int(self.max_message_length * .9)
+        self.message_content += token
+
+        if len(self.message_content) > comfy_message_length:
+            await self.reply_message.edit(content=self.message_content)
+            self.reply_message = await self.reply_message.reply("`continuing from previous message...`\n\n")
+            self.message_content = token
+
+        await self.reply_message.edit(content=self.message_content)
 async def send_chat_stream_api_request(api_route: str,
                                        chat_request: ChatRequest,
                                        message: discord.Message):
-    reply_message = await message.reply("`awaiting bot response...`")
+    updater = DiscordStreamUpdater()
+    await updater.initialize_reply(message)
 
-    async def update_discord_reply(token: str,
-                                   reply_message: discord.Message = reply_message,
-                                   max_message_length: int = 2000):
-        comfy_message_length = int(max_message_length * .9)
-        if len(reply_message.content) > comfy_message_length:
-            reply_message = await reply_message.reply("`continuing from previous message...`")
-        reply_message.edit(content=message.content + token)
+    async def callback(token: str):
+        await updater.update_discord_reply(token)
 
     return await send_request_to_api_streaming(api_route=api_route,
-                                               data=chat_request.dict(),
-                                               callbacks=[update_discord_reply])
+                                               data=None,
+                                               callbacks=[callback])
 
 
 async def print_over_here(token):
