@@ -20,7 +20,7 @@ async def audio_to_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if response.status == 200:
                 data = await response.json()
                 chat_response = ChatResponse(**data)
-                await context.bot.send_message(chat_id=update.effective_chat.id, text=chat_response.message)
+                await context.bot.send_message(chat_id=update.effective_chat.id, text=chat_response.text)
                 mongo_database_manager.insert_telegram_message(update.message, chat_response)
             else:
                 error_message = f"Received non-200 response code: {response.status}"

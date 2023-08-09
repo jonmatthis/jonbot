@@ -75,7 +75,7 @@ class ChatInput(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    message: str
+    text: str
     uuid: str = Field(default_factory=lambda: str(uuid.uuid4()))
     metadata: dict = {}
 

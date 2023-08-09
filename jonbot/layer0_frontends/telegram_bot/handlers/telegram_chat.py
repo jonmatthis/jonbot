@@ -30,7 +30,7 @@ async def telegram_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 data = await response.json()
                 chat_response = ChatResponse(**data)
 
-                await context.bot.send_message(chat_id=update.effective_chat.id, text=chat_response.message)
+                await context.bot.send_message(chat_id=update.effective_chat.id, text=chat_response.text)
                 mongo_database_manager = await get_or_create_mongo_database_manager()
                 await mongo_database_manager.upsert(update.message, chat_response)
             else:

@@ -83,7 +83,7 @@ class AIChatBot(BaseModel):
         logger.info(f"chat_input_string: {chat_input_string}")
         logger.info("Streaming response...\n")
         response = await self.chain.acall(inputs={"human_input": chat_input_string})
-        return ChatResponse(message=response["text"])
+        return ChatResponse(text=response["text"])
 
     async def demo(self):
         print("Welcome to the ChatBot demo!")
@@ -98,7 +98,7 @@ class AIChatBot(BaseModel):
 
             chat_response = await self.get_chat_response(chat_input_string=input_text)
 
-            print(f"Response: {chat_response.message}")
+            print(f"Response: {chat_response.text}")
 
 
 async def ai_chatbot_demo():

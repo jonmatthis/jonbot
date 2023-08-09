@@ -21,11 +21,15 @@ VOICE_TO_TEXT_ENDPOINT = "/voice_to_text"
 CHAT_STREAM_URL = "/chat_stream"
 DATABASE_UPSERT_ENDPOINT = "/database_upsert"
 
+STREAMING_RESPONSE_TEST_ENDPOINT = "/test_streaming_response"
+
+
 API_CHAT_URL = f"http://localhost:8000{CHAT_ENDPOINT}"
 API_VOICE_TO_TEXT_URL = f"http://localhost:8000{VOICE_TO_TEXT_ENDPOINT}"
 API_CHAT_STREAM_URL = f"http://localhost:8000{CHAT_STREAM_URL}"
 API_DATABASE_UPSERT_URL = f"http://localhost:8000{DATABASE_UPSERT_ENDPOINT}"
 
+API_STREAMING_RESPONSE_TEST_URL = f"http://localhost:8000{STREAMING_RESPONSE_TEST_ENDPOINT}"
 app = FastAPI()
 
 
@@ -66,8 +70,8 @@ async def chat(chat_request: ChatRequest) -> ChatResponse:
     return chat_response
 
 
-@app.get(CHAT_STREAM_URL)
-async def chat_stream():
+@app.post(STREAMING_RESPONSE_TEST_ENDPOINT)
+async def streaming_response_test():
     async def generate():
         for chunk in range(10):
             yield f"Data {chunk}\n"

@@ -1,18 +1,40 @@
 import asyncio
+from functools import partial
 
-import aiohttp
+import discord
 
-from jonbot.layer1_api_interface.app import API_CHAT_STREAM_URL
-
-
-async def send_chat_stream_api_request():
-    async with aiohttp.ClientSession() as session:
-        async with session.get(API_CHAT_STREAM_URL) as response:
-            async for line in response.content:
-                print(line.decode('utf-8').strip())
+from jonbot.layer1_api_interface.app import API_STREAMING_RESPONSE_TEST_URL
+from jonbot.layer1_api_interface.send_request_to_api import send_request_to_api_streaming
+from jonbot.layer3_data_layer.data_models.conversation_models import ChatRequest
 
 
+async def send_chat_stream_api_request(api_route: str,
+                                       chat_request: ChatRequest,
+                                       message: discord.Message):
+
+    reply_message = await message.reply("`awaiting bot response...`")
+    async def update_discord_reply(reply_message: discord.Message,
+                                     token: str,
+                                     max_message_length:int=2000):
+        comfy_message_length = int(max_message_length*.9)
+        if len(reply_message.content) > comfy_message_length:
+            reply_message = await reply_message.reply("`continuing from previous message...`")
+        reply_message.edit(content=message.content + token)
+
+    return await send_request_to_api_streaming(api_route=api_route,
+                                               data=chat_request.dict(),
+                                               callbacks=[update_discord_reply])
+
+
+def print_over_here(token):
+    print(f"wow {token}")
+
+
+async def streaming_response_test_endpoint():
+    return await send_request_to_api_streaming(api_route=API_STREAMING_RESPONSE_TEST_URL,
+                                               data={"test": "test"},
+                                               callbacks=[print_over_here])
 
 
 if __name__ == '__main__':
-    asyncio.run(send_chat_stream_api_request())
+    asyncio.run(streaming_response_test_endpoint())
