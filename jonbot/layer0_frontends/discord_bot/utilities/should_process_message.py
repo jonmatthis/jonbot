@@ -3,7 +3,7 @@ import os
 import discord
 from dotenv import load_dotenv
 
-from jonbot.layer0_frontends.discord_bot.commands.voice_command_group import VOICE_RECORDING_PREFIX
+from jonbot.layer0_frontends.discord_bot.commands.voice_channel_cog import VOICE_RECORDING_PREFIX
 from jonbot.layer0_frontends.discord_bot.event_handlers.handle_voice_memo import TRANSCRIBED_AUDIO_PREFIX
 
 

@@ -64,7 +64,7 @@ async def send_request_to_api_streaming(api_route: str = None,
         async with aiohttp.ClientSession() as session:
             async with session.post(api_route, json=data) as response:
                 if response.status == 200:
-                    async for line in response.content:
+                    async for line in response.content.iter_any():
                         await run_callbacks(callbacks, line)
                 else:
                     error_message = await error_message_from_response(response)

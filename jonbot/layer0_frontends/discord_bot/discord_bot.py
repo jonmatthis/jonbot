@@ -3,7 +3,7 @@ import logging
 
 import discord
 
-from jonbot.layer0_frontends.discord_bot.commands.voice_command_group import voice_command_group
+from jonbot.layer0_frontends.discord_bot.commands.voice_channel_cog import VoiceChannelCog
 from jonbot.layer0_frontends.discord_bot.event_handlers.handle_text_message import handle_text_message
 from jonbot.layer0_frontends.discord_bot.event_handlers.handle_voice_memo import handle_voice_memo
 from jonbot.layer0_frontends.discord_bot.utilities.should_process_message import should_process_message
@@ -19,8 +19,9 @@ logger = logging.getLogger(__name__)
 class DiscordBot(discord.Bot):
     def __init__(self):
         super().__init__(command_prefix="!", intents=discord.Intents.all())
-        self.add_application_command(voice_command_group)
         # self.add_cog(ServerScraperCog())
+        self.add_cog(VoiceChannelCog())
+
 
     @discord.Cog.listener()
     async def on_ready(self):

@@ -3,6 +3,7 @@ import logging
 
 from fastapi import FastAPI
 from langchain.callbacks import StreamingStdOutCallbackHandler, AsyncIteratorCallbackHandler
+from langchain.callbacks.base import AsyncCallbackHandler
 from starlette.responses import StreamingResponse
 from uvicorn import Config, Server
 
@@ -56,31 +57,34 @@ async def chat(chat_request: ChatRequest) -> ChatResponse:
     return chat_response
 
 
-@app.post(CHAT_STREAM_ENDPOINT)
-async def chat_stream_endpoint(chat_request: ChatRequest):
-    return StreamingResponse(chat_stream(chat_request), media_type="text/plain")
+
+class StreamingAsyncCallbackHandler(AsyncCallbackHandler):
+    async def on_llm_new_token(self, token: str, *args, **kwargs ) -> None:
+        """Run when a new token is generated."""
+        print("Hi! I just woke up. Your llm is generating a new token: '{token}'")
+        yield f"lookit this token: {token} |"
 
 
+@app.post(CHAT_STREAM_ENDPOINT, response_class=StreamingResponse)
 async def chat_stream(chat_request: ChatRequest):
     logger.info(f"Received chat_stream request: {chat_request}")
 
-    async_iterator_callback_handler = AsyncIteratorCallbackHandler()
-    ai_chat_bot = await AIChatBot.from_chat_request(chat_request=chat_request)
-    ai_chat_bot.add_callback_handler(async_iterator_callback_handler)
-    # ai_chat_bot.add_callback_handler(StreamingStdOutCallbackHandler())
+    mongo_database = await get_or_create_mongo_database_manager()
+    conversation_history = await mongo_database.get_conversation_history(
+        context_route=chat_request.conversation_context.context_route)
 
-    # Run the acall method in the background.
-    task = asyncio.create_task(
-        ai_chat_bot.chain.acall(inputs={"human_input": chat_request.chat_input.message})
-    )
+    ai_chat_bot = await AIChatBot.build(conversation_context=chat_request.conversation_context,
+                                               conversation_history=conversation_history, )
 
-    while not async_iterator_callback_handler.done.is_set():
-        async for token in async_iterator_callback_handler.aiter():
-            logger.debug(f"Backend yielding token: {token}")
-            await asyncio.sleep(.001)
-            yield f"{token}".encode('utf-8')  # This ensures that you are yielding bytes
+    ai_chat_bot.add_callback_handler(handler=StreamingAsyncCallbackHandler())
 
-    await task  # Wait for the task to finish
+    async def stream_response():
+        async for token in ai_chat_bot.stream_chat_response_tokens(input_text=chat_request.chat_input.message):
+            logger.debug(f"Streaming token: {token['text']}")
+            yield token["text"]
+
+    return StreamingResponse(stream_response(), media_type="text/plain")
+
 
 
 @app.post(STREAMING_RESPONSE_TEST_ENDPOINT)
