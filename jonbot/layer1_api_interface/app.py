@@ -3,7 +3,6 @@ import logging
 
 from fastapi import FastAPI
 from langchain.callbacks import StreamingStdOutCallbackHandler, AsyncIteratorCallbackHandler
-from langchain.callbacks.base import AsyncCallbackHandler
 from starlette.responses import StreamingResponse
 from uvicorn import Config, Server
 
@@ -11,30 +10,34 @@ from jonbot.layer2_core_processes.ai_chatbot.ai_chatbot import AIChatBot
 from jonbot.layer2_core_processes.audio_transcription.transcribe_audio import transcribe_audio
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatResponse, ChatRequest
 from jonbot.layer3_data_layer.data_models.database_upsert_models import DatabaseUpsertResponse, DatabaseUpsertRequest
+from jonbot.layer3_data_layer.data_models.health_check_status import HealthCheckResponse
 from jonbot.layer3_data_layer.data_models.voice_to_text_request import VoiceToTextRequest, VoiceToTextResponse
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 
 logger = logging.getLogger(__name__)
 
+HEALTH_ENDPOINT = "/health"
 CHAT_ENDPOINT = "/chat"
-VOICE_TO_TEXT_ENDPOINT = "/voice_to_text"
 CHAT_STREAM_ENDPOINT = "/chat_stream"
+STREAMING_RESPONSE_TEST_ENDPOINT = "/test_streaming_response"
+VOICE_TO_TEXT_ENDPOINT = "/voice_to_text"
 DATABASE_UPSERT_ENDPOINT = "/database_upsert"
 
-STREAMING_RESPONSE_TEST_ENDPOINT = "/test_streaming_response"
-
-API_CHAT_URL = f"http://localhost:8000{CHAT_ENDPOINT}"
-API_VOICE_TO_TEXT_URL = f"http://localhost:8000{VOICE_TO_TEXT_ENDPOINT}"
-API_CHAT_STREAM_URL = f"http://localhost:8000{CHAT_STREAM_ENDPOINT}"
-API_DATABASE_UPSERT_URL = f"http://localhost:8000{DATABASE_UPSERT_ENDPOINT}"
-
-API_STREAMING_RESPONSE_TEST_URL = f"http://localhost:8000{STREAMING_RESPONSE_TEST_ENDPOINT}"
 app = FastAPI()
 
 
 @app.on_event("startup")
 async def startup_event():
     await get_or_create_mongo_database_manager()
+
+
+def get_api_endpoint_url(api_endpoint: str):
+    return f"http://localhost:8000{api_endpoint}"
+
+
+@app.get(HEALTH_ENDPOINT, response_model=HealthCheckResponse)
+async def health_check():
+    return HealthCheckResponse(status="alive")
 
 
 @app.post(CHAT_ENDPOINT, response_model=ChatResponse)
@@ -53,29 +56,18 @@ async def chat(chat_request: ChatRequest) -> ChatResponse:
     return chat_response
 
 
-class StreamingAsyncCallbackHandler(AsyncCallbackHandler):
-    def __init__(self,
-                 queue: asyncio.Queue = None,
-                 *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.queue = queue
-
-    async def on_llm_new_token(self, token: str, *args, **kwargs) -> None:
-        """Run when a new token is generated."""
-        print("Hi! I just woke up. Your llm is generating a new token: '{token}'")
-        await self.queue.put(f"lookit this token: {token} |")
-
 @app.post(CHAT_STREAM_ENDPOINT)
 async def chat_stream_endpoint(chat_request: ChatRequest):
     return StreamingResponse(chat_stream(chat_request))
+
 
 async def chat_stream(chat_request: ChatRequest):
     logger.info(f"Received chat_stream request: {chat_request}")
 
     async_iterator_callback_handler = AsyncIteratorCallbackHandler()
-    ai_chat_bot = await AIChatBot.from_chat_request(chat_request=chat_request,
-                                                    callbacks=[async_iterator_callback_handler,
-                                                               StreamingStdOutCallbackHandler()])
+    ai_chat_bot = await AIChatBot.from_chat_request(chat_request=chat_request)
+    ai_chat_bot.add_callback_handler(async_iterator_callback_handler)
+    # ai_chat_bot.add_callback_handler(StreamingStdOutCallbackHandler())
 
     # Run the acall method in the background.
     task = asyncio.create_task(
@@ -84,6 +76,7 @@ async def chat_stream(chat_request: ChatRequest):
 
     # Iterate over the async iterator to get tokens.
     async for token in async_iterator_callback_handler.aiter():
+        logger.debug(f"Backend yielding token: {token}")
         yield f"{token}".encode('utf-8')  # This ensures that you are yielding bytes
 
     # Await the task at the end to ensure any exceptions raised are propagated.

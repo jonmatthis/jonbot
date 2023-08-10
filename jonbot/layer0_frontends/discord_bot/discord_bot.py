@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 import discord
@@ -6,7 +7,7 @@ from jonbot.layer0_frontends.discord_bot.commands.voice_command_group import voi
 from jonbot.layer0_frontends.discord_bot.event_handlers.handle_text_message import handle_text_message
 from jonbot.layer0_frontends.discord_bot.event_handlers.handle_voice_memo import handle_voice_memo
 from jonbot.layer0_frontends.discord_bot.utilities.should_process_message import should_process_message
-from jonbot.layer1_api_interface.app import API_DATABASE_UPSERT_URL
+from jonbot.layer1_api_interface.app import get_api_endpoint_url, DATABASE_UPSERT_ENDPOINT, HEALTH_ENDPOINT
 from jonbot.layer1_api_interface.send_request_to_api import send_request_to_api
 from jonbot.layer3_data_layer.data_models.conversation_models import ContextRoute
 from jonbot.layer3_data_layer.data_models.database_upsert_models import DatabaseUpsertRequest
@@ -23,7 +24,39 @@ class DiscordBot(discord.Bot):
 
     @discord.Cog.listener()
     async def on_ready(self):
-        print(f'We have logged in as {self.user}')
+        logger.info(f"Logged in as {self.user.name} ({self.user.id}) - checking API health...")
+
+        while True:
+
+            try:
+                response = await send_request_to_api(api_route=get_api_endpoint_url(HEALTH_ENDPOINT),
+                                                     type="GET")
+                if response["status"] == "alive":
+                    logger.info(f"API is alive! \n {response}")
+                    break
+                else:
+                    logger.info(f"API is not alive yet. Waiting for 1 second before checking again.")
+                    await asyncio.sleep(1)
+
+            except Exception as e:
+                logger.exception(f"An error occurred while checking API health: {str(e)}")
+
+        self.print_pretty_startup_message_in_terminal()
+
+    def print_pretty_startup_message_in_terminal(self):
+        message = f"{self.user.name} is ready to roll!!!"
+        padding = 10  # Adjust as needed
+        total_length = len(message) + padding
+
+        border = '═' * total_length
+        space_padding = (total_length - len(message)) // 2
+
+        print(f"""
+        ╔{border}╗
+        ║{' ' * space_padding}{message}{' ' * space_padding}║
+        ╚{border}╝
+        """)
+
 
     @discord.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
@@ -59,11 +92,12 @@ async def log_message_in_database(message: discord.Message):
     """
     discord_message_document = await DiscordMessageDocument.from_message(message)
     database_upsert_request = DatabaseUpsertRequest(data=discord_message_document.dict(),
-                                                    query={"context_route": ContextRoute.from_discord_message(message).dict()},
+                                                    query={"context_route": ContextRoute.from_discord_message(
+                                                        message).dict()},
                                                     collection="discord_messages",
                                                     )
     logger.info(f"Logging message in database: ContextRoute {ContextRoute.from_discord_message(message).full}")
-    response = await send_request_to_api(api_route=API_DATABASE_UPSERT_URL,
+    response = await send_request_to_api(api_route=get_api_endpoint_url(DATABASE_UPSERT_ENDPOINT),
                                          data=database_upsert_request.dict(),
                                          )
     if not response["success"]:

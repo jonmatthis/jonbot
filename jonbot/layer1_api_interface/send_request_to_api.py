@@ -4,15 +4,35 @@ from typing import Callable, Coroutine, Union, List
 
 import aiohttp
 
-from jonbot.layer3_data_layer.data_models.conversation_models import ChatRequest
+from jonbot.layer1_api_interface.app import get_api_endpoint_url
 
 logger = logging.getLogger(__name__)
 
 
-async def send_request_to_api(api_route: str,
-                              data: dict, ) -> dict:
+async def send_request_to_api(api_route: str= None,
+                              api_endpoint: str = None,
+                              data: dict = None,
+                              type:str = "POST") -> dict:
+    if not api_route:
+        if not api_endpoint:
+            raise Exception("Must provide either api_route or api_endpoint")
+
+        api_route = get_api_endpoint_url(api_endpoint)
+    else:
+        if api_endpoint:
+            raise Exception("Cannot provide both api_route and api_endpoint")
+
+
+    if not data:
+        data = {}
+
     async with aiohttp.ClientSession() as session:
-        response = await session.post(api_route, json=data)
+        if type == "POST":
+            response = await session.post(api_route, json=data)
+        elif type == "GET":
+            response = await session.get(api_route, json=data)
+        else:
+            raise Exception(f"Invalid type: {type}")
 
         if response.status == 200:
             return await response.json()
@@ -24,8 +44,7 @@ async def send_request_to_api(api_route: str,
 
 async def send_request_to_api_streaming(api_route: str,
                                         data: dict,
-                                        callbacks: Union[Callable, Coroutine]=None) -> dict:
-
+                                        callbacks: Union[Callable, Coroutine] = None) -> dict:
     if not callbacks:
         callbacks = []
 

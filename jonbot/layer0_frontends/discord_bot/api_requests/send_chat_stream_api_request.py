@@ -87,7 +87,7 @@ async def send_chat_stream_api_request(api_route: str,
     await updater.initialize_reply(message)
 
     async def callback(token: str):
-        logger.debug(f"frontend received token: `{token}`")
+        logger.debug(f"Frontend received token: `{token}`")
         await updater.update_discord_reply(token)
 
     try:
