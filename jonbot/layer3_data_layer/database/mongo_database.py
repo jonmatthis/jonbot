@@ -143,7 +143,7 @@ class MongoDatabaseManager:
         except Exception as e:
             traceback.print_exc()
             print(f"Error saving json: {e}")
-            raise e
+            raise
 
         logger.info(f"Saved {len(data)} documents to {save_path}")
 

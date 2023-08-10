@@ -58,7 +58,7 @@ async def chat(chat_request: ChatRequest) -> ChatResponse:
 
 @app.post(CHAT_STREAM_ENDPOINT)
 async def chat_stream_endpoint(chat_request: ChatRequest):
-    return StreamingResponse(chat_stream(chat_request))
+    return StreamingResponse(chat_stream(chat_request), media_type="text/plain")
 
 
 async def chat_stream(chat_request: ChatRequest):
@@ -77,6 +77,7 @@ async def chat_stream(chat_request: ChatRequest):
     while not async_iterator_callback_handler.done.is_set():
         async for token in async_iterator_callback_handler.aiter():
             logger.debug(f"Backend yielding token: {token}")
+            await asyncio.sleep(.001)
             yield f"{token}".encode('utf-8')  # This ensures that you are yielding bytes
 
     await task  # Wait for the task to finish
@@ -86,6 +87,8 @@ async def chat_stream(chat_request: ChatRequest):
 async def streaming_response_test():
     async def generate():
         for chunk in range(10):
+            test_token = f"Token {chunk}"
+            logger.info(f"Streaming response test yielding token: {test_token}")
             yield f"Data {chunk}\n"
             await asyncio.sleep(1)  # simulate some delay
 

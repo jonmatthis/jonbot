@@ -29,7 +29,7 @@ class DiscordBot(discord.Bot):
         while True:
 
             try:
-                response = await send_request_to_api(api_route=get_api_endpoint_url(HEALTH_ENDPOINT),
+                response = await send_request_to_api(api_endpoint=HEALTH_ENDPOINT,
                                                      type="GET")
                 if response["status"] == "alive":
                     logger.info(f"API is alive! \n {response}")

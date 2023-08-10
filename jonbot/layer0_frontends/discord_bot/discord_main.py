@@ -18,7 +18,7 @@ async def run_discord_bot_async():
         discord_bot = DiscordBot()
     except Exception as e:
         logger.exception(f"An error occurred while starting the Discord bot: {str(e)}")
-        raise e
+        raise
 
     await discord_bot.start(os.getenv("DISCORD_TOKEN"))
 
