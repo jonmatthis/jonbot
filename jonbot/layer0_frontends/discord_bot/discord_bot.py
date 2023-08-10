@@ -40,7 +40,7 @@ class DiscordBot(discord.Bot):
                 else:
                     # HANDLE TEXT MESSAGE
                     await handle_text_message(message,
-                                              streaming=False)
+                                              streaming=True)
 
         except Exception as e:
             error_message = f"An error occurred: {str(e)}"

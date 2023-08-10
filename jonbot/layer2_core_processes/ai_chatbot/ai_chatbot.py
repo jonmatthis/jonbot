@@ -31,24 +31,23 @@ class CustomStreamingCallbackHandler(BaseCallbackHandler):
         self.token_handler(token)
 
 
-class AIChatBot(BaseModel):
+class AIChatBotBuilder(BaseModel):
     llm: BaseChatModel = None
     prompt: ChatPromptTemplate = None
     memory: CombinedMemory = None
     chain: Chain = None
 
-
     @classmethod
-    async def create(cls,
-                     conversation_context: ConversationContext = None,
-                     conversation_history: ConversationHistory = None, ):
+    async def build(cls,
+                    conversation_context: ConversationContext = None,
+                    conversation_history: ConversationHistory = None, ):
         llm = ChatOpenAI(
             streaming=True,
             callbacks=[StreamingStdOutCallbackHandler()],
             temperature=0.8,
             model_name="gpt-4")
 
-        prompt = ChatbotPromptBuilder.create(conversation_context=conversation_context)
+        prompt = ChatbotPromptBuilder.build(conversation_context=conversation_context)
 
         memory = await ChatbotMemoryBuilder.build(conversation_history=conversation_history)
 
@@ -64,32 +63,19 @@ class AIChatBot(BaseModel):
                    chain=chain)
 
     def add_callback_handler(self, handler: BaseCallbackHandler):
+        logger.info(f"Adding callback handler: {handler}")
         self.llm.callbacks.append(handler)
 
-
-    async def async_process_human_input_text_streaming(self, input_text: str):
-        print(f"Input: {input_text}")
-        print("Streaming response...\n")
-
-        async def token_handler(token: str):
+    async def stream_chat_response_tokens(self, input_text: str):
+        logger.info(f"Calling chain (as stream) with input_text: {input_text}")
+        async for token in self.chain.astream(input={"human_input": input_text}):
             yield token
 
-        callback_handler = CustomStreamingCallbackHandler(token_handler=token_handler)
-        self.add_callback_handler(callback_handler)
-        await self.chain.arun(human_input=input_text)
-        return token_handler
-
     async def get_chat_response(self,
-                                chat_input_string: str,
-                                return_response:bool = True) -> ChatResponse:
-        logger.info(f"chat_input_string: {chat_input_string}")
-        logger.info("Streaming response...\n")
+                                chat_input_string: str) -> ChatResponse:
+        logger.info(f"Calling chain with chat_input_string: {chat_input_string}")
         response = await self.chain.acall(inputs={"human_input": chat_input_string})
-
-        if return_response:
-            return ChatResponse(text=response["text"])
-
-
+        return ChatResponse(text=response["text"])
 
     async def demo(self):
         print("Welcome to the ChatBot demo!")
@@ -109,7 +95,7 @@ class AIChatBot(BaseModel):
 
 async def ai_chatbot_demo():
     logging.getLogger(__name__).setLevel(logging.WARNING)
-    chatbot = await AIChatBot.create()
+    chatbot = await AIChatBotBuilder.build()
     await chatbot.demo()
 
 

@@ -1,12 +1,14 @@
 import asyncio
 import logging
+from typing import Any, Dict, List
 
 from fastapi import FastAPI
 from langchain.callbacks.base import AsyncCallbackHandler
+from langchain.schema import LLMResult
 from starlette.responses import StreamingResponse
 from uvicorn import Config, Server
 
-from jonbot.layer2_core_processes.ai_chatbot.ai_chatbot import AIChatBot
+from jonbot.layer2_core_processes.ai_chatbot.ai_chatbot import AIChatBotBuilder
 from jonbot.layer2_core_processes.audio_transcription.transcribe_audio import transcribe_audio
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatResponse, ChatRequest
 from jonbot.layer3_data_layer.data_models.database_upsert_models import DatabaseUpsertResponse, DatabaseUpsertRequest
@@ -44,57 +46,19 @@ async def chat(chat_request: ChatRequest) -> ChatResponse:
     conversation_history = await mongo_database.get_conversation_history(
         context_route=chat_request.conversation_context.context_route)
 
-    ai_chat_bot = await AIChatBot.create(conversation_context=chat_request.conversation_context,
-                                         conversation_history=conversation_history, )
+    ai_chat_bot = await AIChatBotBuilder.build(conversation_context=chat_request.conversation_context,
+                                               conversation_history=conversation_history, )
 
     chat_response = await ai_chat_bot.get_chat_response(chat_input_string=chat_request.chat_input.message)
 
     return chat_response
 
 
-class PutTokenInQueueHandler(AsyncCallbackHandler):
-    def __init__(self, queue: asyncio.Queue):
-        super().__init__()
-        self.queue = queue
-
-    async def on_llm_new_token(self, token: str, **kwargs) -> None:
-        print(f"PutTokenInQueueHandler: {token}")
-        self.queue.put_nowait(token)
-
-
-class StreamingResponseHandler:
-    def __init__(self,
-                 ai_chat_bot: AIChatBot,
-                 queue: asyncio.Queue,
-                 input_message_text: str):
-        self.ai_chat_bot = ai_chat_bot
-        self.queue = queue
-        self.input_message_text = input_message_text
-
-    async def get_response(self):
-        logger.info("Starting `get_response` task")
-        await self.ai_chat_bot.get_chat_response(chat_input_string=self.input_message,
-                                                 return_response=False)
-
-    async def process_tokens(self):
-        logger.info("Starting `process_tokens` task")
-        while True:
-            token = await self.queue.get()
-            print(f"grabbed token from queue: {token}")
-            if token is None:  # signal to stop streaming
-                break
-            yield token
-            self.queue.task_done()
-
-    async def run(self):
-        logger.info("Running `StreamingResponseHandler`")
-        response_task = asyncio.create_task(self.get_response())
-
-        async for token in self.process_tokens():
-            print(f"yielding token: {token}")
-            yield token
-
-        await response_task
+class StreamingAsyncCallbackHandler(AsyncCallbackHandler):
+    async def on_llm_new_token(self, token: str, *args, **kwargs ) -> None:
+        """Run when a new token is generated."""
+        print("Hi! I just woke up. Your llm is generating a new token: '{token}'")
+        yield f"lookit this token: {token} |"
 
 
 @app.post(CHAT_STREAM_ENDPOINT, response_class=StreamingResponse)
@@ -105,18 +69,14 @@ async def chat_stream(chat_request: ChatRequest):
     conversation_history = await mongo_database.get_conversation_history(
         context_route=chat_request.conversation_context.context_route)
 
-    ai_chat_bot = await AIChatBot.create(conversation_context=chat_request.conversation_context,
-                                         conversation_history=conversation_history, )
+    ai_chat_bot = await AIChatBotBuilder.build(conversation_context=chat_request.conversation_context,
+                                               conversation_history=conversation_history, )
 
     queue = asyncio.Queue()
-    ai_chat_bot.add_callback_handler(handler=PutTokenInQueueHandler(queue=queue))
-
-    stream_response_handler = StreamingResponseHandler(ai_chat_bot=ai_chat_bot,
-                                                       queue=queue,
-                                                       input_message_text=chat_request.chat_input.message)
+    ai_chat_bot.add_callback_handler(handler=StreamingAsyncCallbackHandler())
 
     async def stream_response():
-        async for token in stream_response_handler.run():
+        async for token in ai_chat_bot.stream_chat_response_tokens(input_text=chat_request.chat_input.message):
             yield token
 
     return StreamingResponse(stream_response(), media_type="text/plain")

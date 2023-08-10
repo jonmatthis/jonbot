@@ -9,10 +9,10 @@ from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 
 class ChatbotPromptBuilder(ChatPromptTemplate):
     @classmethod
-    def create(cls,
-               conversation_context: ConversationContext = None,
-               system_prompt_template: str = DEFAULT_CHATBOT_SYSTEM_PROMPT_TEMPLATE,
-               ) -> ChatPromptTemplate:
+    def build(cls,
+              conversation_context: ConversationContext = None,
+              system_prompt_template: str = DEFAULT_CHATBOT_SYSTEM_PROMPT_TEMPLATE,
+              ) -> ChatPromptTemplate:
 
         system_prompt = PromptTemplate(template=system_prompt_template,
                                        input_variables=["timestamp",
