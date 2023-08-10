@@ -7,7 +7,7 @@ from jonbot.layer3_data_layer.data_models.conversation_models import Conversatio
 from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
 
 
-class ChatbotPromptBuilder(ChatPromptTemplate):
+class ChatbotPrompt(ChatPromptTemplate):
     @classmethod
     def build(cls,
               conversation_context: ConversationContext = None,

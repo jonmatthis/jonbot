@@ -14,8 +14,8 @@ from langchain.memory import CombinedMemory
 from langchain.prompts import ChatPromptTemplate
 from pydantic import BaseModel
 
-from jonbot.layer2_core_processes.ai_chatbot.components.memory.chatbot_memory_builder import ChatbotMemoryBuilder
-from jonbot.layer2_core_processes.ai_chatbot.components.prompt.prompt_builder import ChatbotPromptBuilder
+from jonbot.layer2_core_processes.ai_chatbot.components.memory.chatbot_memory_builder import ChatbotMemory
+from jonbot.layer2_core_processes.ai_chatbot.components.prompt.prompt_builder import ChatbotPrompt
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatResponse, ConversationHistory, \
     ConversationContext
 
@@ -23,19 +23,12 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
-class CustomStreamingCallbackHandler(BaseCallbackHandler):
-    def __init__(self, token_handler: Callable[[str], None] = None):
-        self.token_handler = token_handler
 
-    def on_llm_new_token(self, token: str, **kwargs: Any) -> None:
-        self.token_handler(token)
-
-
-class AIChatBotBuilder(BaseModel):
+class AIChatBot(BaseModel):
     llm: BaseChatModel = None
     prompt: ChatPromptTemplate = None
     memory: CombinedMemory = None
-    chain: Chain = None
+    chain: LLMChain = None
 
     @classmethod
     async def build(cls,
@@ -43,13 +36,13 @@ class AIChatBotBuilder(BaseModel):
                     conversation_history: ConversationHistory = None, ):
         llm = ChatOpenAI(
             streaming=True,
-            callbacks=[StreamingStdOutCallbackHandler()],
+            callbacks=[],
             temperature=0.8,
             model_name="gpt-4")
 
-        prompt = ChatbotPromptBuilder.build(conversation_context=conversation_context)
+        prompt = ChatbotPrompt.build(conversation_context=conversation_context)
 
-        memory = await ChatbotMemoryBuilder.build(conversation_history=conversation_history)
+        memory = await ChatbotMemory.build(conversation_history=conversation_history)
 
         chain = LLMChain(llm=llm,
                          prompt=prompt,
@@ -69,7 +62,7 @@ class AIChatBotBuilder(BaseModel):
     async def stream_chat_response_tokens(self, input_text: str):
         logger.info(f"Calling chain (as stream) with input_text: {input_text}")
         async for token in self.chain.astream(input={"human_input": input_text}):
-            yield token["text"]
+            yield token
 
     async def get_chat_response(self,
                                 chat_input_string: str) -> ChatResponse:
@@ -95,7 +88,7 @@ class AIChatBotBuilder(BaseModel):
 
 async def ai_chatbot_demo():
     logging.getLogger(__name__).setLevel(logging.WARNING)
-    chatbot = await AIChatBotBuilder.build()
+    chatbot = await AIChatBot.build()
     await chatbot.demo()
 
 

@@ -13,7 +13,7 @@ from jonbot.layer3_data_layer.data_models.conversation_models import Conversatio
 logger = logging.getLogger(__name__)
 
 
-class ChatbotMemoryBuilder(CombinedMemory):
+class ChatbotMemory(CombinedMemory):
     @classmethod
     async def build(cls,
                     conversation_history: ConversationHistory = None):

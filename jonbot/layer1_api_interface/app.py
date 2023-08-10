@@ -1,14 +1,13 @@
 import asyncio
 import logging
-from typing import Any, Dict, List
 
 from fastapi import FastAPI
+from langchain.callbacks import StreamingStdOutCallbackHandler, AsyncIteratorCallbackHandler
 from langchain.callbacks.base import AsyncCallbackHandler
-from langchain.schema import LLMResult
 from starlette.responses import StreamingResponse
 from uvicorn import Config, Server
 
-from jonbot.layer2_core_processes.ai_chatbot.ai_chatbot import AIChatBotBuilder
+from jonbot.layer2_core_processes.ai_chatbot.ai_chatbot import AIChatBot
 from jonbot.layer2_core_processes.audio_transcription.transcribe_audio import transcribe_audio
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatResponse, ChatRequest
 from jonbot.layer3_data_layer.data_models.database_upsert_models import DatabaseUpsertResponse, DatabaseUpsertRequest
@@ -46,22 +45,30 @@ async def chat(chat_request: ChatRequest) -> ChatResponse:
     conversation_history = await mongo_database.get_conversation_history(
         context_route=chat_request.conversation_context.context_route)
 
-    ai_chat_bot = await AIChatBotBuilder.build(conversation_context=chat_request.conversation_context,
-                                               conversation_history=conversation_history, )
-
+    ai_chat_bot = await AIChatBot.build(conversation_context=chat_request.conversation_context,
+                                        conversation_history=conversation_history, )
+    ai_chat_bot.add_callback_handler(StreamingStdOutCallbackHandler())
     chat_response = await ai_chat_bot.get_chat_response(chat_input_string=chat_request.chat_input.message)
 
     return chat_response
 
 
 class StreamingAsyncCallbackHandler(AsyncCallbackHandler):
-    async def on_llm_new_token(self, token: str, *args, **kwargs ) -> None:
+    def __init__(self,
+                 queue: asyncio.Queue = None,
+                 *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.queue = queue
+
+    async def on_llm_new_token(self, token: str, *args, **kwargs) -> None:
         """Run when a new token is generated."""
         print("Hi! I just woke up. Your llm is generating a new token: '{token}'")
-        yield f"lookit this token: {token} |"
+        await self.queue.put(f"lookit this token: {token} |")
 
+@app.post(CHAT_STREAM_ENDPOINT)
+async def chat_stream_endpoint(chat_request: ChatRequest):
+    return StreamingResponse(chat_stream(chat_request))
 
-@app.post(CHAT_STREAM_ENDPOINT, response_class=StreamingResponse)
 async def chat_stream(chat_request: ChatRequest):
     logger.info(f"Received chat_stream request: {chat_request}")
 
@@ -69,16 +76,25 @@ async def chat_stream(chat_request: ChatRequest):
     conversation_history = await mongo_database.get_conversation_history(
         context_route=chat_request.conversation_context.context_route)
 
-    ai_chat_bot = await AIChatBotBuilder.build(conversation_context=chat_request.conversation_context,
-                                               conversation_history=conversation_history, )
+    ai_chat_bot = await AIChatBot.build(conversation_context=chat_request.conversation_context,
+                                        conversation_history=conversation_history)
 
-    ai_chat_bot.add_callback_handler(handler=StreamingAsyncCallbackHandler())
+    async_iterator_callback_handler = AsyncIteratorCallbackHandler()
+    ai_chat_bot.add_callback_handler(handler=async_iterator_callback_handler)
+    ai_chat_bot.add_callback_handler(handler=StreamingStdOutCallbackHandler())
 
-    async def stream_response():
-        async for token in ai_chat_bot.stream_chat_response_tokens(input_text=chat_request.chat_input.message):
-            yield token
+    # Run the acall method in the background.
+    task = asyncio.create_task(
+        ai_chat_bot.chain.acall(inputs={"human_input": chat_request.chat_input.message})
+    )
 
-    return StreamingResponse(stream_response(), media_type="text/plain")
+    # Iterate over the async iterator to get tokens.
+    async for token in async_iterator_callback_handler.aiter():
+        print(f"token: {token}\n")
+        yield f"token: {token}\n".encode('utf-8')  # This ensures that you are yielding bytes
+
+    # Await the task at the end to ensure any exceptions raised are propagated.
+    await task
 
 
 @app.post(STREAMING_RESPONSE_TEST_ENDPOINT)
