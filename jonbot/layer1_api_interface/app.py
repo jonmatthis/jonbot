@@ -72,16 +72,10 @@ async def chat_stream_endpoint(chat_request: ChatRequest):
 async def chat_stream(chat_request: ChatRequest):
     logger.info(f"Received chat_stream request: {chat_request}")
 
-    mongo_database = await get_or_create_mongo_database_manager()
-    conversation_history = await mongo_database.get_conversation_history(
-        context_route=chat_request.conversation_context.context_route)
-
-    ai_chat_bot = await AIChatBot.build(conversation_context=chat_request.conversation_context,
-                                        conversation_history=conversation_history)
-
     async_iterator_callback_handler = AsyncIteratorCallbackHandler()
-    ai_chat_bot.add_callback_handler(handler=async_iterator_callback_handler)
-    ai_chat_bot.add_callback_handler(handler=StreamingStdOutCallbackHandler())
+    ai_chat_bot = await AIChatBot.from_chat_request(chat_request=chat_request,
+                                                    callbacks=[async_iterator_callback_handler,
+                                                               StreamingStdOutCallbackHandler()])
 
     # Run the acall method in the background.
     task = asyncio.create_task(
@@ -90,8 +84,7 @@ async def chat_stream(chat_request: ChatRequest):
 
     # Iterate over the async iterator to get tokens.
     async for token in async_iterator_callback_handler.aiter():
-        print(f"token: {token}\n")
-        yield f"token: {token}\n".encode('utf-8')  # This ensures that you are yielding bytes
+        yield f"{token}".encode('utf-8')  # This ensures that you are yielding bytes
 
     # Await the task at the end to ensure any exceptions raised are propagated.
     await task

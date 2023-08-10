@@ -1,13 +1,10 @@
 import asyncio
 import logging
-from typing import Any
-from typing import Callable
+from typing import List
 
 from dotenv import load_dotenv
 from langchain import LLMChain
-from langchain.callbacks import StreamingStdOutCallbackHandler
 from langchain.callbacks.base import BaseCallbackHandler
-from langchain.chains.base import Chain
 from langchain.chat_models import ChatOpenAI
 from langchain.chat_models.base import BaseChatModel
 from langchain.memory import CombinedMemory
@@ -17,11 +14,11 @@ from pydantic import BaseModel
 from jonbot.layer2_core_processes.ai_chatbot.components.memory.chatbot_memory_builder import ChatbotMemory
 from jonbot.layer2_core_processes.ai_chatbot.components.prompt.prompt_builder import ChatbotPrompt
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatResponse, ConversationHistory, \
-    ConversationContext
+    ConversationContext, ChatRequest
+from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 
 load_dotenv()
 logger = logging.getLogger(__name__)
-
 
 
 class AIChatBot(BaseModel):
@@ -54,6 +51,16 @@ class AIChatBot(BaseModel):
                    prompt=prompt,
                    memory=memory,
                    chain=chain)
+
+    @classmethod
+    async def from_chat_request(cls,
+                                chat_request: ChatRequest):
+        mongo_database = await get_or_create_mongo_database_manager()
+        conversation_history = await mongo_database.get_conversation_history(
+            context_route=chat_request.conversation_context.context_route)
+
+        return await cls.build(conversation_context=chat_request.conversation_context,
+                               conversation_history=conversation_history)
 
     def add_callback_handler(self, handler: BaseCallbackHandler):
         logger.info(f"Adding callback handler: {handler}")
