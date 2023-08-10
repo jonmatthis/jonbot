@@ -40,7 +40,7 @@ class DiscordBot(discord.Bot):
                 else:
                     # HANDLE TEXT MESSAGE
                     await handle_text_message(message,
-                                              streaming=True)
+                                              streaming=False)
 
         except Exception as e:
             error_message = f"An error occurred: {str(e)}"
@@ -62,9 +62,9 @@ async def log_message_in_database(message: discord.Message):
                                                     query={"context_route": ContextRoute.from_discord_message(message).dict()},
                                                     collection="discord_messages",
                                                     )
-    logger.info(f"Logging message in database: {database_upsert_request}")
+    logger.info(f"Logging message in database: ContextRoute {ContextRoute.from_discord_message(message).full}")
     response = await send_request_to_api(api_route=API_DATABASE_UPSERT_URL,
                                          data=database_upsert_request.dict(),
                                          )
     if not response["success"]:
-        logger.error(f"Failed to log message in database!! \n\n {discord_message_document}")
+        logger.error(f"Failed to log message in database!! \n\n response: \n {response}")

@@ -63,8 +63,8 @@ class AIChatBot(BaseModel):
                    memory=memory,
                    chain=chain)
 
-    def add_callback(self, callback: BaseCallbackHandler):
-        self.llm.callbacks.append(callback)
+    def add_callback_handler(self, handler: BaseCallbackHandler):
+        self.llm.callbacks.append(handler)
 
 
     async def async_process_human_input_text_streaming(self, input_text: str):
@@ -75,15 +75,21 @@ class AIChatBot(BaseModel):
             yield token
 
         callback_handler = CustomStreamingCallbackHandler(token_handler=token_handler)
-        self.add_callback(callback_handler)
+        self.add_callback_handler(callback_handler)
         await self.chain.arun(human_input=input_text)
         return token_handler
 
-    async def get_chat_response(self, chat_input_string: str) -> ChatResponse:
+    async def get_chat_response(self,
+                                chat_input_string: str,
+                                return_response:bool = True) -> ChatResponse:
         logger.info(f"chat_input_string: {chat_input_string}")
         logger.info("Streaming response...\n")
         response = await self.chain.acall(inputs={"human_input": chat_input_string})
-        return ChatResponse(text=response["text"])
+
+        if return_response:
+            return ChatResponse(text=response["text"])
+
+
 
     async def demo(self):
         print("Welcome to the ChatBot demo!")

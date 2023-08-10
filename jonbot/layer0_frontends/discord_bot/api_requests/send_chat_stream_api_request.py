@@ -26,6 +26,7 @@ class DiscordStreamUpdater:
             self.message_content = token
 
         await self.reply_message.edit(content=self.message_content)
+
 async def send_chat_stream_api_request(api_route: str,
                                        chat_request: ChatRequest,
                                        message: discord.Message):
@@ -35,9 +36,13 @@ async def send_chat_stream_api_request(api_route: str,
     async def callback(token: str):
         await updater.update_discord_reply(token)
 
-    return await send_request_to_api_streaming(api_route=api_route,
-                                               data=None,
-                                               callbacks=[callback])
+    try:
+        return await send_request_to_api_streaming(api_route=api_route,
+                                                   data=chat_request.dict(),
+                                                   callbacks=[callback])
+    except Exception as e:
+        await updater.update_discord_reply(f"Error while streaming reply: \n >  {e}")
+        raise e
 
 
 async def print_over_here(token):

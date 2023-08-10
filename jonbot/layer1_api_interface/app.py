@@ -1,9 +1,8 @@
 import asyncio
 import logging
-import time
 
 from fastapi import FastAPI
-from langchain.callbacks.base import BaseCallbackHandler
+from langchain.callbacks.base import AsyncCallbackHandler
 from starlette.responses import StreamingResponse
 from uvicorn import Config, Server
 
@@ -18,24 +17,18 @@ logger = logging.getLogger(__name__)
 
 CHAT_ENDPOINT = "/chat"
 VOICE_TO_TEXT_ENDPOINT = "/voice_to_text"
-CHAT_STREAM_URL = "/chat_stream"
+CHAT_STREAM_ENDPOINT = "/chat_stream"
 DATABASE_UPSERT_ENDPOINT = "/database_upsert"
 
 STREAMING_RESPONSE_TEST_ENDPOINT = "/test_streaming_response"
 
-
 API_CHAT_URL = f"http://localhost:8000{CHAT_ENDPOINT}"
 API_VOICE_TO_TEXT_URL = f"http://localhost:8000{VOICE_TO_TEXT_ENDPOINT}"
-API_CHAT_STREAM_URL = f"http://localhost:8000{CHAT_STREAM_URL}"
+API_CHAT_STREAM_URL = f"http://localhost:8000{CHAT_STREAM_ENDPOINT}"
 API_DATABASE_UPSERT_URL = f"http://localhost:8000{DATABASE_UPSERT_ENDPOINT}"
 
 API_STREAMING_RESPONSE_TEST_URL = f"http://localhost:8000{STREAMING_RESPONSE_TEST_ENDPOINT}"
 app = FastAPI()
-
-
-class MyCustomHandler(BaseCallbackHandler):
-    def on_llm_new_token(self, token: str, **kwargs) -> None:
-        print(f"My custom handler, token: {token}")
 
 
 @app.on_event("startup")
@@ -47,27 +40,86 @@ async def startup_event():
 async def chat(chat_request: ChatRequest) -> ChatResponse:
     logger.info(f"Received chat request: {chat_request}")
 
-    tic = time.perf_counter()
     mongo_database = await get_or_create_mongo_database_manager()
     conversation_history = await mongo_database.get_conversation_history(
         context_route=chat_request.conversation_context.context_route)
 
-    toc = time.perf_counter()
-    if conversation_history is None:
-        logger.info(f"No conversation history found, elapsed time: {toc - tic:0.4f} seconds")
-    else:
-        logger.info(
-            f"Retrieved conversation history(length: {len(conversation_history)} documents), elapsed time: {toc - tic:0.4f} seconds")
-
-    tic = time.perf_counter()
     ai_chat_bot = await AIChatBot.create(conversation_context=chat_request.conversation_context,
                                          conversation_history=conversation_history, )
 
     chat_response = await ai_chat_bot.get_chat_response(chat_input_string=chat_request.chat_input.message)
 
-    toc = time.perf_counter()
-    logger.info(f"Returning chat response: {chat_response}, elapsed time: {toc - tic:0.4f} seconds")
     return chat_response
+
+
+class PutTokenInQueueHandler(AsyncCallbackHandler):
+    def __init__(self, queue: asyncio.Queue):
+        super().__init__()
+        self.queue = queue
+
+    async def on_llm_new_token(self, token: str, **kwargs) -> None:
+        print(f"PutTokenInQueueHandler: {token}")
+        self.queue.put_nowait(token)
+
+
+class StreamingResponseHandler:
+    def __init__(self,
+                 ai_chat_bot: AIChatBot,
+                 queue: asyncio.Queue,
+                 input_message_text: str):
+        self.ai_chat_bot = ai_chat_bot
+        self.queue = queue
+        self.input_message_text = input_message_text
+
+    async def get_response(self):
+        logger.info("Starting `get_response` task")
+        await self.ai_chat_bot.get_chat_response(chat_input_string=self.input_message,
+                                                 return_response=False)
+
+    async def process_tokens(self):
+        logger.info("Starting `process_tokens` task")
+        while True:
+            token = await self.queue.get()
+            print(f"grabbed token from queue: {token}")
+            if token is None:  # signal to stop streaming
+                break
+            yield token
+            self.queue.task_done()
+
+    async def run(self):
+        logger.info("Running `StreamingResponseHandler`")
+        response_task = asyncio.create_task(self.get_response())
+
+        async for token in self.process_tokens():
+            print(f"yielding token: {token}")
+            yield token
+
+        await response_task
+
+
+@app.post(CHAT_STREAM_ENDPOINT, response_class=StreamingResponse)
+async def chat_stream(chat_request: ChatRequest):
+    logger.info(f"Received chat_stream request: {chat_request}")
+
+    mongo_database = await get_or_create_mongo_database_manager()
+    conversation_history = await mongo_database.get_conversation_history(
+        context_route=chat_request.conversation_context.context_route)
+
+    ai_chat_bot = await AIChatBot.create(conversation_context=chat_request.conversation_context,
+                                         conversation_history=conversation_history, )
+
+    queue = asyncio.Queue()
+    ai_chat_bot.add_callback_handler(handler=PutTokenInQueueHandler(queue=queue))
+
+    stream_response_handler = StreamingResponseHandler(ai_chat_bot=ai_chat_bot,
+                                                       queue=queue,
+                                                       input_message_text=chat_request.chat_input.message)
+
+    async def stream_response():
+        async for token in stream_response_handler.run():
+            yield token
+
+    return StreamingResponse(stream_response(), media_type="text/plain")
 
 
 @app.post(STREAMING_RESPONSE_TEST_ENDPOINT)
@@ -78,6 +130,7 @@ async def streaming_response_test():
             await asyncio.sleep(1)  # simulate some delay
 
     return StreamingResponse(generate(), media_type="text/plain")
+
 
 @app.post(VOICE_TO_TEXT_ENDPOINT, response_model=VoiceToTextResponse)
 async def voice_to_text(request: VoiceToTextRequest) -> VoiceToTextResponse:
@@ -92,8 +145,8 @@ async def voice_to_text(request: VoiceToTextRequest) -> VoiceToTextResponse:
 
 
 @app.post(DATABASE_UPSERT_ENDPOINT, response_model=DatabaseUpsertResponse)
-async def database_upsert(database_upsert_request:DatabaseUpsertRequest) -> DatabaseUpsertResponse:
-    logger.info(f"Upserting data into database: database_upsert_request={database_upsert_request}")
+async def database_upsert(database_upsert_request: DatabaseUpsertRequest) -> DatabaseUpsertResponse:
+    logger.info(f"Upserting data into database query - {database_upsert_request.query}")
     mongo_database = await get_or_create_mongo_database_manager()
     success = await mongo_database.upsert(**database_upsert_request.dict())
     if success:
