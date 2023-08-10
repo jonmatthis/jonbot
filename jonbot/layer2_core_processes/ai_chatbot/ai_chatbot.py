@@ -69,7 +69,7 @@ class AIChatBotBuilder(BaseModel):
     async def stream_chat_response_tokens(self, input_text: str):
         logger.info(f"Calling chain (as stream) with input_text: {input_text}")
         async for token in self.chain.astream(input={"human_input": input_text}):
-            yield token
+            yield token["text"]
 
     async def get_chat_response(self,
                                 chat_input_string: str) -> ChatResponse:

@@ -37,7 +37,7 @@ async def send_request_to_api_streaming(api_route: str,
                         await run_callbacks(callbacks, line)
                 else:
                     error_message = await error_message_from_response(response)
-                    logger.exception(error_message)
+                    logger.error(error_message)
                     await run_callbacks(callbacks, error_message.encode('utf-8'))
                     raise Exception(error_message)
     except Exception as e:

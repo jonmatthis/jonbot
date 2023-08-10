@@ -72,7 +72,6 @@ async def chat_stream(chat_request: ChatRequest):
     ai_chat_bot = await AIChatBotBuilder.build(conversation_context=chat_request.conversation_context,
                                                conversation_history=conversation_history, )
 
-    queue = asyncio.Queue()
     ai_chat_bot.add_callback_handler(handler=StreamingAsyncCallbackHandler())
 
     async def stream_response():
