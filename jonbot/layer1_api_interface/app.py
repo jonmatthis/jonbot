@@ -74,13 +74,12 @@ async def chat_stream(chat_request: ChatRequest):
         ai_chat_bot.chain.acall(inputs={"human_input": chat_request.chat_input.message})
     )
 
-    # Iterate over the async iterator to get tokens.
-    async for token in async_iterator_callback_handler.aiter():
-        logger.debug(f"Backend yielding token: {token}")
-        yield f"{token}".encode('utf-8')  # This ensures that you are yielding bytes
+    while not async_iterator_callback_handler.done.is_set():
+        async for token in async_iterator_callback_handler.aiter():
+            logger.debug(f"Backend yielding token: {token}")
+            yield f"{token}".encode('utf-8')  # This ensures that you are yielding bytes
 
-    # Await the task at the end to ensure any exceptions raised are propagated.
-    await task
+    await task  # Wait for the task to finish
 
 
 @app.post(STREAMING_RESPONSE_TEST_ENDPOINT)

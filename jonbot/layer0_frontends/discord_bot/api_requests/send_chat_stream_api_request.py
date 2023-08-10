@@ -99,5 +99,4 @@ async def send_chat_stream_api_request(api_route: str,
         raise e
 
 
-if __name__ == '__main__':
-    asyncio.run(streaming_response_test_endpoint())
+
