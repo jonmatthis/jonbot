@@ -8,4 +8,4 @@ RUN pip install .
 
 EXPOSE 1235
 
-CMD ["python", "jonbot/__main__.py"]
+CMD ["python", "golembot/__main__.py"]
