@@ -1,4 +1,4 @@
-# jonbot
+# golembot
 
 a friendly machine whats nice to talk to
 
@@ -9,7 +9,7 @@ this bot helped me build this bot 🤖❤️✨
 
 ---
 
-JonBot is a chatbot with multiple frontends (Discord, Telegram) powered by AI
+GolemBot is a chatbot with multiple frontends (Discord, Telegram) powered by AI
 through [LangChain](https://langchain.readthedocs.io/en/latest/) and connected to a [MongDB](mongodb.com) database.
 
 ## Installation
@@ -18,15 +18,15 @@ Create and activate an environment:
 e.g.
 
 ```
-conda create -n jonbot-env python=3.11
-conda activate jonbot-env
+conda create -n golembot-env python=3.11
+conda activate golembot-env
 ```
 
 Clone the repo:
 
 ```
-git clone https://github.com/jonmatthis/jonbot
-cd jonbot
+git clone https://github.com/jonmatthis/golembot
+cd golembot
 ```
 
 Install dependencies:
@@ -42,7 +42,7 @@ pip install -e .
     - Discord - https://guide.pycord.dev/getting-started/creating-your-first-bot
     - Telegram - https://core.telegram.org/bots#how-do-i-create-a-bot
 
-## Run with: `python -m jonbot`  🤖❤️✨
+## Run with: `python -m golembot`  🤖❤️✨
 
 ## Usage
 
