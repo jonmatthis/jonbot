@@ -1,6 +1,6 @@
 version: '3.7'
 services:
-  golembot:
+  jonbot:
     build: .
     ports:
       - "1235:1235"
