@@ -1,10 +1,8 @@
-import asyncio
 import logging
 
 import discord
 
-from jonbot.layer0_frontends.discord_bot.api_requests.send_streaming_test_request import streaming_response_test_endpoint
-from jonbot.layer1_api_interface.send_request_to_api import send_request_to_api_streaming
+from jonbot.layer1_api_interface.app import send_request_to_api_streaming
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatRequest
 
 logger = logging.getLogger(__name__)
