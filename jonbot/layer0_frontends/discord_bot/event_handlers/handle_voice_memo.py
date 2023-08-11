@@ -4,8 +4,7 @@ import discord
 
 from jonbot.layer0_frontends.discord_bot.event_handlers.handle_text_message import \
     update_conversation_history_in_database
-from jonbot.layer1_api_interface.app import get_api_endpoint_url, VOICE_TO_TEXT_ENDPOINT
-from jonbot.layer1_api_interface.send_request_to_api import send_request_to_api
+from jonbot.layer1_api_interface.app import get_api_endpoint_url, VOICE_TO_TEXT_ENDPOINT, send_request_to_api
 from jonbot.layer3_data_layer.data_models.voice_to_text_request import VoiceToTextRequest
 
 logger = logging.getLogger(__name__)

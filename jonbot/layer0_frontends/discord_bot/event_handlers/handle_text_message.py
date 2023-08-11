@@ -8,8 +8,7 @@ from jonbot.layer0_frontends.discord_bot.api_requests.send_chat_stream_api_reque
 from jonbot.layer0_frontends.discord_bot.utilities.get_conversation_history_from_message import \
     get_conversation_history_from_message
 from jonbot.layer1_api_interface.app import get_api_endpoint_url, CHAT_STREAM_ENDPOINT, \
-    CHAT_ENDPOINT, DATABASE_UPSERT_ENDPOINT
-from jonbot.layer1_api_interface.send_request_to_api import send_request_to_api
+    CHAT_ENDPOINT, DATABASE_UPSERT_ENDPOINT, send_request_to_api
 from jonbot.layer3_data_layer.data_models.conversation_models import ChatRequest, \
     ContextRoute
 from jonbot.layer3_data_layer.data_models.database_upsert_models import DatabaseUpsertRequest

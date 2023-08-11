@@ -18,13 +18,13 @@ def run_services():
         # Start the API server in a new thread
         api_server_thread = executor.submit(run_api_sync)
 
-        # Start the Telegram bot using asyncio
-        telegram_bot_thread = executor.submit(run_telegram_bot_sync)
+        # # Start the Telegram bot using asyncio
+        # telegram_bot_thread = executor.submit(run_telegram_bot_sync)
 
         # Wait for the threads to complete
         discord_bot_thread.result()
         api_server_thread.result()
-        telegram_bot_thread.result()
+        # telegram_bot_thread.result()
 def main():
     run_services()
 

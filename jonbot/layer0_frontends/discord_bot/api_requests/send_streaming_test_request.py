@@ -1,8 +1,7 @@
 import asyncio
 import logging
 
-from jonbot.layer1_api_interface.app import STREAMING_RESPONSE_TEST_ENDPOINT
-from jonbot.layer1_api_interface.send_request_to_api import send_request_to_api_streaming
+from jonbot.layer1_api_interface.app import STREAMING_RESPONSE_TEST_ENDPOINT, send_request_to_api_streaming
 
 logger = logging.getLogger(__name__)
 

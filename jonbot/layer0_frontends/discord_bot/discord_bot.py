@@ -1,4 +1,3 @@
-import asyncio
 import logging
 
 import discord
@@ -7,8 +6,8 @@ from jonbot.layer0_frontends.discord_bot.commands.voice_channel_cog import Voice
 from jonbot.layer0_frontends.discord_bot.event_handlers.handle_text_message import handle_text_message
 from jonbot.layer0_frontends.discord_bot.event_handlers.handle_voice_memo import handle_voice_memo
 from jonbot.layer0_frontends.discord_bot.utilities.should_process_message import should_process_message
-from jonbot.layer1_api_interface.app import get_api_endpoint_url, DATABASE_UPSERT_ENDPOINT, HEALTH_ENDPOINT
-from jonbot.layer1_api_interface.send_request_to_api import send_request_to_api
+from jonbot.layer1_api_interface.app import get_api_endpoint_url, DATABASE_UPSERT_ENDPOINT, health_check_api, \
+    send_request_to_api
 from jonbot.layer3_data_layer.data_models.conversation_models import ContextRoute
 from jonbot.layer3_data_layer.data_models.database_upsert_models import DatabaseUpsertRequest
 from jonbot.layer3_data_layer.data_models.discord_message import DiscordMessageDocument
@@ -27,22 +26,10 @@ class DiscordBot(discord.Bot):
     async def on_ready(self):
         logger.info(f"Logged in as {self.user.name} ({self.user.id}) - checking API health...")
 
-        while True:
-
-            try:
-                response = await send_request_to_api(api_endpoint=HEALTH_ENDPOINT,
-                                                     type="GET")
-                if response["status"] == "alive":
-                    logger.info(f"API is alive! \n {response}")
-                    break
-                else:
-                    logger.info(f"API is not alive yet. Waiting for 1 second before checking again.")
-                    await asyncio.sleep(1)
-
-            except Exception as e:
-                logger.exception(f"An error occurred while checking API health: {str(e)}")
+        await health_check_api()
 
         self.print_pretty_startup_message_in_terminal()
+
 
     def print_pretty_startup_message_in_terminal(self):
         message = f"{self.user.name} is ready to roll!!!"
