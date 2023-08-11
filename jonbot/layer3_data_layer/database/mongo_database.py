@@ -17,10 +17,11 @@ from jonbot.layer3_data_layer.utilities.default_serialize import default_seriali
 
 logger = logging.getLogger(__name__)
 
-DATA_COLLECTION_NAME = "jonbot_collection"
-USERS_COLLECTION_NAME = "jonbot_users"
+PACKAGE_NAME = os.getenv('BOT_NAME')
+DATABASE_NAME = f"{PACKAGE_NAME}_database"
+DEFAULT_COLLECTION = f"default_collection"
+USERS_COLLECTION_NAME = f"users"
 CONVERSATION_HISTORY_COLLECTION_NAME = "conversation_history"
-DATABASE_NAME = "jonbot_database"
 
 
 class MongoDatabaseManager:
@@ -30,32 +31,43 @@ class MongoDatabaseManager:
         # self._client = MongoClient( os.getenv('MONGO_URI_MONGO_CLOUD'))
         self._client = AsyncIOMotorClient(os.getenv('MONGO_URI_MONGO_CLOUD'))
         self._database = self._client[DATABASE_NAME]
-        self._data_collection = self._database[DATA_COLLECTION_NAME]
+        self._data_collection = self._database[DEFAULT_COLLECTION]
         self._users_collection = self._database[USERS_COLLECTION_NAME]
         self._conversation_history_collection = self._database[CONVERSATION_HISTORY_COLLECTION_NAME]
 
     async def test_startup(self):
-        logger.debug(f'Running startup test...')
+        logger.debug(f'Running Mongo Database startup test...')
         test_uuid = str(uuid.uuid4())
         test_doc = {'uuid': test_uuid,
                     'test_field': 'test_value'}
+        logger.debug(f'Inserting test document: {test_doc}')
         try:
             result = await self._data_collection.insert_one(test_doc)
-            assert result.inserted_id is not None
+            if result.inserted_id is not None:
+                logger.debug(f'Successfully inserted test document.')
+            else:
+                raise Exception(f'Failed to insert test document.')
 
             retrieved_doc = await self._data_collection.find_one({'uuid': test_uuid})
-            assert retrieved_doc == test_doc
+            if retrieved_doc is not None:
+                logger.debug(f'Successfully retrieved test document ({retrieved_doc}).')
+            else:
+                raise Exception(f'Failed to retrieve test document.')
 
             delete_result = await self._data_collection.delete_one({'uuid': test_uuid})
-            assert delete_result.deleted_count > 0
+            if delete_result.deleted_count == 1:
+                logger.debug(f'Successfully deleted test document.')
+            else:
+                raise Exception(f'Failed to delete test document.')
 
-            logger.debug(f'Successful startup test.')
+            logger.debug(f'Mongo Database startup test successful.')
 
         except Exception as e:
-            logging.error(f'Startup test unsuccessful.')
-            logging.error(e)
+            logging.error(f'Startup test unsuccessful :( ')
+            logging.exception(e)
+            raise
 
-        logger.debug(f'Startup test complete.')
+        logger.debug(f'Startup test complete :D')
 
     async def get_or_create_user(self,
                                  discord_id: DiscordID = None,
