@@ -74,8 +74,14 @@ class ConversationContext(BaseModel):
         if message.channel.type.name == 'private':
             context_description = DIRECT_MESSAGE_CHANNEL_DESCRIPTION
         else:
-            if message.channel.topic:
+            if "thread" in message.channel.type.name:
+                context_description = f"Thread {message.channel.name} " \
+                                      f"in channel {message.channel.parent.name}" \
+                                      f" in server {message.guild.name}"
+
+            elif message.channel.topic:
                 context_description = message.channel.topic
+
             else:
                 context_description = f"Channel {message.channel.name} in server {message.guild.name}"
         return context_description
