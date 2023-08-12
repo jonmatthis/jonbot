@@ -12,9 +12,11 @@ from pydantic import BaseModel
 TRACE_LEVEL = 5
 logging.addLevelName(TRACE_LEVEL, "TRACE")
 
+
 def trace(self, message, *args, **kwargs):
     if self.isEnabledFor(TRACE_LEVEL):
         self._log(TRACE_LEVEL, message, args, **kwargs)
+
 
 logging.Logger.trace = trace
 
@@ -28,15 +30,14 @@ class ContentFetcherConfig(BaseModel):
     fetch_content_for: List[str]
 
 
-
 class StructureFetcherConfig(BaseModel):
     base_directory: str
     excluded_directories: List[str]
     included_extensions: List[str]
     excluded_file_names: List[str]
-    content: ContentFetcherConfig   # Add ContentFetcherConfig to StructureFetcherConfig
+    content: ContentFetcherConfig  # Add ContentFetcherConfig to StructureFetcherConfig
     indent: int = 0
-    
+
 
 class QuineConfig(BaseModel):
     print_mode: Literal["editor", "terminal", "both"]
@@ -54,10 +55,12 @@ class QuineConfig(BaseModel):
 class StructureFetcher:
     def __init__(self, config: StructureFetcherConfig):
         self.config = config
+
     def _parse_file(self, file_path: str) -> dict:
         # Check if the file is in the list of files/folders to fetch content for
         if file_path not in self.config.content.fetch_content_for and not any(
-                os.path.commonpath([file_path, content_path]) == content_path for content_path in self.config.content.fetch_content_for
+                os.path.commonpath([file_path, content_path]) == content_path for content_path in
+                self.config.content.fetch_content_for
         ):
             return {'functions': [], 'classes': [], 'constants': []}
 
@@ -172,22 +175,22 @@ class Quine:
 
 
 if __name__ == "__main__":
-    base_directory_in = str(Path(__file__).parent)
-    content = ContentFetcherConfig(
-        fetch_content_for=[__file__]
-    )
+    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\layer1_api_interface"
 
     quine_config = QuineConfig(
         print_mode="both",
         structure=StructureFetcherConfig(
-            content = content,
+            content=ContentFetcherConfig(
+                fetch_content_for=[
+                    r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\layer1_api_interface\api_client.py"]
+            ),
             base_directory=base_directory_in,
             excluded_directories=["__pycache__", ".git", "legacy"],
             included_extensions=[".py"],
             excluded_file_names=["poetry.lock", ".gitignore", "LICENSE"],
         ),
-        content=ContentFetcherConfig(
-            fetch_content_for=[__file__]
+        content = ContentFetcherConfig(
+            fetch_content_for=[r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\layer1_api_interface\api_main.py"]
         ),
         output_file_name=f"quine_{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S.%f')}.txt",
         output_directory=str(Path(__file__).parent / "quine_output"),
