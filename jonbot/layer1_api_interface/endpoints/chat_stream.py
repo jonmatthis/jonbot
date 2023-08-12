@@ -4,7 +4,7 @@ from jonbot.layer2_core_processes.ai_chatbot.ai_chatbot import AIChatBot
 from jonbot.layer2_core_processes.ai_chatbot.components.callbacks.callbacks import StreamingAsyncCallbackHandler
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 from jonbot.models.conversation_models import ChatRequest
-from jonbot.system.logging.get_or_create_logger import logger
+from jonbot.system.logging.configure_logging import logger
 
 
 async def chat_stream(chat_request: ChatRequest):

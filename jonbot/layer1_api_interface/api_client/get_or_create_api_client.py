@@ -1,5 +1,5 @@
 from jonbot.layer1_api_interface.api_client.api_client import ApiClient
-from jonbot.system.logging.get_or_create_logger import logger
+from jonbot.system.logging.configure_logging import logger
 
 API_CLIENT = None
 

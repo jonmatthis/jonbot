@@ -7,7 +7,7 @@ from discord.ext import commands
 
 from jonbot.layer3_data_layer.database.mongo_database import MongoDatabaseManager
 from jonbot.models.discord_message import DiscordMessageDocument
-from jonbot.system.logging.get_or_create_logger import logger
+from jonbot.system.logging.configure_logging import logger
 
 logging.getLogger('discord').setLevel(logging.INFO)
 

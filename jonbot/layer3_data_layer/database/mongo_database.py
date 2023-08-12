@@ -8,7 +8,7 @@ from jonbot.models.conversation_models import ContextRoute, ConversationHistory
 from jonbot.models.user_id_models import DiscordUserID, TelegramUserID, UserID
 from jonbot.system.environment_variables import MONGO_URI, DATABASE_NAME, USERS_COLLECTION_NAME, \
     CONVERSATION_HISTORY_COLLECTION_NAME
-from jonbot.system.logging.get_or_create_logger import logger
+from jonbot.system.logging.configure_logging import logger
 
 
 class MongoDatabaseManager:

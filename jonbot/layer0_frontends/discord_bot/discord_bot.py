@@ -11,7 +11,7 @@ from jonbot.models.api_endpoint_url import ApiRoute
 from jonbot.models.conversation_models import ContextRoute
 from jonbot.models.database_upsert_models import DatabaseUpsertRequest
 from jonbot.models.discord_message import DiscordMessageDocument
-from jonbot.system.logging.get_or_create_logger import logger
+from jonbot.system.logging.configure_logging import logger
 
 
 class DiscordBot(discord.Bot):

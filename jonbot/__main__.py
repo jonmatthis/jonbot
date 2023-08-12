@@ -4,8 +4,7 @@ from jonbot import configure_logging
 from jonbot.layer0_frontends.discord_bot.discord_main import run_discord_bot
 from jonbot.layer0_frontends.telegram_bot.telegram_bot import run_telegram_bot_sync
 from jonbot.layer1_api_interface.api_main import run_api_sync
-from jonbot.system.logging.get_or_create_logger import logger
-
+from jonbot.system.logging.configure_logging import logger
 
 SERVICES = [
     run_discord_bot,

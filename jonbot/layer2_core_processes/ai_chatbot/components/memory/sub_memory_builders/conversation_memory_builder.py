@@ -5,7 +5,7 @@ from jonbot.models.conversation_models import ConversationHistory
 
 CONVERSATION_HISTORY_MAX_TOKENS = 1000
 
-from jonbot.system.logging.get_or_create_logger import logger
+from jonbot.system.logging.configure_logging import logger
 
 
 class ChatbotConversationMemoryBuilder(ConversationSummaryBufferMemory):

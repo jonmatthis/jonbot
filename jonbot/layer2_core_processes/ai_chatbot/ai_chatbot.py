@@ -14,7 +14,7 @@ from jonbot.layer2_core_processes.ai_chatbot.components.prompt.prompt_builder im
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 from jonbot.models.conversation_models import ConversationContext, ConversationHistory, ChatRequest, ChatResponse
 from jonbot.system.environment_variables import OPENAI_API_KEY
-from jonbot.system.logging.get_or_create_logger import logger
+from jonbot.system.logging.configure_logging import logger
 
 
 class AIChatBot(BaseModel):

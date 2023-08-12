@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from jonbot.models.conversation_models import ConversationContext, ContextRoute
 from jonbot.models.timestamp_model import Timestamp
-from jonbot.system.logging.get_or_create_logger import logger
+from jonbot.system.logging.configure_logging import logger
 from jonbot.system.path_getters import get_new_attachments_folder_path
 
 

@@ -10,7 +10,7 @@ from jonbot.models.conversation_models import ChatResponse, ChatRequest
 from jonbot.models.database_upsert_models import DatabaseUpsertResponse, DatabaseUpsertRequest
 from jonbot.models.health_check_status import HealthCheckResponse
 from jonbot.models.voice_to_text_request import VoiceToTextResponse, VoiceToTextRequest
-from jonbot.system.logging.get_or_create_logger import logger
+from jonbot.system.logging.configure_logging import logger
 
 HEALTH_ENDPOINT = "/health"
 CHAT_ENDPOINT = "/chat"

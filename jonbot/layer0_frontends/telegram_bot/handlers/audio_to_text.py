@@ -5,7 +5,7 @@ from telegram.ext import ContextTypes
 
 from jonbot.layer3_data_layer.database.mongo_database import mongo_database_manager
 from jonbot.models import ChatResponse
-from jonbot.system.logging.get_or_create_logger import logger
+from jonbot.system.logging.configure_logging import logger
 
 
 async def audio_to_text(update: Update, context: ContextTypes.DEFAULT_TYPE):

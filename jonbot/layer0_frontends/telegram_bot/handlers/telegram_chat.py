@@ -15,8 +15,7 @@ logger.setLevel(logging.INFO)
 logger = logging.getLogger('telegram')
 logger.setLevel(logging.INFO)
 
-from jonbot.system.logging.get_or_create_logger import logger
-
+from jonbot.system.logging.configure_logging import logger
 
 
 async def telegram_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):

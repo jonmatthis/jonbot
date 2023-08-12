@@ -2,7 +2,7 @@ import discord
 
 from jonbot.layer1_api_interface.api_client.get_or_create_api_client import api_client
 from jonbot.models.conversation_models import ChatRequest
-from jonbot.system.logging.get_or_create_logger import logger
+from jonbot.system.logging.configure_logging import logger
 
 
 class DiscordStreamUpdater:

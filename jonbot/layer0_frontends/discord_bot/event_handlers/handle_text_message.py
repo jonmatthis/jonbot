@@ -11,7 +11,7 @@ from jonbot.models.api_endpoint_url import ApiRoute
 from jonbot.models.conversation_models import ChatRequest, ContextRoute
 from jonbot.models.database_upsert_models import DatabaseUpsertRequest
 from jonbot.system.environment_variables import CONVERSATION_HISTORY_COLLECTION_NAME
-from jonbot.system.logging.get_or_create_logger import logger
+from jonbot.system.logging.configure_logging import logger
 
 conversations = {}
 

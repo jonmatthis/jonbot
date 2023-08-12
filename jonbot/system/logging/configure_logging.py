@@ -1,4 +1,3 @@
-import io
 import logging
 import logging.handlers
 import sys
@@ -13,16 +12,23 @@ DEFAULT_LOGGING = {"version": 1, "disable_existing_loggers": False}
 LOG_FILE_PATH = None
 TRACE_LEVEL = 5
 logging.addLevelName(TRACE_LEVEL, "TRACE")
+logging.root.setLevel(TRACE_LEVEL)
 
 
-def trace(self, message, *args, **kwargs):
-    if self.isEnabledFor(TRACE_LEVEL):
-        self._log(TRACE_LEVEL, message, args, **kwargs)
+class ContextLoggerAdapter(logging.LoggerAdapter):
+    def process(self, msg, kwargs):
+        # Enhance the log record with new attributes
+        kwargs['extra'] = {
+            'caller_name': self.extra['caller_name'],
+            'caller_funcName': self.extra['caller_funcName'],
+            'caller_lineno': self.extra['caller_lineno']
+        }
+        return msg, kwargs
 
+    # Add the trace method to the ContextLoggerAdapter
+    def trace(self, msg, *args, **kwargs):
+        self.log(TRACE_LEVEL, msg, *args, **kwargs)
 
-logging.Logger.trace = trace
-
-logging.basicConfig(level=TRACE_LEVEL)  # Setting default logging level to TRACE
 
 format_string = "[%(asctime)s.%(msecs)04d] [%(levelname)8s] [%(caller_name)s] [%(caller_funcName)s():%(caller_lineno)s] [PID:%(process)d TID:%(thread)d] %(message)s"
 
@@ -34,8 +40,8 @@ def get_logging_handlers():
     console_handler = build_console_handler()
     file_handler = build_file_handler()
 
-
-    return [file_handler]
+    return [file_handler,
+            console_handler]
 
 
 def get_log_file_path():
@@ -47,15 +53,35 @@ def get_log_file_path():
 
 def build_file_handler():
     file_handler = logging.FileHandler(get_log_file_path(), encoding="utf-8")
+    file_handler.setLevel(TRACE_LEVEL)
     file_handler.setFormatter(default_logging_formatter)
-    file_handler.setLevel(logging.DEBUG)
     return file_handler
 
 
+class ColoredConsoleHandler(logging.StreamHandler):
+    COLORS = {
+        "TRACE": "\033[0m",  # DEFAULT
+        "DEBUG": "\033[0m",  # DEFAULT
+        "INFO": "\033[0m",  # DEFAULT
+        "WARNING": "\033[33m",  # YELLOW
+        "ERROR": "\033[31m",  # RED
+        "CRITICAL": "\033[41m",  # BG RED
+    }
+
+    def emit(self, record):
+        # Set the color for this record
+        color_code = self.COLORS.get(record.levelname, "\033[0m")
+
+        # Format the record with color
+        formatted_record = color_code + self.format(record) + "\033[0m"  # \033[0m resets the color
+
+        # Print the colored record to console
+        print(formatted_record)
+
+
 def build_console_handler():
-    stream = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    console_handler = logging.StreamHandler(stream)
-    console_handler.setLevel(logging.DEBUG)
+    console_handler = ColoredConsoleHandler(stream=sys.stdout)
+    console_handler.setLevel(TRACE_LEVEL)
     console_handler.setFormatter(default_logging_formatter)
     return console_handler
 
@@ -64,12 +90,43 @@ def configure_logging(entry_point: str = None):
     print(f"Setting up logging  {__file__}")
 
     if len(logging.getLogger().handlers) == 0:
-        handlers = get_logging_handlers(entry_point=entry_point)
+        handlers = get_logging_handlers()
         for handler in handlers:
             if not handler in logging.getLogger("").handlers:
                 logging.getLogger("").handlers.append(handler)
-
-        logging.root.setLevel(logging.DEBUG)
     else:
-        from jonbot.system.logging.get_or_create_logger import logger
         logger.info("Logging already configured")
+
+
+LOGGER = None
+
+
+def get_or_create_logger():
+    logger = logging.getLogger(__name__)
+    caller_frame = sys._getframe(1)  # Get one frame back to the caller
+    adapter = ContextLoggerAdapter(
+        logger,
+        {
+            'caller_name': caller_frame.f_globals['__name__'],
+            'caller_funcName': caller_frame.f_code.co_name,
+            'caller_lineno': caller_frame.f_lineno
+        }
+    )
+    return adapter
+
+
+logger = get_or_create_logger()
+
+if __name__ == "__main__":
+    # configure the logging
+    configure_logging(entry_point=__name__)
+
+    # log some test messages
+    logger.trace("This is a TRACE message.")
+    logger.debug("This is a DEBUG message.")
+    logger.info("This is an INFO message.")
+    logger.warning("This is a WARNING message.")
+    logger.error("This is an ERROR message.")
+    logger.critical("This is a CRITICAL message.")
+
+    print("Logging setup and tests completed. Check the console output and the log file.")
