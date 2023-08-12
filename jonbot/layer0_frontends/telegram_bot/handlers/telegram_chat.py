@@ -5,16 +5,17 @@ import aiohttp
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from jonbot.layer1_api_interface.app import CHAT_ENDPOINT, get_api_endpoint_url
-from jonbot.models import ChatInput, ChatResponse
+from jonbot.layer1_api_interface.api_client.get_or_create_api_client import api_client
+from jonbot.layer1_api_interface.routes import CHAT_ENDPOINT
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
+from jonbot.models.conversation_models import ChatInput, ChatResponse
 
 logger = logging.getLogger('httpcore')
 logger.setLevel(logging.INFO)
 logger = logging.getLogger('telegram')
 logger.setLevel(logging.INFO)
 
-logger = logging.getLogger(__name__)
+from jonbot.system.logging.get_or_create_logger import logger
 
 
 
@@ -25,7 +26,7 @@ async def telegram_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.chat.send_action(action="typing")
 
     async with aiohttp.ClientSession() as session:
-        async with session.post(get_api_endpoint_url(CHAT_ENDPOINT), json=chat_input.dict()) as response:
+        async with session.post(api_client.get_api_endpoint_url(CHAT_ENDPOINT), json=chat_input.dict()) as response:
             if response.status == 200:
                 data = await response.json()
                 chat_response = ChatResponse(**data)

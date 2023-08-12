@@ -9,20 +9,8 @@ from typing import List, Literal
 
 from pydantic import BaseModel, Field
 
-TRACE_LEVEL = 5
-logging.addLevelName(TRACE_LEVEL, "TRACE")
 
-
-def trace(self, message, *args, **kwargs):
-    if self.isEnabledFor(TRACE_LEVEL):
-        self._log(TRACE_LEVEL, message, args, **kwargs)
-
-
-logging.Logger.trace = trace
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=TRACE_LEVEL)  # Setting default logging level to TRACE
-logger = logging.getLogger(__name__)
+from jonbot.system.logging.get_or_create_logger import logger
 
 
 ## MODEL DEFINITIONS
@@ -189,14 +177,13 @@ class Quine:
 
 
 if __name__ == "__main__":
-    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\layer1_api_interface"
+    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\system\logging"
 
     quine_config = QuineConfig(
         print_mode="both",
         structure=StructureFetcherConfig(
             content=ContentFetcherConfig(
-                fetch_content_for=[
-                    r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\layer1_api_interface\endpoints"],
+                fetch_content_for=[],
                 recursion_depth=0,
             ),
             base_directory=base_directory_in,
@@ -205,8 +192,8 @@ if __name__ == "__main__":
             excluded_file_names=["poetry.lock", ".gitignore", "LICENSE"],
         ),
         content=ContentFetcherConfig(
-            fetch_content_for=[r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\layer1_api_interface"],
-            recursion_depth=0,
+            fetch_content_for=[r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\system\logging"],
+            recursion_depth=1,
         ),
         output_file_name=f"quine_{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S.%f')}.txt",
         output_directory=str(Path(__file__).parent / "quine_output"),

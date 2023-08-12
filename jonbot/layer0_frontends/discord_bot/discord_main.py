@@ -1,20 +1,18 @@
 import asyncio
 import logging
 
-from jonbot.system.environment_variables import DISCORD_BOT_TOKEN
 from jonbot.layer0_frontends.discord_bot.discord_bot import DiscordBot
-from jonbot.layer1_api_interface.helpers import run_api_health_check
+from jonbot.system.environment_variables import DISCORD_BOT_TOKEN
 
 logging.getLogger("discord").setLevel(logging.INFO)
 
-logger = logging.getLogger(__name__)
+from jonbot.system.logging.get_or_create_logger import logger
 
 
 async def run_discord_bot_async():
 
     try:
         discord_bot = DiscordBot()
-        await run_api_health_check()
 
     except Exception as e:
         logger.exception(f"An error occurred while starting the Discord bot: {str(e)}")

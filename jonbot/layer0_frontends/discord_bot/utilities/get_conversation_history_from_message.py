@@ -1,6 +1,6 @@
 import discord
 
-from jonbot.models import ConversationHistory, ChatMessage
+from jonbot.models.conversation_models import ConversationHistory, ChatMessage
 
 
 async def get_conversation_history_from_message(message: discord.Message,

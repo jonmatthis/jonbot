@@ -1,9 +1,9 @@
 import asyncio
-import logging
 
 from jonbot.layer1_api_interface.app import STREAMING_RESPONSE_TEST_ENDPOINT, send_request_to_api_streaming
 
-logger = logging.getLogger(__name__)
+from jonbot.system.logging.get_or_create_logger import logger
+
 
 async def print_over_here(token):
     await asyncio.sleep(1)

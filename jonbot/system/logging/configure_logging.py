@@ -11,20 +11,29 @@ from jonbot.system.path_getters import get_base_data_folder_path, LOG_FILE_FOLDE
 DEFAULT_LOGGING = {"version": 1, "disable_existing_loggers": False}
 
 LOG_FILE_PATH = None
+TRACE_LEVEL = 5
+logging.addLevelName(TRACE_LEVEL, "TRACE")
 
-format_string = "[%(asctime)s.%(msecs)04d] [%(levelname)8s] [%(name)s] [%(funcName)s():%(lineno)s] [PID:%(process)d TID:%(thread)d] %(message)s"
+
+def trace(self, message, *args, **kwargs):
+    if self.isEnabledFor(TRACE_LEVEL):
+        self._log(TRACE_LEVEL, message, args, **kwargs)
+
+
+logging.Logger.trace = trace
+
+logging.basicConfig(level=TRACE_LEVEL)  # Setting default logging level to TRACE
+
+format_string = "[%(asctime)s.%(msecs)04d] [%(levelname)8s] [%(caller_name)s] [%(caller_funcName)s():%(caller_lineno)s] [PID:%(process)d TID:%(thread)d] %(message)s"
 
 default_logging_formatter = logging.Formatter(fmt=format_string, datefmt="%Y-%m-%dT%H:%M:%S")
 
 
-def get_logging_handlers(entry_point: str = None):
+def get_logging_handlers():
     dictConfig(DEFAULT_LOGGING)
-
     console_handler = build_console_handler()
     file_handler = build_file_handler()
 
-    if not entry_point == "cli":
-        return [console_handler, file_handler]
 
     return [file_handler]
 
@@ -62,5 +71,5 @@ def configure_logging(entry_point: str = None):
 
         logging.root.setLevel(logging.DEBUG)
     else:
-        logger = logging.getLogger(__name__)
+        from jonbot.system.logging.get_or_create_logger import logger
         logger.info("Logging already configured")

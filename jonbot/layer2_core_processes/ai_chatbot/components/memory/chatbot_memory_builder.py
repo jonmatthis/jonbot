@@ -1,4 +1,3 @@
-import logging
 from typing import List
 
 from langchain.memory import CombinedMemory
@@ -9,8 +8,6 @@ from jonbot.layer2_core_processes.ai_chatbot.components.memory.sub_memory_builde
 from jonbot.layer2_core_processes.ai_chatbot.components.memory.sub_memory_builders.vectorstore_memory_builder import \
     ChatbotVectorStoreMemoryBuilder
 from jonbot.models.conversation_models import ConversationHistory
-
-logger = logging.getLogger(__name__)
 
 
 class ChatbotMemory(CombinedMemory):

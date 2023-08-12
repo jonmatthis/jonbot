@@ -34,3 +34,6 @@ def get_allowed_channels():
         return [int(channel_id) for channel_id in ALLOWED_CHANNELS.split(",")]
 
 ALLOWED_CHANNELS = get_allowed_channels()
+DATABASE_NAME = f"{BOT_NAME}_database"
+USERS_COLLECTION_NAME = f"users"
+CONVERSATION_HISTORY_COLLECTION_NAME = "conversation_history"
