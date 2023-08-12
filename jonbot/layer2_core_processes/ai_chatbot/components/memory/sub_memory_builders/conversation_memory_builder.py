@@ -3,7 +3,7 @@ import logging
 from langchain import OpenAI
 from langchain.memory import ConversationSummaryBufferMemory
 
-from jonbot.layer3_data_layer.data_models.conversation_models import ConversationHistory
+from jonbot.models import ConversationHistory
 
 CONVERSATION_HISTORY_MAX_TOKENS = 1000
 

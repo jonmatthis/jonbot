@@ -3,7 +3,7 @@ import logging
 import discord
 
 from jonbot.layer1_api_interface.app import send_request_to_api_streaming
-from jonbot.layer3_data_layer.data_models.conversation_models import ChatRequest
+from jonbot.models import ChatRequest
 
 logger = logging.getLogger(__name__)
 class DiscordStreamUpdater:

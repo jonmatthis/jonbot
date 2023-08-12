@@ -1,8 +1,6 @@
 import asyncio
 import logging
-from typing import List
 
-from dotenv import load_dotenv
 from langchain import LLMChain
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.chat_models import ChatOpenAI
@@ -13,11 +11,11 @@ from pydantic import BaseModel
 
 from jonbot.layer2_core_processes.ai_chatbot.components.memory.chatbot_memory_builder import ChatbotMemory
 from jonbot.layer2_core_processes.ai_chatbot.components.prompt.prompt_builder import ChatbotPrompt
-from jonbot.layer3_data_layer.data_models.conversation_models import ChatResponse, ConversationHistory, \
-    ConversationContext, ChatRequest
-from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 
-load_dotenv()
+from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
+from jonbot.models.conversation_models import ConversationContext, ConversationHistory, ChatRequest
+from jonbot.system.environment_variables import OPENAI_API_KEY
+
 logger = logging.getLogger(__name__)
 
 
@@ -42,6 +40,7 @@ class AIChatBot(BaseModel):
         memory = await ChatbotMemory.build(conversation_history=conversation_history)
 
         chain = LLMChain(llm=llm,
+                         api_key=OPENAI_API_KEY,
                          prompt=prompt,
                          memory=memory,
                          verbose=True,

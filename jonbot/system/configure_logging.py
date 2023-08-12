@@ -5,7 +5,7 @@ import sys
 from logging.config import dictConfig
 from pathlib import Path
 
-from jonbot.layer3_data_layer.system.filenames_and_paths import get_base_data_folder_path, LOG_FILE_FOLDER_NAME, \
+from jonbot.system.path_getters import get_base_data_folder_path, LOG_FILE_FOLDER_NAME, \
     create_log_file_name
 
 DEFAULT_LOGGING = {"version": 1, "disable_existing_loggers": False}

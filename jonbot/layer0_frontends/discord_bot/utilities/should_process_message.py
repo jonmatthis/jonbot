@@ -1,31 +1,14 @@
-import os
-
 import discord
-from dotenv import load_dotenv
 
 from jonbot.layer0_frontends.discord_bot.commands.voice_channel_cog import VOICE_RECORDING_PREFIX
 from jonbot.layer0_frontends.discord_bot.event_handlers.handle_voice_memo import TRANSCRIBED_AUDIO_PREFIX
-
-
-def get_allowed_chanels():
-    load_dotenv()
-    allowed_channels = os.getenv("ALLOWED_CHANNELS")
-    if allowed_channels is None:
-        raise ValueError("ALLOWED_CHANNELS environment variable not set.")
-
-    if allowed_channels == "ALL":
-        return allowed_channels
-    else:
-        return [int(channel_id) for channel_id in allowed_channels.split(",")]
-
-
-DIRECT_MESSAGES_ALLOWED = True
+from jonbot.system.environment_variables import DIRECT_MESSAGES_ALLOWED, ALLOWED_CHANNELS
 
 
 def should_process_message(message)->bool:
-    allowed_channels = get_allowed_chanels()
-    if not allowed_channels == "ALL":
-        if not message.channel.id in allowed_channels:
+
+    if not ALLOWED_CHANNELS == "ALL":
+        if not message.channel.id in ALLOWED_CHANNELS:
             return False
 
     if not DIRECT_MESSAGES_ALLOWED and message.channel.type == discord.ChannelType.private:

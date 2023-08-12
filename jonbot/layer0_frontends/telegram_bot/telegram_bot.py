@@ -16,13 +16,10 @@ bot.
 """
 import asyncio
 import logging
-import os
 
-from dotenv import load_dotenv
-
+from jonbot.system.environment_variables import TELEGRAM_BOT_TOKEN
 from jonbot.layer0_frontends.telegram_bot.handlers.telegram_chat import telegram_chat
 
-load_dotenv()
 
 from telegram import __version__ as TG_VER
 
@@ -70,7 +67,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 def run_telegram_bot() -> None:
     """Start the bot."""
     # Create the Application and pass it your bot's token.
-    application = Application.builder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
+    application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
     # on different commands - answer in Telegram
     application.add_handler(CommandHandler("start", start))

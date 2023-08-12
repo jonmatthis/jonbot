@@ -9,10 +9,10 @@ from jonbot.layer0_frontends.discord_bot.utilities.get_conversation_history_from
     get_conversation_history_from_message
 from jonbot.layer1_api_interface.app import get_api_endpoint_url, CHAT_STREAM_ENDPOINT, \
     CHAT_ENDPOINT, DATABASE_UPSERT_ENDPOINT, send_request_to_api
-from jonbot.layer3_data_layer.data_models.conversation_models import ChatRequest, \
+from jonbot.models import ChatRequest, \
     ContextRoute
-from jonbot.layer3_data_layer.data_models.database_upsert_models import DatabaseUpsertRequest
-from jonbot.layer3_data_layer.database.mongo_database import CONVERSATION_HISTORY_COLLECTION_NAME
+from jonbot.models import DatabaseUpsertRequest
+from jonbot.system.environment_variables import CONVERSATION_HISTORY_COLLECTION_NAME
 
 logger = logging.getLogger(__name__)
 

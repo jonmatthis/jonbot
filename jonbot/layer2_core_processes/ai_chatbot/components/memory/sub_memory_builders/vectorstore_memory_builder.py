@@ -2,7 +2,7 @@ from langchain.embeddings import OpenAIEmbeddings
 from langchain.memory import VectorStoreRetrieverMemory
 from langchain.vectorstores import VectorStore, Chroma
 
-from jonbot.layer3_data_layer.data_models.ai_chatbot_models import VectorStoreMemoryConfig
+from jonbot.models import VectorStoreMemoryConfig
 
 
 class ChatbotVectorStoreMemoryBuilder(VectorStoreRetrieverMemory):

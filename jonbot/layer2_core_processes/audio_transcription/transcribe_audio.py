@@ -14,7 +14,8 @@ async def transcribe_audio(
         prompt: str = None,
         response_format: str = None,
         temperature: float = None,
-        language: str = None
+        language: str = None,
+        **kwargs,
 ) -> str:
     TEMP_FILE_PATH = f"/tmp/voice-message"
 

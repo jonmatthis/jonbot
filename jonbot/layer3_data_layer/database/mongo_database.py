@@ -1,37 +1,28 @@
 import json
 import logging
-import os
 import traceback
 import uuid
 from collections import defaultdict
 from pathlib import Path
 from typing import Union
 
-from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from jonbot.layer3_data_layer.data_models.conversation_models import ConversationHistory, ContextRoute
-from jonbot.layer3_data_layer.data_models.user_id_models import TelegramID, DiscordID, UserID
-from jonbot.layer3_data_layer.system.filenames_and_paths import clean_path_string, get_default_database_json_save_path
 from jonbot.layer3_data_layer.utilities.default_serialize import default_serialize
+from jonbot.models.conversation_models import ContextRoute, ConversationHistory
+from jonbot.models.user_id_models import DiscordUserID, TelegramUserID, UserID
+from jonbot.system.environment_variables import DATABASE_NAME, USERS_COLLECTION_NAME, \
+    CONVERSATION_HISTORY_COLLECTION_NAME, MONGO_URI
+from jonbot.system.path_getters import clean_path_string, get_default_database_json_save_path
 
 logger = logging.getLogger(__name__)
-
-PACKAGE_NAME = os.getenv('BOT_NAME')
-DATABASE_NAME = f"{PACKAGE_NAME}_database"
-DEFAULT_COLLECTION = f"default_collection"
-USERS_COLLECTION_NAME = f"users"
-CONVERSATION_HISTORY_COLLECTION_NAME = "conversation_history"
 
 
 class MongoDatabaseManager:
     def __init__(self):
         logger.info(f'Initializing MongoDatabaseManager...')
-        load_dotenv()
-        # self._client = MongoClient( os.getenv('MONGO_URI_MONGO_CLOUD'))
-        self._client = AsyncIOMotorClient(os.getenv('MONGO_URI_MONGO_CLOUD'))
+        self._client = AsyncIOMotorClient(MONGO_URI)
         self._database = self._client[DATABASE_NAME]
-        self._data_collection = self._database[DEFAULT_COLLECTION]
         self._users_collection = self._database[USERS_COLLECTION_NAME]
         self._conversation_history_collection = self._database[CONVERSATION_HISTORY_COLLECTION_NAME]
 
@@ -70,8 +61,8 @@ class MongoDatabaseManager:
         logger.debug(f'Startup test complete :D')
 
     async def get_or_create_user(self,
-                                 discord_id: DiscordID = None,
-                                 telegram_id: TelegramID = None) -> str:
+                                 discord_id: DiscordUserID = None,
+                                 telegram_id: TelegramUserID = None) -> str:
 
         user = await self.get_user(discord_id=discord_id,
                                    telegram_id=telegram_id)
@@ -82,8 +73,8 @@ class MongoDatabaseManager:
         return user.uuid
 
     async def get_user(self,
-                       discord_id: DiscordID = None,
-                       telegram_id: TelegramID = None) -> Union[None, UserID]:
+                       discord_id: DiscordUserID = None,
+                       telegram_id: TelegramUserID = None) -> Union[None, UserID]:
         query = {}
         if discord_id is not None:
             query["discord_id"] = discord_id.dict()
@@ -97,7 +88,7 @@ class MongoDatabaseManager:
     async def upsert(self,
                      data: dict,
                      collection: str = None,
-                     query: dict = None)->bool:
+                     query: dict = None) -> bool:
 
         if not query:
             query = {}
@@ -105,7 +96,7 @@ class MongoDatabaseManager:
         update_data = {"$set": data}
 
         try:
-            if  collection:
+            if collection:
                 await self._database[collection].update_one(query, update_data, upsert=True)
             else:
                 await self._data_collection.update_one(query, update_data, upsert=True)
@@ -114,9 +105,8 @@ class MongoDatabaseManager:
             logging.error(f'Error occurred while upserting. Error: {e}')
             return False
 
-
     async def get_conversation_history(self,
-                                       context_route: ContextRoute)->dict:
+                                       context_route: ContextRoute) -> dict:
         query = {"context_route": context_route.dict()}
         result = await self._conversation_history_collection.find_one(query)
 
@@ -160,13 +150,10 @@ class MongoDatabaseManager:
         logger.info(f"Saved {len(data)} documents to {save_path}")
 
     async def create_user(self,
-                          discord_id: DiscordID = None,
-                          telegram_id: TelegramID = None) -> Union[None, UserID]:
+                          discord_id: DiscordUserID = None,
+                          telegram_id: TelegramUserID = None) -> Union[None, UserID]:
         user_id = UserID(uuid=str(uuid.uuid4()),
                          discord_id=discord_id,
                          telegram_id=telegram_id)
         await self._users_collection.insert_one(user_id.dict())
         return user_id
-
-
-

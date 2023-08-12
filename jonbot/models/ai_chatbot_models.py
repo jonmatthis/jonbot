@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from jonbot.layer3_data_layer.system.filenames_and_paths import get_chroma_vector_store_path
+from jonbot.system.path_getters import get_chroma_vector_store_path
 
 
 class VectorStoreMemoryConfig(BaseModel):

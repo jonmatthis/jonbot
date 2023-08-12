@@ -3,14 +3,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Union
 
-from dotenv import load_dotenv
 
-load_dotenv()
-BASE_DATA_FOLDER_NAME = f"{os.getenv('BOT_NAME')}_data"
-
-DATABASE_BACKUP = "database_backup"
-
-LOG_FILE_FOLDER_NAME = "logs"
+from jonbot.system.environment_variables import BASE_DATA_FOLDER_NAME, LOG_FILE_FOLDER_NAME, DATABASE_BACKUP
 
 
 def os_independent_home_dir():

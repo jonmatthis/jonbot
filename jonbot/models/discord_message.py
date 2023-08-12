@@ -5,9 +5,9 @@ from typing import List, Optional, Union
 import discord
 from pydantic import BaseModel
 
-from jonbot.layer3_data_layer.data_models.conversation_models import ConversationContext, ContextRoute
-from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
-from jonbot.layer3_data_layer.system.filenames_and_paths import get_new_attachments_folder_path
+from jonbot.models.conversation_models import ConversationContext, ContextRoute
+from jonbot.models.timestamp_model import Timestamp
+from jonbot.system.path_getters import get_new_attachments_folder_path
 
 logger = logging.getLogger(__name__)
 

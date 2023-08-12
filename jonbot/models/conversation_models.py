@@ -4,8 +4,8 @@ from typing import Union, Optional, List, Literal
 import discord
 from pydantic import BaseModel, Field
 
-from jonbot.layer3_data_layer.data_models.ai_chatbot_models import VectorStoreMemoryConfig
-from jonbot.layer3_data_layer.data_models.timestamp_model import Timestamp
+from jonbot.models.ai_chatbot_models import VectorStoreMemoryConfig
+from jonbot.models.timestamp_model import Timestamp
 
 
 class ContextRoute(BaseModel):
