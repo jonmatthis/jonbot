@@ -24,17 +24,19 @@ logger = logging.getLogger(__name__)
 
 
 ## MODEL DEFINITIONS
+class ContentFetcherConfig(BaseModel):
+    fetch_content_for: List[str]
+
+
+
 class StructureFetcherConfig(BaseModel):
     base_directory: str
     excluded_directories: List[str]
     included_extensions: List[str]
     excluded_file_names: List[str]
+    content: ContentFetcherConfig   # Add ContentFetcherConfig to StructureFetcherConfig
     indent: int = 0
-
-
-class ContentFetcherConfig(BaseModel):
-    fetch_content_for: List[str]
-
+    
 
 class QuineConfig(BaseModel):
     print_mode: Literal["editor", "terminal", "both"]
@@ -52,8 +54,13 @@ class QuineConfig(BaseModel):
 class StructureFetcher:
     def __init__(self, config: StructureFetcherConfig):
         self.config = config
-
     def _parse_file(self, file_path: str) -> dict:
+        # Check if the file is in the list of files/folders to fetch content for
+        if file_path not in self.config.content.fetch_content_for and not any(
+                os.path.commonpath([file_path, content_path]) == content_path for content_path in self.config.content.fetch_content_for
+        ):
+            return {'functions': [], 'classes': [], 'constants': []}
+
         logger.trace(f"Reading file: {file_path}")  # TRACE level log
         with open(file_path, 'r', encoding='utf-8') as file:
             node = ast.parse(file.read())
@@ -165,10 +172,15 @@ class Quine:
 
 
 if __name__ == "__main__":
-    base_directory_in = str(Path(__file__).parent.parent)
+    base_directory_in = str(Path(__file__).parent)
+    content = ContentFetcherConfig(
+        fetch_content_for=[__file__]
+    )
+
     quine_config = QuineConfig(
         print_mode="both",
         structure=StructureFetcherConfig(
+            content = content,
             base_directory=base_directory_in,
             excluded_directories=["__pycache__", ".git", "legacy"],
             included_extensions=[".py"],
@@ -178,7 +190,7 @@ if __name__ == "__main__":
             fetch_content_for=[__file__]
         ),
         output_file_name=f"quine_{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S.%f')}.txt",
-        output_directory=str(Path(__file__) / "quine_output"),
+        output_directory=str(Path(__file__).parent / "quine_output"),
     )
 
     quine = Quine(quine_config)
