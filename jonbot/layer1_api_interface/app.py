@@ -1,8 +1,10 @@
 import asyncio
 import logging
+import os
 from typing import List, Callable, Union, Coroutine
 
 import aiohttp
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from langchain.callbacks import StreamingStdOutCallbackHandler
 from langchain.callbacks.base import AsyncCallbackHandler
@@ -19,8 +21,10 @@ from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager impo
 
 logger = logging.getLogger(__name__)
 
+load_dotenv()
+
 PREFIX = "http"
-PORT_NUMBER = 8002
+PORT_NUMBER = os.getenv("PORT_NUMBER", 8000)
 HOST_NAME = "localhost"
 
 HEALTH_ENDPOINT = "/health"
