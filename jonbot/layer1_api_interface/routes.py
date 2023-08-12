@@ -3,8 +3,8 @@ import logging
 from fastapi import FastAPI
 from starlette.responses import StreamingResponse
 
-from jonbot.layer1_api_interface.api.endpoints.chat_stream import chat_stream
-from jonbot.layer1_api_interface.api.endpoints.database import database_upsert
+from jonbot.layer1_api_interface.endpoints.chat_stream import chat_stream
+from jonbot.layer1_api_interface.endpoints.database import database_upsert
 from jonbot.layer2_core_processes.audio_transcription.transcribe_audio import transcribe_audio
 from jonbot.layer2_core_processes.utilities.generate_test_tokens import generate_test_tokens
 from jonbot.models import ChatRequest, ChatResponse

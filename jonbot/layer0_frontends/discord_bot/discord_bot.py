@@ -7,7 +7,7 @@ from jonbot.layer0_frontends.discord_bot.event_handlers.handle_text_message impo
 from jonbot.layer0_frontends.discord_bot.event_handlers.handle_voice_memo import handle_voice_memo
 from jonbot.layer0_frontends.discord_bot.utilities.should_process_message import should_process_message
 from jonbot.layer1_api_interface.app import get_api_endpoint_url, DATABASE_UPSERT_ENDPOINT, send_request_to_api
-from jonbot.layer1_api_interface.api.routes import health_check_api
+from jonbot.layer1_api_interface.routes import health_check_api
 from jonbot.models import ContextRoute
 from jonbot.models import DatabaseUpsertRequest
 from jonbot.models.discord_message import DiscordMessageDocument

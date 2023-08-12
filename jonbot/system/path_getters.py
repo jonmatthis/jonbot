@@ -1,8 +1,6 @@
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Union
-
 
 from jonbot.system.environment_variables import BASE_DATA_FOLDER_NAME, LOG_FILE_FOLDER_NAME, DATABASE_BACKUP
 

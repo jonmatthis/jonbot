@@ -14,6 +14,14 @@ DIRECT_MESSAGES_ALLOWED = True if os.getenv("DIRECT_MESSAGES_ALLOWED") == "True"
 
 OPENAI_API_KEY = os.getenv("OPEN_AI_API_KEY")
 
+
+
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+BOT_NAME = os.getenv('BOT_NAME')
+MONGO_URI = os.getenv('MONGO_URI')
+URL_PREFIX = os.getenv('PREFIX')
+HOST_NAME = os.getenv('HOST_NAME', 'localhost')
+
 def get_allowed_channels():
     ALLOWED_CHANNELS = os.getenv("ALLOWED_CHANNELS")
     if ALLOWED_CHANNELS is None:
@@ -25,12 +33,3 @@ def get_allowed_channels():
         return [int(channel_id) for channel_id in ALLOWED_CHANNELS.split(",")]
 
 ALLOWED_CHANNELS = get_allowed_channels()
-
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-PACKAGE_NAME = os.getenv('BOT_NAME')
-DATABASE_NAME = f"{PACKAGE_NAME}_database"
-USERS_COLLECTION_NAME = f"users"
-CONVERSATION_HISTORY_COLLECTION_NAME = "conversation_history"
-MONGO_URI = os.getenv('MONGO_URI_MONGO_CLOUD')
-URL_PREFIX = os.getenv('PREFIX', 'http')
-HOST_NAME = os.getenv('HOST_NAME', 'localhost')

@@ -3,7 +3,7 @@ import logging
 
 from jonbot.system.environment_variables import DISCORD_BOT_TOKEN
 from jonbot.layer0_frontends.discord_bot.discord_bot import DiscordBot
-from jonbot.layer1_api_interface.api.helpers.run_api_health_check import run_api_health_check
+from jonbot.layer1_api_interface.helpers import run_api_health_check
 
 logging.getLogger("discord").setLevel(logging.INFO)
 
