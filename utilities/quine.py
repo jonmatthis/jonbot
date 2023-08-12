@@ -7,7 +7,7 @@ import subprocess
 from pathlib import Path
 from typing import List, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 TRACE_LEVEL = 5
 logging.addLevelName(TRACE_LEVEL, "TRACE")
@@ -27,7 +27,9 @@ logger = logging.getLogger(__name__)
 
 ## MODEL DEFINITIONS
 class ContentFetcherConfig(BaseModel):
-    fetch_content_for: List[str]
+    fetch_content_for: List[str] = Field([], description="List of files/folders to fetch content for")
+    recursion_depth: int = Field(0,
+                                 description="0 means it won't go into subdirectories, -1 means it will go into all subdirectories")
 
 
 class StructureFetcherConfig(BaseModel):
@@ -117,13 +119,25 @@ class ContentFetcher:
     def __init__(self, config: ContentFetcherConfig):
         self.config = config
 
-    def fetch_content(self) -> str:
+    def fetch_content(self, path=None, current_depth=0) -> str:
+        if path is None:
+            path = self.config.fetch_content_for
+
         output = ""
-        for content_path in self.config.fetch_content_for:
+
+        # Check the recursion depth
+        if self.config.recursion_depth != -1 and current_depth > self.config.recursion_depth:
+            return output
+
+        for content_path in path:
             if os.path.isdir(content_path):
                 for file_name in os.listdir(content_path):
                     file_path = os.path.join(content_path, file_name)
-                    output += self._get_file_content(file_path)
+                    # Check if it's a directory and we need to go deeper
+                    if os.path.isdir(file_path):
+                        output += self.fetch_content([file_path], current_depth + 1)
+                    else:
+                        output += self._get_file_content(file_path)
             else:
                 output += self._get_file_content(content_path)
         return output
@@ -182,15 +196,17 @@ if __name__ == "__main__":
         structure=StructureFetcherConfig(
             content=ContentFetcherConfig(
                 fetch_content_for=[
-                    r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\layer1_api_interface\api_client.py"]
+                    r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\layer1_api_interface\endpoints"],
+                recursion_depth=0,
             ),
             base_directory=base_directory_in,
             excluded_directories=["__pycache__", ".git", "legacy"],
             included_extensions=[".py"],
             excluded_file_names=["poetry.lock", ".gitignore", "LICENSE"],
         ),
-        content = ContentFetcherConfig(
-            fetch_content_for=[r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\layer1_api_interface\api_main.py"]
+        content=ContentFetcherConfig(
+            fetch_content_for=[r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\layer1_api_interface"],
+            recursion_depth=0,
         ),
         output_file_name=f"quine_{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S.%f')}.txt",
         output_directory=str(Path(__file__).parent / "quine_output"),

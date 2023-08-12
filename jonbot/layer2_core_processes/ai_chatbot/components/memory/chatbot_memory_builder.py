@@ -8,7 +8,7 @@ from jonbot.layer2_core_processes.ai_chatbot.components.memory.sub_memory_builde
     ChatbotConversationMemoryBuilder
 from jonbot.layer2_core_processes.ai_chatbot.components.memory.sub_memory_builders.vectorstore_memory_builder import \
     ChatbotVectorStoreMemoryBuilder
-from jonbot.models import ConversationHistory
+from jonbot.models.conversation_models import ConversationHistory
 
 logger = logging.getLogger(__name__)
 

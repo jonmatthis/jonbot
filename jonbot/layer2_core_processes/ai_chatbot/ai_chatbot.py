@@ -13,7 +13,7 @@ from jonbot.layer2_core_processes.ai_chatbot.components.memory.chatbot_memory_bu
 from jonbot.layer2_core_processes.ai_chatbot.components.prompt.prompt_builder import ChatbotPrompt
 
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
-from jonbot.models.conversation_models import ConversationContext, ConversationHistory, ChatRequest
+from jonbot.models.conversation_models import ConversationContext, ConversationHistory, ChatRequest, ChatResponse
 from jonbot.system.environment_variables import OPENAI_API_KEY
 
 logger = logging.getLogger(__name__)

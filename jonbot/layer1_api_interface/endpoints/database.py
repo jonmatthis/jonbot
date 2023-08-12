@@ -1,7 +1,7 @@
 import logging
 
-from jonbot.models import DatabaseUpsertResponse, DatabaseUpsertRequest
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
+from jonbot.models.database_upsert_models import DatabaseUpsertRequest, DatabaseUpsertResponse
 
 logger = logging.getLogger(__name__)
 async def database_upsert(database_upsert_request: DatabaseUpsertRequest) -> DatabaseUpsertResponse:

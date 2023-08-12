@@ -21,6 +21,7 @@ BOT_NAME = os.getenv('BOT_NAME')
 MONGO_URI = os.getenv('MONGO_URI')
 URL_PREFIX = os.getenv('PREFIX')
 HOST_NAME = os.getenv('HOST_NAME', 'localhost')
+PORT_NUMBER = int(os.getenv('PORT_NUMBER', 5000))
 
 def get_allowed_channels():
     ALLOWED_CHANNELS = os.getenv("ALLOWED_CHANNELS")

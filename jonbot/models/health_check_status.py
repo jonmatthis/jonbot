@@ -5,5 +5,5 @@ from sqlalchemy import literal
 
 
 class HealthCheckResponse(BaseModel):
-    status: str = Literal["alive"]
+    status: Literal["alive", "dead"] = "dead"
 

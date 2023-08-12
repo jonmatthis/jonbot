@@ -7,11 +7,11 @@ from jonbot.layer1_api_interface.endpoints.chat_stream import chat_stream
 from jonbot.layer1_api_interface.endpoints.database import database_upsert
 from jonbot.layer2_core_processes.audio_transcription.transcribe_audio import transcribe_audio
 from jonbot.layer2_core_processes.utilities.generate_test_tokens import generate_test_tokens
-from jonbot.models import ChatRequest, ChatResponse
-from jonbot.models import DatabaseUpsertResponse, DatabaseUpsertRequest
-from jonbot.models import HealthCheckResponse
-from jonbot.models.voice_to_text_request import VoiceToTextResponse, VoiceToTextRequest
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
+from jonbot.models.conversation_models import ChatResponse, ChatRequest
+from jonbot.models.database_upsert_models import DatabaseUpsertResponse, DatabaseUpsertRequest
+from jonbot.models.health_check_status import HealthCheckResponse
+from jonbot.models.voice_to_text_request import VoiceToTextResponse, VoiceToTextRequest
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,15 @@ STREAMING_RESPONSE_TEST_ENDPOINT = "/test_streaming_response"
 VOICE_TO_TEXT_ENDPOINT = "/voice_to_text"
 DATABASE_UPSERT_ENDPOINT = "/database_upsert"
 
-app = FastAPI()
+APP = None
+def get_or_create_fastapi_app():
+    global APP
+    if APP is None:
+        APP = FastAPI()
+    return APP
+
+
+app = get_or_create_fastapi_app()
 
 
 @app.on_event("startup")
@@ -49,8 +57,8 @@ async def voice_to_text_endpoint(voice_to_text_request: VoiceToTextRequest) -> V
     return VoiceToTextResponse(text=transcript_text)
 
 
-@app.post(CHAT_STREAM_ENDPOINT, response_model=StreamingResponse)
-async def chat_stream_endpoint(chat_request: ChatRequest) -> StreamingResponse:
+@app.post(CHAT_STREAM_ENDPOINT)
+async def chat_stream_endpoint(chat_request: ChatRequest, response_model=None) -> StreamingResponse:
     return await chat_stream(chat_request=chat_request)
 
 
