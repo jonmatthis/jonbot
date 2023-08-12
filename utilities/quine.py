@@ -1,152 +1,185 @@
+import ast
 import datetime
 import logging
 import os
+import platform
 import subprocess
 from pathlib import Path
-import platform
+from typing import List, Literal
 
 from pydantic import BaseModel
-from typing import List, Optional, Literal
-import ast
 
-logger  = logging.getLogger(__name__)
+TRACE_LEVEL = 5
+logging.addLevelName(TRACE_LEVEL, "TRACE")
 
-class QuineConfig(BaseModel):
+def trace(self, message, *args, **kwargs):
+    if self.isEnabledFor(TRACE_LEVEL):
+        self._log(TRACE_LEVEL, message, args, **kwargs)
+
+logging.Logger.trace = trace
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=TRACE_LEVEL)  # Setting default logging level to TRACE
+logger = logging.getLogger(__name__)
+
+
+## MODEL DEFINITIONS
+class StructureFetcherConfig(BaseModel):
     base_directory: str
     excluded_directories: List[str]
     included_extensions: List[str]
     excluded_file_names: List[str]
-    print_content_for: List[str]
-    print_mode: Literal["editor", "terminal", "both"] = "both"
-    output_file_name: Optional[str] = f"quine_{datetime.datetime.now().isoformat().replace(':', '-')}.md"
-    output_directory: str = str(Path(__file__).parent / "quine_output")
+    indent: int = 0
+
+
+class ContentFetcherConfig(BaseModel):
+    fetch_content_for: List[str]
+
+
+class QuineConfig(BaseModel):
+    print_mode: Literal["editor", "terminal", "both"]
+    structure: StructureFetcherConfig
+    content: ContentFetcherConfig
+    output_file_name: str
+    output_directory: str
 
     def output_file_path(self) -> str:
         Path(self.output_directory).mkdir(parents=True, exist_ok=True)
         return str(Path(self.output_directory) / self.output_file_name)
 
 
-
-class StructurePrinter:
-    def __init__(self, config: QuineConfig):
+# CORE PROCESSES
+class StructureFetcher:
+    def __init__(self, config: StructureFetcherConfig):
         self.config = config
 
-    def _parse_file(self, file_path: str) -> List[str]:
-        """
-        Parse the Python file to extract classes, functions, and constants.
-
-        Args:
-            file_path (str): Path to the file to parse.
-
-        Returns:
-            List[str]: List of entity names in the file.
-        """
-        with open(file_path, 'r') as file:
+    def _parse_file(self, file_path: str) -> dict:
+        logger.trace(f"Reading file: {file_path}")  # TRACE level log
+        with open(file_path, 'r', encoding='utf-8') as file:
             node = ast.parse(file.read())
 
-        entities = []
+        entities = {
+            'functions': [],
+            'classes': [],
+            'constants': []
+        }
+
         for item in node.body:
             if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                entities.append(f"Function: {item.name}")
+                entities['functions'].append(f"{item.name}({','.join([arg.arg for arg in item.args.args])})")
             elif isinstance(item, ast.ClassDef):
-                entities.append(f"Class: {item.name}")
+                methods = [m.name for m in item.body if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef))]
+                entities['classes'].append(f"{item.name}(init or constructor methods, {methods})")
             elif isinstance(item, ast.Assign):
                 for target in item.targets:
                     if isinstance(target, ast.Name):
-                        entities.append(f"Constant: {target.id}")
+                        entities['constants'].append(target.id)
 
         return entities
 
-    def print_structure(self):
-        """
-        Print the structure of the package based on the configuration.
-        """
+    def fetch_structure(self, indent=None) -> str:
+        logger.debug(f"Fetching structure with base directory: {self.config.base_directory}")
+        output = ""
+        indent = indent if indent is not None else self.config.indent
         for root_directory, directories, files in os.walk(self.config.base_directory):
             directories[:] = [d for d in directories if d not in self.config.excluded_directories]
-
-            # Print directory name
-            print(f"Directory: {root_directory}")
-
+            ind = '| ' * indent
+            output += f"{ind}| {os.path.basename(root_directory)}/\n"
             for file_name in files:
                 if file_name in self.config.excluded_file_names:
                     continue
                 if any(file_name.endswith(extension) for extension in self.config.included_extensions):
                     file_path = os.path.join(root_directory, file_name)
                     entities = self._parse_file(file_path)
-                    print(f"  File: {file_name}")
-                    for entity in entities:
-                        print(f"    {entity}")
+                    output += f"{ind}|- {file_name}\n"
+                    for entity_type, entity_list in entities.items():
+                        if entity_list:
+                            output += f"{ind}  |- {entity_type.capitalize()}: {', '.join(entity_list)}\n"
+
+            for directory in directories:
+                self.config.base_directory = os.path.join(root_directory, directory)
+                output += self.fetch_structure(indent + 1)
+
+        return output
 
 
-class ContentPrinter:
-    def __init__(self, config: QuineConfig):
+class ContentFetcher:
+    def __init__(self, config: ContentFetcherConfig):
         self.config = config
 
+    def fetch_content(self) -> str:
+        output = ""
+        for content_path in self.config.fetch_content_for:
+            if os.path.isdir(content_path):
+                for file_name in os.listdir(content_path):
+                    file_path = os.path.join(content_path, file_name)
+                    output += self._get_file_content(file_path)
+            else:
+                output += self._get_file_content(content_path)
+        return output
 
-    def open_file(self) -> None:
-        """Opens the generated file in the system's default program associated with the file's type."""
-        current_os = platform.system()  # Get the current operating system
+    def _get_file_content(self, file_path) -> str:
+        logger.trace(f"Getting content for file: {file_path}")  # TRACE level log
+        try:
+            with open(file_path, 'r') as file:
+                content = file.read()
+            return f"Content of {file_path}:\n{'=' * 40}\n{content}\n\n"
+        except Exception as e:
+            logger.error(f"Error processing {file_path}: {e}")
+            return ""
 
+
+# MAIN DEFINITION
+class Quine:
+    def __init__(self, config: QuineConfig):
+        self.config = config
+        self.structure_fetcher = StructureFetcher(config.structure)
+        self.content_fetcher = ContentFetcher(config.content)
+
+    def generate(self):
+        output = self.structure_fetcher.fetch_structure()
+        output += "\n\n" + self.content_fetcher.fetch_content()
+
+        if self.config.print_mode in ["terminal", "both"]:
+            print(output)
+
+        with open(self.config.output_file_path(), 'w') as file:
+            file.write(output)
+
+        if self.config.print_mode == "editor":
+            self.open_file()
+
+    def open_file(self):
+        current_os = platform.system()
         try:
             if current_os == "Windows":
-                os.startfile(self.config.output_file_path())
-            elif current_os == "Darwin":  # MacOS
-                subprocess.run(("open", self.config.output_file_path()), check=True)
+                os.startfile(self.config.content.output_file_path())
+            elif current_os == "Darwin":
+                subprocess.run(("open", self.config.content.output_file_path()), check=True)
             elif current_os == "Linux":
-                subprocess.run(("xdg-open", self.config.output_file_path()), check=True)
+                subprocess.run(("xdg-open", self.config.content.output_file_path()), check=True)
             else:
                 print(f"Unsupported operating system: {current_os}")
         except Exception as e:
             print(f"Failed to open the file: {e}")
 
-    def print_content(self):
-        for content_path in self.config.print_content_for:
-            if os.path.isdir(content_path):
-                # If the provided path is a directory, iterate over all files in the directory
-                for file_name in os.listdir(content_path):
-                    file_path = os.path.join(content_path, file_name)
-                    if file_path.endswith(tuple(self.config.included_extensions)):
-                        self._print_file_content(file_path)
-            else:
-                self._print_file_content(content_path)
-
-    def _print_file_content(self, file_path):
-        try:
-            with open(file_path, 'r') as file:
-                content = file.read()
-
-            if self.config.print_mode in ["terminal", "both"]:
-                print(f"Content of {file_path}:\n{'='*40}\n")
-                print(content)
-
-            # Save the content to the specified output file
-            with open(self.config.output_file_path(), 'w') as file:
-                file.write(content)
-
-            if self.config.print_mode in ["editor", "both"]:
-                self.open_file()
-
-        except Exception as e:
-            print(f"Error processing {file_path}: {e}")
-class Quine:
-    def __init__(self, config: QuineConfig):
-        self.config = config
-        self.structure_printer = StructurePrinter(config)
-        self.content_printer = ContentPrinter(config)
-
-    def generate(self):
-        self.structure_printer.print_structure()
-        self.content_printer.print_content()
-
 
 if __name__ == "__main__":
-    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\layer1_api_interface\api"
+    base_directory_in = str(Path(__file__).parent.parent)
     quine_config = QuineConfig(
-        base_directory=base_directory_in,
-        excluded_directories=["__pycache__", ".git", "legacy"],
-        included_extensions=[".py"],
-        excluded_file_names=["poetry.lock", ".gitignore", "LICENSE"],
-        print_content_for=[r"C:\Users\jonma\github_repos\jonmatthis\jonbot\utilities\quine.py"]
+        print_mode="both",
+        structure=StructureFetcherConfig(
+            base_directory=base_directory_in,
+            excluded_directories=["__pycache__", ".git", "legacy"],
+            included_extensions=[".py"],
+            excluded_file_names=["poetry.lock", ".gitignore", "LICENSE"],
+        ),
+        content=ContentFetcherConfig(
+            fetch_content_for=[__file__]
+        ),
+        output_file_name=f"quine_{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S.%f')}.txt",
+        output_directory=str(Path(__file__) / "quine_output"),
     )
+
     quine = Quine(quine_config)
     quine.generate()
