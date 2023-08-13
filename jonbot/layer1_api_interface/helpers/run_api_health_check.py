@@ -24,6 +24,6 @@ async def run_api_health_check(attempts: int = 60):
                     f"API is not alive yet. Waiting for 1 second before checking again (`{attempts - attempt_number}` attempts remaining)")
                 await asyncio.sleep(1)
         except Exception as e:
-            logger.info(f"Health check returned an error: {str(e)}")
+            logger.exception(f"Health check returned an error: {str(e)}")
 
     raise Exception(f"API is not alive after {attempts} attempts. Aborting.")
