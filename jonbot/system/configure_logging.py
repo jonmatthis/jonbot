@@ -14,8 +14,10 @@ default_logging_formatter = logging.Formatter(fmt=format_string, datefmt="%Y-%m-
 LOG_FILE_PATH = None
 TRACE = 5
 logging.addLevelName(TRACE, "TRACE")
-logging.root.setLevel(TRACE)
 
+# logging.root.setLevel(TRACE)
+logging.root.setLevel(logging.DEBUG)
+# logging.root.setLevel(logging.INFO)
 
 
 # Add the method for the new TRACE level

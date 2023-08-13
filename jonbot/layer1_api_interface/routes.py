@@ -17,7 +17,6 @@ from jonbot.models.conversation_models import ChatResponse, ChatRequest
 from jonbot.models.database_upsert_models import DatabaseUpsertResponse, DatabaseUpsertRequest
 from jonbot.models.health_check_status import HealthCheckResponse
 from jonbot.models.voice_to_text_request import VoiceToTextResponse, VoiceToTextRequest
-from scratchpad.api_streaming_test.fastapi_langchain_streaming_test_app import send_message
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +72,7 @@ async def chat_stream_endpoint(chat_request: ChatRequest):
     logger.info(f"Received chat stream request: {chat_request}")
     return StreamingResponse(stream_chat(chat_request), media_type="text/event-stream")
 
+
 async def stream_chat(chat_request: ChatRequest) -> AsyncIterable[str]:
     callback = AsyncIteratorCallbackHandler()
     model = ChatOpenAI(
@@ -86,8 +86,9 @@ async def stream_chat(chat_request: ChatRequest) -> AsyncIterable[str]:
         try:
             await awaitable_function
         except Exception as e:
-            # TODO: handle exception
-            print(f"Caught exception: {e}")
+            logger.exception(e)
+            raise
+
         finally:
             # Signal the aiter to stop.
             event.set()
@@ -100,10 +101,11 @@ async def stream_chat(chat_request: ChatRequest) -> AsyncIterable[str]:
 
     async for token in callback.aiter():
         # Use server-sent-events to stream the response
-        yield f"data: {token}\n\n"
+        token_sse_format = f"data: {token}\n\n"
+        logger.trace(f"Sending token: {token_sse_format}")
+        yield token_sse_format
 
     await task
-
 
 
 @app.post(CHAT_ENDPOINT, response_model=ChatResponse)

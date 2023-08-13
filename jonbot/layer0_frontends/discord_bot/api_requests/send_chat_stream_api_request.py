@@ -20,7 +20,7 @@ class DiscordStreamUpdater:
         self.reply_message = await message.reply("`awaiting bot response...`")
 
     async def update_discord_reply(self, token: str):
-        logger.debug(f"updating discord reply with token: `{token}`")
+        logger.trace(f"updating discord reply with token: `{token}`")
         comfy_message_length = int(self.max_message_length * .9)
         self.message_content += token
 
@@ -38,7 +38,7 @@ async def send_chat_stream_api_request(chat_request: ChatRequest,
     await updater.initialize_reply(message)
 
     async def callback(token: str):
-        logger.debug(f"Frontend received token: `{token}`")
+        logger.trace(f"Frontend received token: `{token}`")
         clean_token = token.replace("data: ", "").replace("\n\n", "")
         await updater.update_discord_reply(clean_token)
 
