@@ -1,8 +1,11 @@
+import logging
+
 import discord
 
 from jonbot.layer1_api_interface.api_client.get_or_create_api_client import api_client
 from jonbot.models.conversation_models import ChatRequest
-from jonbot.system.logging.configure_logging import logger
+
+logger = logging.getLogger(__name__)
 
 
 class DiscordStreamUpdater:
@@ -27,6 +30,7 @@ class DiscordStreamUpdater:
 
         await self.reply_message.edit(content=self.message_content)
 
+
 async def send_chat_stream_api_request(api_route: str,
                                        chat_request: ChatRequest,
                                        message: discord.Message):
@@ -39,8 +43,8 @@ async def send_chat_stream_api_request(api_route: str,
 
     try:
         return await api_client.send_request_to_api_streaming(api_route=api_route,
-                                                   data=chat_request.dict(),
-                                                   callbacks=[callback])
+                                                              data=chat_request.dict(),
+                                                              callbacks=[callback])
     except Exception as e:
         await updater.update_discord_reply(f"Error while streaming reply: \n >  {e}")
         raise

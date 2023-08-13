@@ -13,7 +13,6 @@ class ChatbotPrompt(ChatPromptTemplate):
               conversation_context: ConversationContext = None,
               system_prompt_template: str = DEFAULT_CHATBOT_SYSTEM_PROMPT_TEMPLATE,
               ) -> ChatPromptTemplate:
-
         system_prompt = PromptTemplate(template=system_prompt_template,
                                        input_variables=["timestamp",
                                                         "rules_for_living",

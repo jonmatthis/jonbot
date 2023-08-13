@@ -4,8 +4,7 @@ from jonbot.models.conversation_models import ConversationHistory, ChatMessage
 
 
 async def get_conversation_history_from_message(message: discord.Message,
-                                          message_limit: int = 100) -> ConversationHistory:
-
+                                                message_limit: int = 100) -> ConversationHistory:
     # Check if the message is in a thread
     if message.thread:
         message_history = message.thread.history(limit=message_limit, oldest_first=False)

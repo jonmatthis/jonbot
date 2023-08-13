@@ -37,7 +37,6 @@ class VoiceChannelCog(discord.Cog):
         self.status_message[ctx.guild_id] = await ctx.channel.send("Joined!")
         self.voice_client_connections[ctx.guild.id] = ctx.guild.voice_client
 
-
     @discord.slash_command(name="leave", description="Leave the voice channel")
     async def leave_voice(self, ctx: discord.ApplicationContext):
         """Leave the voice channel!"""
@@ -51,8 +50,6 @@ class VoiceChannelCog(discord.Cog):
             del self.voice_client_connections[ctx.guild.id]
         except KeyError:
             pass
-
-
 
     @discord.slash_command(name="start", description="Start recording audio from the voice channel")
     @discord.option(name="sink", description="The format to record in", required=True, choices=Sinks)

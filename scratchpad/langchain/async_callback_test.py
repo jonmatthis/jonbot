@@ -15,12 +15,13 @@ class MyCustomAsyncHandler(AsyncCallbackHandler):
     """Async callback handler that can be used to handle callbacks from langchain."""
 
     async def on_llm_start(
-        self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any
+            self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any
     ) -> None:
         """Run when chain starts running."""
         print("zzzz....")
         await asyncio.sleep(0.3)
         print("Hi! I just woke up. Your llm is starting")
+
     async def on_llm_new_token(self, token: str, **kwargs) -> str:
         return f"async handler: token: {token}"
 
@@ -31,11 +32,9 @@ class MyCustomAsyncHandler(AsyncCallbackHandler):
         print("Hi! I just woke up. Your llm is ending")
 
 
-
-
-
 if __name__ == "__main__":
     from dotenv import load_dotenv
+
     load_dotenv()
     # To enable streaming, we pass in `streaming=True` to the ChatModel constructor
     # Additionally, we pass in a list with our custom handler
@@ -52,4 +51,4 @@ if __name__ == "__main__":
             print(f"wowooo - {token.content}")
 
 
-    asyncio.run( stream_generator() )
+    asyncio.run(stream_generator())

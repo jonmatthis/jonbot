@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -6,7 +7,8 @@ from pydantic import BaseModel
 
 from jonbot.models.conversation_models import ConversationContext, ContextRoute
 from jonbot.models.timestamp_model import Timestamp
-from jonbot.system.logging.configure_logging import logger
+
+logger = logging.getLogger(__name__)
 from jonbot.system.path_getters import get_new_attachments_folder_path
 
 
@@ -69,7 +71,8 @@ class DiscordMessageDocument(BaseModel):
 
     async def _add_attachments_to_message(self,
                                           message: discord.Message,
-                                          attachment_local_path: Optional[Union[str, Path]] = get_new_attachments_folder_path(),
+                                          attachment_local_path: Optional[
+                                              Union[str, Path]] = get_new_attachments_folder_path(),
                                           ):
         """Save attachments from a message and add their paths to the message data.
 

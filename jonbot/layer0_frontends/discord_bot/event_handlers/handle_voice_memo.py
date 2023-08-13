@@ -1,3 +1,5 @@
+import logging
+
 import discord
 
 from jonbot.layer0_frontends.discord_bot.event_handlers.handle_text_message import \
@@ -5,7 +7,8 @@ from jonbot.layer0_frontends.discord_bot.event_handlers.handle_text_message impo
 from jonbot.layer1_api_interface.api_client.get_or_create_api_client import api_client
 from jonbot.layer1_api_interface.routes import VOICE_TO_TEXT_ENDPOINT
 from jonbot.models.voice_to_text_request import VoiceToTextRequest
-from jonbot.system.logging.configure_logging import logger
+
+logger = logging.getLogger(__name__)
 
 TRANSCRIBED_AUDIO_PREFIX = "Transcribed audio message"
 

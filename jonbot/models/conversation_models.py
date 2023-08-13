@@ -145,6 +145,7 @@ class ChatRequestConfig(BaseModel):
     dummy: str = "hi:D"
     vector_store_memory_config: VectorStoreMemoryConfig = VectorStoreMemoryConfig()
 
+
 class ChatRequest(BaseModel):
     chat_input: ChatInput
     conversation_context: ConversationContext
@@ -157,5 +158,3 @@ class ChatRequest(BaseModel):
                    conversation_context=ConversationContext.from_discord_message(message=message),
                    ChatRequestConfig=ChatRequestConfig(),
                    )
-
-

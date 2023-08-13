@@ -5,8 +5,7 @@ from jonbot.layer0_frontends.discord_bot.event_handlers.handle_voice_memo import
 from jonbot.system.environment_variables import DIRECT_MESSAGES_ALLOWED, ALLOWED_CHANNELS
 
 
-def should_process_message(message)->bool:
-
+def should_process_message(message) -> bool:
     if not ALLOWED_CHANNELS == "ALL":
         if not message.channel.id in ALLOWED_CHANNELS:
             return False

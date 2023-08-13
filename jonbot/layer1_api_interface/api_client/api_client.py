@@ -1,11 +1,13 @@
 import asyncio
+import logging
 from typing import Union, Callable, List, Coroutine
 
 import aiohttp
 
 from jonbot.layer1_api_interface.helpers.error_message_from_response import error_message_from_response
 from jonbot.models.api_endpoint_url import ApiRoute
-from jonbot.system.logging.configure_logging import logger
+
+logger = logging.getLogger(__name__)
 
 
 class ApiClient:

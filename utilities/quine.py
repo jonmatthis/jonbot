@@ -9,7 +9,7 @@ from typing import List, Literal
 
 from pydantic import BaseModel, Field
 
-from jonbot.system.logging.configure_logging import logger
+logger = logging.getLogger(__name__)
 
 
 ## MODEL DEFINITIONS

@@ -1,3 +1,5 @@
+import logging
+
 import aiohttp
 import discord
 
@@ -11,7 +13,8 @@ from jonbot.models.api_endpoint_url import ApiRoute
 from jonbot.models.conversation_models import ChatRequest, ContextRoute
 from jonbot.models.database_upsert_models import DatabaseUpsertRequest
 from jonbot.system.environment_variables import CONVERSATION_HISTORY_COLLECTION_NAME
-from jonbot.system.logging.configure_logging import logger
+
+logger = logging.getLogger(__name__)
 
 conversations = {}
 

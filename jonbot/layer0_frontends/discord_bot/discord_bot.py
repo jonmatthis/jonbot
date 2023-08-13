@@ -1,3 +1,5 @@
+import logging
+
 import discord
 
 from jonbot.layer0_frontends.discord_bot.commands.voice_channel_cog import VoiceChannelCog
@@ -11,7 +13,8 @@ from jonbot.models.api_endpoint_url import ApiRoute
 from jonbot.models.conversation_models import ContextRoute
 from jonbot.models.database_upsert_models import DatabaseUpsertRequest
 from jonbot.models.discord_message import DiscordMessageDocument
-from jonbot.system.logging.configure_logging import logger
+
+logger = logging.getLogger(__name__)
 
 
 class DiscordBot(discord.Bot):
@@ -20,7 +23,6 @@ class DiscordBot(discord.Bot):
         # self.add_cog(ServerScraperCog())
         self.add_cog(VoiceChannelCog())
 
-
     @discord.Cog.listener()
     async def on_ready(self):
         logger.info(f"Logged in as {self.user.name} ({self.user.id}) - checking API health...")
@@ -28,7 +30,6 @@ class DiscordBot(discord.Bot):
         await run_api_health_check()
 
         self.print_pretty_startup_message_in_terminal()
-
 
     def print_pretty_startup_message_in_terminal(self):
         message = f"{self.user.name} is ready to roll!!!"
@@ -43,7 +44,6 @@ class DiscordBot(discord.Bot):
         ║{' ' * space_padding}{message}{' ' * space_padding}║
         ╚{border}╝
         """)
-
 
     @discord.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
@@ -88,7 +88,7 @@ async def log_message_in_database(message: discord.Message):
                                                     )
     logger.info(f"Logging message in database: ContextRoute {ContextRoute.from_discord_message(message).full}")
     response = await api_client.send_request_to_api(api_route=ApiRoute.from_endpoint(DATABASE_UPSERT_ENDPOINT),
-                                         data=database_upsert_request.dict(),
-                                         )
+                                                    data=database_upsert_request.dict(),
+                                                    )
     if not response["success"]:
         logger.error(f"Failed to log message in database!! \n\n response: \n {response}")

@@ -1,7 +1,11 @@
+import logging
+
 from jonbot.layer3_data_layer.database.mongo_database import MongoDatabaseManager
-from jonbot.system.logging.configure_logging import logger
+
+logger = logging.getLogger(__name__)
 
 MONGO_DATABASE_MANAGER = None
+
 
 async def get_or_create_mongo_database_manager() -> MongoDatabaseManager:
     global MONGO_DATABASE_MANAGER

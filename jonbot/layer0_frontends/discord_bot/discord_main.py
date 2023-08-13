@@ -6,11 +6,12 @@ from jonbot.system.environment_variables import DISCORD_BOT_TOKEN
 
 logging.getLogger("discord").setLevel(logging.INFO)
 
-from jonbot.system.logging.configure_logging import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 async def run_discord_bot_async():
-
     try:
         discord_bot = DiscordBot()
 

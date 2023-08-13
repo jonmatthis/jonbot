@@ -46,6 +46,7 @@ llm = ChatOpenAI(
     callbacks=[MyCustomAsyncHandler()],
 )
 
+
 async def stream_generator(query: str):
     async for token in llm.astream(query):
         yield f"wowooo - {token.content}\n"

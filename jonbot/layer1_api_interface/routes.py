@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI
 from starlette.responses import StreamingResponse
 
@@ -10,7 +12,8 @@ from jonbot.models.conversation_models import ChatResponse, ChatRequest
 from jonbot.models.database_upsert_models import DatabaseUpsertResponse, DatabaseUpsertRequest
 from jonbot.models.health_check_status import HealthCheckResponse
 from jonbot.models.voice_to_text_request import VoiceToTextResponse, VoiceToTextRequest
-from jonbot.system.logging.configure_logging import logger
+
+logger = logging.getLogger(__name__)
 
 HEALTH_ENDPOINT = "/health"
 CHAT_ENDPOINT = "/chat"
@@ -20,6 +23,8 @@ VOICE_TO_TEXT_ENDPOINT = "/voice_to_text"
 DATABASE_UPSERT_ENDPOINT = "/database_upsert"
 
 APP = None
+
+
 def get_or_create_fastapi_app():
     global APP
     if APP is None:

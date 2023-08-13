@@ -7,14 +7,16 @@ from discord.ext import commands
 
 from jonbot.layer3_data_layer.database.mongo_database import MongoDatabaseManager
 from jonbot.models.discord_message import DiscordMessageDocument
-from jonbot.system.logging.configure_logging import logger
+
+logger = logging.getLogger(__name__)
 
 logging.getLogger('discord').setLevel(logging.INFO)
 
 
 class ServerScraperCog(commands.Cog):
     """A cog for scraping server data and storing it in a MongoDB database."""
-    def __init__(self, mongo_database_manager:MongoDatabaseManager):
+
+    def __init__(self, mongo_database_manager: MongoDatabaseManager):
         self.mongo_database_manager = mongo_database_manager
 
     @commands.slash_command(name="scrape_server",
@@ -61,7 +63,6 @@ class ServerScraperCog(commands.Cog):
         await self._add_attachments_to_message(message, message_document)
         await self._upsert_message_data_to_database(message_id=message.id,
                                                     message_document=message_document)
-
 
     async def _upsert_message_data_to_database(self,
                                                message_id: int,

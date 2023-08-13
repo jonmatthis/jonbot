@@ -1,9 +1,11 @@
 import asyncio
+import logging
 
 from jonbot.layer1_api_interface.api_client.get_or_create_api_client import api_client
 from jonbot.layer1_api_interface.routes import HEALTH_ENDPOINT
 from jonbot.models.api_endpoint_url import ApiRoute
-from jonbot.system.logging.configure_logging import logger
+
+logger = logging.getLogger(__name__)
 
 
 async def run_api_health_check(attempts: int = 60):

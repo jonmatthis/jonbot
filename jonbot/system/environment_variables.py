@@ -14,14 +14,13 @@ DIRECT_MESSAGES_ALLOWED = True if os.getenv("DIRECT_MESSAGES_ALLOWED") == "True"
 
 OPENAI_API_KEY = os.getenv("OPEN_AI_API_KEY")
 
-
-
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 BOT_NAME = os.getenv('BOT_NAME')
 MONGO_URI = os.getenv('MONGO_URI')
 URL_PREFIX = os.getenv('PREFIX')
 HOST_NAME = os.getenv('HOST_NAME', 'localhost')
 PORT_NUMBER = int(os.getenv('PORT_NUMBER', 5000))
+
 
 def get_allowed_channels():
     ALLOWED_CHANNELS = os.getenv("ALLOWED_CHANNELS")
@@ -32,6 +31,7 @@ def get_allowed_channels():
         return ALLOWED_CHANNELS
     else:
         return [int(channel_id) for channel_id in ALLOWED_CHANNELS.split(",")]
+
 
 ALLOWED_CHANNELS = get_allowed_channels()
 DATABASE_NAME = f"{BOT_NAME}_database"

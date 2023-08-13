@@ -91,5 +91,6 @@ def run_telegram_bot_sync():
     loop = asyncio.get_event_loop()
     loop.run_until_complete(run_telegram_bot_async())
 
+
 if __name__ == "__main__":
     run_telegram_bot()
