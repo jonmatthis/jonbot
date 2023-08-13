@@ -40,7 +40,7 @@ async def send_message_expression_chain(message: str) -> AsyncIterable[str]:
     model = ChatOpenAI()
     prompt = ChatPromptTemplate.from_template("tell me a joke about {topic}")
     chain = prompt | model
-    async for token in chain.astream({"topic": "goobery"}):
+    async for token in chain.astream({"topic": message}):
         # Use server-sent-events to stream the response
         print(f"Sending token: {token.content}")
         yield f"data: {token.content}\n\n"
@@ -76,7 +76,7 @@ async def send_message_trad_chain(message: str) -> AsyncIterable[str]:
 
     # Begin a task that runs in the background.
     task = asyncio.create_task(wrap_done(
-        chain.agenerate(input_list=[{"topic": "red"}]),
+        chain.agenerate(input_list=[{"topic": message}]),
         callback.done),
     )
 
