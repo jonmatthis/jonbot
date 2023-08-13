@@ -9,6 +9,7 @@ from langchain.schema import HumanMessage
 from starlette.responses import StreamingResponse
 
 from jonbot.layer1_api_interface.endpoints.chat import chat
+from jonbot.layer1_api_interface.endpoints.chat_stream import stream_chat_expression_lang
 from jonbot.layer1_api_interface.endpoints.database import database_upsert
 from jonbot.layer2_core_processes.audio_transcription.transcribe_audio import transcribe_audio
 from jonbot.layer2_core_processes.utilities.generate_test_tokens import generate_test_tokens
@@ -70,42 +71,9 @@ async def voice_to_text_endpoint(voice_to_text_request: VoiceToTextRequest) -> V
 @app.post(CHAT_STREAM_ENDPOINT)
 async def chat_stream_endpoint(chat_request: ChatRequest):
     logger.info(f"Received chat stream request: {chat_request}")
-    return StreamingResponse(stream_chat(chat_request), media_type="text/event-stream")
+    return StreamingResponse(stream_chat_expression_lang(chat_request), media_type="text/event-stream")
 
 
-async def stream_chat(chat_request: ChatRequest) -> AsyncIterable[str]:
-    callback = AsyncIteratorCallbackHandler()
-    model = ChatOpenAI(
-        streaming=True,
-        verbose=True,
-        callbacks=[callback],
-    )
-
-    async def wrap_done(awaitable_function: Awaitable, event: asyncio.Event):
-        """Wrap an awaitable with a event to signal when it's done or an exception is raised."""
-        try:
-            await awaitable_function
-        except Exception as e:
-            logger.exception(e)
-            raise
-
-        finally:
-            # Signal the aiter to stop.
-            event.set()
-
-    # Begin a task that runs in the background.
-    task = asyncio.create_task(wrap_done(
-        model.agenerate(messages=[[HumanMessage(content=chat_request.chat_input.message)]]),
-        callback.done),
-    )
-
-    async for token in callback.aiter():
-        # Use server-sent-events to stream the response
-        token_sse_format = f"data: {token}\n\n"
-        logger.trace(f"Sending token: {token_sse_format}")
-        yield token_sse_format
-
-    await task
 
 
 @app.post(CHAT_ENDPOINT, response_model=ChatResponse)

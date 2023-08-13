@@ -10,10 +10,12 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
+from langchain import LLMChain, PromptTemplate
 from langchain.callbacks import AsyncIteratorCallbackHandler
 from langchain.chat_models import ChatOpenAI
-from langchain.schema import HumanMessage
 from pydantic import BaseModel
+
+from scratchpad.langchain_stuff.langchain_expression_language import create_chain_with_expression_language
 
 # Two ways to load env variables
 # 1.load env variables from .env file
@@ -26,13 +28,31 @@ if "OPENAI_API_KEY" not in os.environ:
 app = FastAPI()
 
 
-async def send_message(message: str) -> AsyncIterable[str]:
-    callback = AsyncIteratorCallbackHandler()
-    model = ChatOpenAI(
+async def send_message_expression_language(message: str) -> AsyncIterable[str]:
+    chain = await create_chain_with_expression_language()
+
+    async for token in chain.astream(inputs={"input": message}):
+        # Use server-sent-events to stream the response
+        print(f"Sending token: {token}")
+        yield f"data: {token}\n\n"
+
+
+def make_chain(callback: AsyncIteratorCallbackHandler) -> LLMChain:
+    prompt_template = "Tell me a {adjective} joke"
+    prompt = PromptTemplate(
+        input_variables=["adjective"], template=prompt_template
+    )
+    llm = ChatOpenAI(
         streaming=True,
         verbose=True,
         callbacks=[callback],
     )
+    return LLMChain(llm=llm, prompt=prompt)
+
+
+async def send_message(message: str) -> AsyncIterable[str]:
+    callback = AsyncIteratorCallbackHandler()
+    chain = make_chain(callback)
 
     async def wrap_done(fn: Awaitable, event: asyncio.Event):
         """Wrap an awaitable with a event to signal when it's done or an exception is raised."""
@@ -47,7 +67,7 @@ async def send_message(message: str) -> AsyncIterable[str]:
 
     # Begin a task that runs in the background.
     task = asyncio.create_task(wrap_done(
-        model.agenerate(messages=[[HumanMessage(content=message)]]),
+        chain.agenerate(input_list=[{"adjective": "red"}]),
         callback.done),
     )
 
