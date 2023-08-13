@@ -1,18 +1,17 @@
-import logging
-
 import discord
 
 from jonbot.layer0_frontends.discord_bot.commands.voice_channel_cog import VoiceChannelCog
 from jonbot.layer0_frontends.discord_bot.event_handlers.handle_text_message import handle_text_message
 from jonbot.layer0_frontends.discord_bot.event_handlers.handle_voice_memo import handle_voice_memo
 from jonbot.layer0_frontends.discord_bot.utilities.should_process_message import should_process_message
-from jonbot.layer1_api_interface.app import get_api_endpoint_url, DATABASE_UPSERT_ENDPOINT, send_request_to_api
-from jonbot.layer1_api_interface.routes import health_check_api
-from jonbot.models import ContextRoute
-from jonbot.models import DatabaseUpsertRequest
+from jonbot.layer1_api_interface.api_client.get_or_create_api_client import api_client
+from jonbot.layer1_api_interface.helpers.run_api_health_check import run_api_health_check
+from jonbot.layer1_api_interface.routes import DATABASE_UPSERT_ENDPOINT
+from jonbot.models.api_endpoint_url import ApiRoute
+from jonbot.models.conversation_models import ContextRoute
+from jonbot.models.database_upsert_models import DatabaseUpsertRequest
 from jonbot.models.discord_message import DiscordMessageDocument
-
-logger = logging.getLogger(__name__)
+from jonbot.system.logging.configure_logging import logger
 
 
 class DiscordBot(discord.Bot):
@@ -26,7 +25,7 @@ class DiscordBot(discord.Bot):
     async def on_ready(self):
         logger.info(f"Logged in as {self.user.name} ({self.user.id}) - checking API health...")
 
-        await health_check_api()
+        await run_api_health_check()
 
         self.print_pretty_startup_message_in_terminal()
 
@@ -88,7 +87,7 @@ async def log_message_in_database(message: discord.Message):
                                                     collection="discord_messages",
                                                     )
     logger.info(f"Logging message in database: ContextRoute {ContextRoute.from_discord_message(message).full}")
-    response = await send_request_to_api(api_route=get_api_endpoint_url(DATABASE_UPSERT_ENDPOINT),
+    response = await api_client.send_request_to_api(api_route=ApiRoute.from_endpoint(DATABASE_UPSERT_ENDPOINT),
                                          data=database_upsert_request.dict(),
                                          )
     if not response["success"]:

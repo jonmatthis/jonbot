@@ -1,5 +1,3 @@
-import logging
-
 from langchain import OpenAI
 from langchain.memory import ConversationSummaryBufferMemory
 
@@ -7,7 +5,7 @@ from jonbot.models.conversation_models import ConversationHistory
 
 CONVERSATION_HISTORY_MAX_TOKENS = 1000
 
-logger = logging.getLogger(__name__)
+from jonbot.system.logging.configure_logging import logger
 
 
 class ChatbotConversationMemoryBuilder(ConversationSummaryBufferMemory):

@@ -1,14 +1,11 @@
-import logging
-
 import aiohttp
+from jonbot.layer1_api_interface.app import API_VOICE_TO_TEXT_URL
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from jonbot.layer1_api_interface.app import API_VOICE_TO_TEXT_URL
-from jonbot.models import ChatResponse
 from jonbot.layer3_data_layer.database.mongo_database import mongo_database_manager
-
-logger = logging.getLogger(__name__)
+from jonbot.models import ChatResponse
+from jonbot.system.logging.configure_logging import logger
 
 
 async def audio_to_text(update: Update, context: ContextTypes.DEFAULT_TYPE):

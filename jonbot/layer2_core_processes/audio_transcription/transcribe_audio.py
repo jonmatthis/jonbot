@@ -1,4 +1,3 @@
-import logging
 import os
 
 import aiofiles
@@ -6,7 +5,7 @@ import aiohttp
 import openai
 from pydub import AudioSegment
 
-logger = logging.getLogger(__name__)
+from jonbot.system.logging.configure_logging import logger
 
 
 async def transcribe_audio(

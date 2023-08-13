@@ -1,13 +1,11 @@
 import asyncio
-import logging
 from typing import Union, Callable, List, Coroutine
 
 import aiohttp
 
 from jonbot.layer1_api_interface.helpers.error_message_from_response import error_message_from_response
-from jonbot.models.api_endpoint_url import ApiRouteUrl
-
-logger = logging.getLogger(__name__)
+from jonbot.models.api_endpoint_url import ApiRoute
+from jonbot.system.logging.configure_logging import logger
 
 
 class ApiClient:
@@ -15,7 +13,7 @@ class ApiClient:
                                   endpoint_name: str,
                                   data: dict = None,
                                   type: str = "POST") -> dict:
-        endpoint_url = ApiRouteUrl.from_endpoint(endpoint=endpoint_name).full_route
+        endpoint_url = ApiRoute.from_endpoint(endpoint=endpoint_name).full_route
         if not data:
             data = {}
 
@@ -38,7 +36,7 @@ class ApiClient:
                                             endpoint_name: str,
                                             data: dict = dict(),
                                             callbacks: Union[Callable, Coroutine] = None) -> list():
-        endpoint_url = ApiRouteUrl.from_endpoint(endpoint=endpoint_name).full_route
+        endpoint_url = ApiRoute.from_endpoint(endpoint=endpoint_name).full_route
         if not callbacks:
             callbacks = []
 

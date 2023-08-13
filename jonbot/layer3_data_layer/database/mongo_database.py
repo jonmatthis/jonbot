@@ -6,13 +6,9 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from jonbot.models.conversation_models import ContextRoute, ConversationHistory
 from jonbot.models.user_id_models import DiscordUserID, TelegramUserID, UserID
-from jonbot.system.environment_variables import BOT_NAME, MONGO_URI
-
-logger = logging.getLogger(__name__)
-
-DATABASE_NAME = f"{BOT_NAME}_database"
-USERS_COLLECTION_NAME = f"users"
-CONVERSATION_HISTORY_COLLECTION_NAME = "conversation_history"
+from jonbot.system.environment_variables import MONGO_URI, DATABASE_NAME, USERS_COLLECTION_NAME, \
+    CONVERSATION_HISTORY_COLLECTION_NAME
+from jonbot.system.logging.configure_logging import logger
 
 
 class MongoDatabaseManager:

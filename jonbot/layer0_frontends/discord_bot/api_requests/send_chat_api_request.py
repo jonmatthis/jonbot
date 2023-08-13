@@ -1,12 +1,7 @@
-import logging
-
 import discord
 
 from jonbot.models.conversation_models import ChatRequest, ChatResponse
-
-logger = logging.getLogger(__name__)
-
-
+from jonbot.system.logging.configure_logging import logger
 
 
 async def send_chat_api_request(api_route: str,

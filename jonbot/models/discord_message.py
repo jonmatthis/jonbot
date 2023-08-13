@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -7,9 +6,8 @@ from pydantic import BaseModel
 
 from jonbot.models.conversation_models import ConversationContext, ContextRoute
 from jonbot.models.timestamp_model import Timestamp
+from jonbot.system.logging.configure_logging import logger
 from jonbot.system.path_getters import get_new_attachments_folder_path
-
-logger = logging.getLogger(__name__)
 
 
 class DiscordMessageDocument(BaseModel):

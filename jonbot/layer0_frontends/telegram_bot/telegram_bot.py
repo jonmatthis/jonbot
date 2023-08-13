@@ -17,11 +17,10 @@ bot.
 import asyncio
 import logging
 
-from jonbot.system.environment_variables import TELEGRAM_BOT_TOKEN
-from jonbot.layer0_frontends.telegram_bot.handlers.telegram_chat import telegram_chat
-
-
 from telegram import __version__ as TG_VER
+
+from jonbot.layer0_frontends.telegram_bot.handlers.telegram_chat import telegram_chat
+from jonbot.system.environment_variables import TELEGRAM_BOT_TOKEN
 
 try:
     from jonbot.layer0_frontends.telegram_bot.utilities.check_version_compatibility import __version_info__
@@ -44,8 +43,6 @@ logging.basicConfig(
 )
 # set higher logging level for httpx to avoid all GET and POST requests being logged
 logging.getLogger("httpx").setLevel(logging.WARNING)
-
-logger = logging.getLogger(__name__)
 
 
 # Define a few command handlers. These usually take the two arguments update and
