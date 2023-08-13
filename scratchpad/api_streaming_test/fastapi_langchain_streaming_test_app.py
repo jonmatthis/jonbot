@@ -29,18 +29,21 @@ app = FastAPI()
 
 
 def make_chain_with_expression_language() -> RunnableSequence:
-    prompt = ChatPromptTemplate.from_template("tell me a joke about {topic}")
+    prompt = PromptTemplate.from_template("tell me a joke about {topic}")
     model = ChatOpenAI()
     chain = model | prompt
     return chain
 
 
 async def send_message_expression_chain(message: str) -> AsyncIterable[str]:
-    chain = make_chain_with_expression_language()
+    # chain = make_chain_with_expression_language()
+    model = ChatOpenAI()
+    prompt = ChatPromptTemplate.from_template("tell me a joke about {topic}")
+    chain = prompt | model
     async for token in chain.astream({"topic": "goobery"}):
         # Use server-sent-events to stream the response
-        print(f"Sending token: {token}")
-        yield f"data: {token}\n\n"
+        print(f"Sending token: {token.content}")
+        yield f"data: {token.content}\n\n"
 
 
 def make_chain(callback: AsyncIteratorCallbackHandler) -> LLMChain:
