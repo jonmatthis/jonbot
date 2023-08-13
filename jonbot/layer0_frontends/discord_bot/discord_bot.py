@@ -54,16 +54,13 @@ class DiscordBot(discord.Bot):
         await log_message_in_database(message=message)
         try:
             async with message.channel.typing():
-                if len(message.attachments) > 0 and message.attachments[0].content_type.startswith("audio"):
-                    # HANDLE VOICE MEMO(s)
-                    for attachment in message.attachments:
-                        temp_message = await message.reply(f"Processing voice memo: {attachment.filename}")
-                        temp_message.attachments.append(attachment)
-                        await handle_voice_memo(temp_message)
+                if len(message.attachments) > 0:
+                    if any(attachement.content_type.startswith("audio") for attachement in message.attachments):
+                        await handle_voice_memo(message)
                 else:
                     # HANDLE TEXT MESSAGE
                     await handle_text_message(message,
-                                              streaming=False)
+                                              streaming=True)
 
         except Exception as e:
             error_message = f"An error occurred: {str(e)}"

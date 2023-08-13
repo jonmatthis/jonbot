@@ -16,20 +16,24 @@ TRANSCRIBED_AUDIO_PREFIX = "Transcribed audio message"
 async def handle_voice_memo(message: discord.Message):
     await update_conversation_history_in_database(message=message)
 
-    voice_to_text_request = VoiceToTextRequest(audio_file_url=message.attachments[0].url)
+    reply_message = await message.reply("Transcribing audio...")
+    for attachment in message.attachments:
+        if attachment.filename.startswith("audio"):
+            voice_to_text_request = VoiceToTextRequest(audio_file_url=message.attachments[0].url)
 
-    await send_voice_to_text_api_request(voice_to_text_request=voice_to_text_request,
-                                         message=message
-                                         )
+            await send_voice_to_text_api_request(voice_to_text_request=voice_to_text_request,
+                                                 message=message,
+                                                 reply_message=reply_message)
 
 
 async def send_voice_to_text_api_request(voice_to_text_request: VoiceToTextRequest,
-                                         message: discord.Message):
+                                         message: discord.Message,
+                                         reply_message: discord.Message):
     logger.info(f"Sending voice to text request payload: {voice_to_text_request.dict()}")
-    reply_message = await message.reply("`awaiting bot response...`")
     response = await api_client.send_request_to_api(endpoint_name=VOICE_TO_TEXT_ENDPOINT,
                                                     data=voice_to_text_request.dict())
-    await reply_message.reply(
-        f"{TRANSCRIBED_AUDIO_PREFIX} from user `{message.author}`:\n > {response['text']}")
+    tmp = reply_message.content
+    await reply_message.edit(
+        content=tmp + "\n" + f"{TRANSCRIBED_AUDIO_PREFIX} from user `{message.author}`:\n > {response['text']}")
     logger.info(f"VoiceToTextResponse payload received: \n {response}\n"
                 f"Successfully sent voice to text request payload to API!")
