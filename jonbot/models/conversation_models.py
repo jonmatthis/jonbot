@@ -98,6 +98,11 @@ class ChatResponse(BaseModel):
     uuid: str = Field(default_factory=lambda: str(uuid.uuid4()))
     metadata: dict = {}
 
+    @classmethod
+    def from_tokens(cls, tokens: List[str]):
+        return cls(text=''.join(tokens),
+                   metadata={'tokens': tokens})
+
 
 class Speaker(BaseModel):
     name: str

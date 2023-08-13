@@ -12,15 +12,16 @@ format_string = "[%(asctime)s.%(msecs)04d] [%(levelname)8s] [%(name)s] [%(funcNa
 default_logging_formatter = logging.Formatter(fmt=format_string, datefmt="%Y-%m-%dT%H:%M:%S")
 
 LOG_FILE_PATH = None
-TRACE_LEVEL = 5
-logging.addLevelName(TRACE_LEVEL, "TRACE")
-logging.root.setLevel(TRACE_LEVEL)
+TRACE = 5
+logging.addLevelName(TRACE, "TRACE")
+logging.root.setLevel(TRACE)
+
 
 
 # Add the method for the new TRACE level
 def trace(self, message, *args, **kws):
-    if self.isEnabledFor(TRACE_LEVEL):
-        self._log(TRACE_LEVEL, message, args, **kws)
+    if self.isEnabledFor(TRACE):
+        self._log(TRACE, message, args, **kws)
 
 
 logging.Logger.trace = trace
@@ -42,7 +43,7 @@ def get_logging_handlers():
 
 def build_file_handler():
     file_handler = logging.FileHandler(get_log_file_path(), encoding="utf-8")
-    file_handler.setLevel(TRACE_LEVEL)
+    file_handler.setLevel(TRACE)
     file_handler.setFormatter(default_logging_formatter)
     return file_handler
 
@@ -70,7 +71,7 @@ class ColoredConsoleHandler(logging.StreamHandler):
 
 def build_console_handler():
     console_handler = ColoredConsoleHandler(stream=sys.stdout)
-    console_handler.setLevel(TRACE_LEVEL)
+    console_handler.setLevel(TRACE)
     console_handler.setFormatter(default_logging_formatter)
     return console_handler
 
