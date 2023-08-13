@@ -1,10 +1,14 @@
+import asyncio
 import logging
+from typing import AsyncIterable, Awaitable
 
 from fastapi import FastAPI
+from langchain.callbacks import AsyncIteratorCallbackHandler
+from langchain.chat_models import ChatOpenAI
+from langchain.schema import HumanMessage
 from starlette.responses import StreamingResponse
 
 from jonbot.layer1_api_interface.endpoints.chat import chat
-from jonbot.layer1_api_interface.endpoints.chat_stream import chat_stream
 from jonbot.layer1_api_interface.endpoints.database import database_upsert
 from jonbot.layer2_core_processes.audio_transcription.transcribe_audio import transcribe_audio
 from jonbot.layer2_core_processes.utilities.generate_test_tokens import generate_test_tokens
@@ -13,6 +17,7 @@ from jonbot.models.conversation_models import ChatResponse, ChatRequest
 from jonbot.models.database_upsert_models import DatabaseUpsertResponse, DatabaseUpsertRequest
 from jonbot.models.health_check_status import HealthCheckResponse
 from jonbot.models.voice_to_text_request import VoiceToTextResponse, VoiceToTextRequest
+from scratchpad.api_streaming_test.fastapi_langchain_streaming_test_app import send_message
 
 logger = logging.getLogger(__name__)
 
@@ -60,13 +65,50 @@ async def voice_to_text_endpoint(voice_to_text_request: VoiceToTextRequest) -> V
     return VoiceToTextResponse(text=transcript_text)
 
 
+# @app.post(CHAT_STREAM_ENDPOINT)
+# async def chat_stream_endpoint(chat_request: ChatRequest, response_model=None) -> StreamingResponse:
+#     return await chat_stream(chat_request=chat_request)
 @app.post(CHAT_STREAM_ENDPOINT)
-async def chat_stream_endpoint(chat_request: ChatRequest, response_model=None) -> StreamingResponse:
-    return await chat_stream(chat_request=chat_request)
+async def chat_stream_endpoint(chat_request: ChatRequest):
+    logger.info(f"Received chat stream request: {chat_request}")
+    return StreamingResponse(stream_chat(chat_request), media_type="text/event-stream")
+
+async def stream_chat(chat_request: ChatRequest) -> AsyncIterable[str]:
+    callback = AsyncIteratorCallbackHandler()
+    model = ChatOpenAI(
+        streaming=True,
+        verbose=True,
+        callbacks=[callback],
+    )
+
+    async def wrap_done(awaitable_function: Awaitable, event: asyncio.Event):
+        """Wrap an awaitable with a event to signal when it's done or an exception is raised."""
+        try:
+            await awaitable_function
+        except Exception as e:
+            # TODO: handle exception
+            print(f"Caught exception: {e}")
+        finally:
+            # Signal the aiter to stop.
+            event.set()
+
+    # Begin a task that runs in the background.
+    task = asyncio.create_task(wrap_done(
+        model.agenerate(messages=[[HumanMessage(content=chat_request.chat_input.message)]]),
+        callback.done),
+    )
+
+    async for token in callback.aiter():
+        # Use server-sent-events to stream the response
+        yield f"data: {token}\n\n"
+
+    await task
+
 
 
 @app.post(CHAT_ENDPOINT, response_model=ChatResponse)
 async def chat_endpoint(chat_request: ChatRequest) -> ChatResponse:
+    logger.info(f"Received chat request: {chat_request}")
     return await chat(chat_request=chat_request)
 
 

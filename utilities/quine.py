@@ -9,7 +9,17 @@ from typing import List, Literal
 
 from pydantic import BaseModel, Field
 
-logger = logging.getLogger(__name__)
+
+
+try:
+    from jonbot import configure_logging
+    configure_logging()
+    logger = logging.getLogger(__name__)
+except Exception as e:
+    print(f"Error while importing configure_logging: {str(e)}")
+    logger = logging.getLogger(__name__)
+    logger.exception(f"Error while importing configure_logging: {str(e)}")
+
 
 
 ## MODEL DEFINITIONS
@@ -176,7 +186,7 @@ class Quine:
 
 
 if __name__ == "__main__":
-    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\system\logging"
+    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\scratchpad\api_streaming_test"
 
     quine_config = QuineConfig(
         print_mode="both",
@@ -191,7 +201,7 @@ if __name__ == "__main__":
             excluded_file_names=["poetry.lock", ".gitignore", "LICENSE"],
         ),
         content=ContentFetcherConfig(
-            fetch_content_for=[r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\system\logging"],
+            fetch_content_for=[base_directory_in],
             recursion_depth=1,
         ),
         output_file_name=f"quine_{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S.%f')}.txt",

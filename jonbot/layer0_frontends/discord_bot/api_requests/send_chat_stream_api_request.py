@@ -39,7 +39,8 @@ async def send_chat_stream_api_request(chat_request: ChatRequest,
 
     async def callback(token: str):
         logger.debug(f"Frontend received token: `{token}`")
-        await updater.update_discord_reply(token)
+        clean_token = token.replace("data: ", "").replace("\n\n", "")
+        await updater.update_discord_reply(clean_token)
 
     try:
         return await api_client.send_request_to_api_streaming(endpoint_name=CHAT_STREAM_ENDPOINT,

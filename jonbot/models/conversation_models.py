@@ -47,6 +47,17 @@ class ContextRoute(BaseModel):
                    message_id=message_id if not parent_route_only else 0,
                    )
 
+    @classmethod
+    def from_text(cls, text: str):
+        return cls(full=text,
+                   parent=text,
+                   frontend=text,
+                   server=text,
+                   channel=text,
+                   thread=text,
+                   message_id=0,
+                   )
+
 
 DIRECT_MESSAGE_CHANNEL_DESCRIPTION = """
 This is a direct message channel between you and the human.
@@ -56,9 +67,9 @@ NOTE THAT CONVERSATIONS IN THIS CHANNEL ARE STILL LOGGED AND MAY BE USED AS PART
 
 
 class ConversationContext(BaseModel):
-    context_route: ContextRoute
-    context_description: str
-    timestamp: Timestamp
+    context_route: ContextRoute = ContextRoute.from_text("unknown")
+    context_description: str = "unknown"
+    timestamp: Union[Timestamp, str] = "unknown"
 
     @classmethod
     def from_discord_message(cls, message: discord.Message):
@@ -156,6 +167,14 @@ class ChatRequest(BaseModel):
     conversation_context: ConversationContext
     config: ChatRequestConfig = ChatRequestConfig()
     uuid: str = Field(default_factory=lambda: str(uuid.uuid4()))
+
+    @classmethod
+    def from_text(cls,  text:str, timestamp: Timestamp):
+        return cls(chat_input=ChatInput(message=text),
+                   conversation_context=ConversationContext(context_route=ContextRoute.from_text(text),
+                                                            timestamp=timestamp,
+                                                            )
+                     )
 
     @classmethod
     def from_discord_message(cls, message):

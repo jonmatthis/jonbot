@@ -15,25 +15,30 @@ class ApiClient:
                                   endpoint_name: str,
                                   data: dict = None,
                                   type: str = "POST") -> dict:
-        endpoint_url = ApiRoute.from_endpoint(endpoint=endpoint_name).endpoint_url
+        try:
+            endpoint_url = ApiRoute.from_endpoint(endpoint=endpoint_name).endpoint_url
 
-        if not data:
-            data = {}
-        logger.debug(f"Sending request to API endpoint: {endpoint_url} with payload keys: {list(data.keys())}")
-        async with aiohttp.ClientSession() as session:
-            if type == "POST":
-                response = await session.post(endpoint_url, json=data)
-            elif type == "GET":
-                response = await session.get(endpoint_url, json=data)
-            else:
-                raise Exception(f"Invalid type: {type}")
+            if not data:
+                data = {}
+            logger.debug(f"Sending request to API endpoint: {endpoint_url} with payload keys: {list(data.keys())}")
+            async with aiohttp.ClientSession() as session:
+                if type == "POST":
+                    response = await session.post(endpoint_url, json=data)
+                elif type == "GET":
+                    response = await session.get(endpoint_url, json=data)
+                else:
+                    raise Exception(f"Invalid type: {type}")
 
-            if response.status == 200:
-                return await response.json()
-            else:
-                error_message = await error_message_from_response(response)
-                logger.exception(error_message)
-                raise Exception(error_message)
+                if response.status == 200:
+                    return await response.json()
+                else:
+                    error_message = await error_message_from_response(response)
+                    logger.exception(error_message)
+                    raise Exception(error_message)
+        except Exception as e:
+            error_msg = f"An error occurred while sending a request to the API: {str(e)}"
+            logger.exception(error_msg)
+            raise
 
     async def send_request_to_api_streaming(self,
                                             endpoint_name: str,
