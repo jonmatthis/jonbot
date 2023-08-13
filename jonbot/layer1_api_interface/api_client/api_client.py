@@ -72,7 +72,7 @@ class ApiClient:
 async def run_callbacks(callbacks: List[Callable], line: bytes):
     try:
         for callback in callbacks:
-            logger.debug(f"Running callback: {callback.__name__}")
+            logger.trace(f"Running callback: {callback.__name__}")
             if asyncio.iscoroutinefunction(callback):
                 await callback(line.decode('utf-8').strip())
             else:

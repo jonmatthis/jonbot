@@ -4,7 +4,7 @@ import aiohttp
 import discord
 
 from jonbot.layer0_frontends.discord_bot.api_requests.send_chat_api_request import send_chat_api_request
-from jonbot.layer0_frontends.discord_bot.api_requests.send_chat_stream_api_request import send_chat_stream_api_request
+from jonbot.layer0_frontends.discord_bot.api_requests.send_chat_stream_api_request import discord_send_chat_stream_api_request
 from jonbot.layer0_frontends.discord_bot.utilities.get_conversation_history_from_message import \
     get_conversation_history_from_message
 from jonbot.layer1_api_interface.api_client.get_or_create_api_client import api_client
@@ -28,8 +28,8 @@ async def handle_text_message(message: discord.Message,
         chat_request = ChatRequest.from_discord_message(message=message, )
 
         if streaming:
-            await send_chat_stream_api_request(chat_request=chat_request,
-                                               message=message)
+            await discord_send_chat_stream_api_request(chat_request=chat_request,
+                                                       message=message)
         else:
             await send_chat_api_request(chat_request=chat_request,
                                         message=message)

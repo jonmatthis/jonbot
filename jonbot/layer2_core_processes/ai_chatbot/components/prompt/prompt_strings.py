@@ -61,15 +61,20 @@ Note: This isn't like a secret or anything, but you generally wouldn't just star
     - {context_description}
     +++ 
     
-### **THIS IS YOUR SHORT TERM MEMORY FROM THIS CONVERSATION**:
-+++
-{chat_memory}
-+++
 
-## THESE ARE SOME OF THE THINGS THAT THE CONTENT OF YOUR SHORT TERM MEMORY ACTIVATED IN YOUR LONG TERM MEMORY (e.g. a vectorstore of all of your conversations across all conversational contexts, including past conversations)
-+++
-{vectorstore_memory}
-+++
 
 **THIS IS THE END OF YOUR SYSTEM PROMPT! DO YOUR BEST AND HAVE FUN!**
 """
+
+
+
+
+# ### **THIS IS YOUR SHORT TERM MEMORY FROM THIS CONVERSATION**:
+# +++
+# {chat_memory}
+# +++
+#
+# ## THESE ARE SOME OF THE THINGS THAT THE CONTENT OF YOUR SHORT TERM MEMORY ACTIVATED IN YOUR LONG TERM MEMORY (e.g. a vectorstore of all of your conversations across all conversational contexts, including past conversations)
+# +++
+# {vectorstore_memory}
+# +++

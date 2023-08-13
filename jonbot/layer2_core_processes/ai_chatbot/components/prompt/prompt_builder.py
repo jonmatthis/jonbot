@@ -18,8 +18,8 @@ class ChatbotPrompt(ChatPromptTemplate):
                                                         "rules_for_living",
                                                         "context_route",
                                                         "context_description",
-                                                        "chat_memory",
-                                                        "vectorstore_memory"
+                                                        # "chat_memory",
+                                                        # "vectorstore_memory"
                                                         ],
                                        )
         partial_system_prompt = system_prompt.partial(timestamp=str(Timestamp.now()),

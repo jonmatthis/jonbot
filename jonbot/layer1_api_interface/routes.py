@@ -9,7 +9,7 @@ from langchain.schema import HumanMessage
 from starlette.responses import StreamingResponse
 
 from jonbot.layer1_api_interface.endpoints.chat import chat
-from jonbot.layer1_api_interface.endpoints.chat_stream import stream_chat_expression_lang
+from jonbot.layer1_api_interface.endpoints.chat_stream import chat_stream
 from jonbot.layer1_api_interface.endpoints.database import database_upsert
 from jonbot.layer2_core_processes.audio_transcription.transcribe_audio import transcribe_audio
 from jonbot.layer2_core_processes.utilities.generate_test_tokens import generate_test_tokens
@@ -71,7 +71,7 @@ async def voice_to_text_endpoint(voice_to_text_request: VoiceToTextRequest) -> V
 @app.post(CHAT_STREAM_ENDPOINT)
 async def chat_stream_endpoint(chat_request: ChatRequest):
     logger.info(f"Received chat stream request: {chat_request}")
-    return StreamingResponse(stream_chat_expression_lang(chat_request), media_type="text/event-stream")
+    return StreamingResponse(chat_stream(chat_request.chat_input.message), media_type="text/event-stream")
 
 
 
