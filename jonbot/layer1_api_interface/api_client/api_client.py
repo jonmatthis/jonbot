@@ -6,17 +6,21 @@ import aiohttp
 
 from jonbot.layer1_api_interface.helpers.error_message_from_response import error_message_from_response
 from jonbot.models.api_endpoint_url import ApiRoute
+from jonbot.system.environment_variables import API_HOST_NAME
 
 logger = logging.getLogger(__name__)
 
 
 class ApiClient:
+    api_host_name = API_HOST_NAME
+
     async def send_request_to_api(self,
                                   endpoint_name: str,
                                   data: dict = None,
                                   type: str = "POST") -> dict:
         try:
-            endpoint_url = ApiRoute.from_endpoint(endpoint=endpoint_name).endpoint_url
+            endpoint_url = ApiRoute.from_endpoint(host_name=self.api_host_name,
+                                                  endpoint=endpoint_name).endpoint_url
 
             if not data:
                 data = {}
@@ -44,7 +48,8 @@ class ApiClient:
                                             endpoint_name: str,
                                             data: dict = dict(),
                                             callbacks: Union[Callable, Coroutine] = None) -> list():
-        endpoint_url = ApiRoute.from_endpoint(endpoint=endpoint_name).endpoint_url
+        endpoint_url = ApiRoute.from_endpoint(host_name=self.api_host_name,
+                                              endpoint=endpoint_name).endpoint_url
         if not callbacks:
             callbacks = []
 

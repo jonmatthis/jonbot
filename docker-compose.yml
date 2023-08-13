@@ -1,6 +1,16 @@
 version: '3.7'
+
 services:
-  jonbot:
-    build: .
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
     ports:
-      - "1235:1235"
+      - "8091:8091"
+
+  discord:
+    build:
+      context: .
+      dockerfile: Dockerfile.discord
+    depends_on:
+      - api

@@ -1,0 +1,12 @@
+FROM python:3.9
+
+WORKDIR /app
+
+ADD . /app
+
+RUN pip install --upgrade pip
+RUN pip install -e .
+
+EXPOSE 8091
+
+CMD ["python", "-m", "jonbot.layer1_api_interface.api_main"]

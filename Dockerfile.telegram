@@ -1,0 +1,10 @@
+FROM python:3.9
+
+WORKDIR /app
+
+ADD . /app
+
+RUN pip install --upgrade pip
+RUN pip install -e .
+
+CMD ["python", "-m", "jonbot.layer0_frontends.telegram_bot.telegram_bot"]
