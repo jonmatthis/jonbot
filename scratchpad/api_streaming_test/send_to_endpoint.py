@@ -4,7 +4,7 @@ import httpx
 
 async def call_streaming_endpoint_trad(message: str) -> str:
     url = "http://localhost:8000/stream_trad"
-    payload = {"message": "this is a langchain traditional chain test"}
+    payload = {"message": "this is a langchain TRADITIONAL chain test"}
 
     result_string = ""
 
@@ -26,7 +26,7 @@ async def call_streaming_endpoint_trad(message: str) -> str:
 
 async def call_streaming_endpoint_expression(message: str) -> str:
     url = "http://localhost:8000/stream_expression"
-    payload = {"message": "this is a langchain expression chain test"}
+    payload = {"message": "this is a langchain EXPRESSION LANGUAGE chain test"}
 
     result_string = ""
 
