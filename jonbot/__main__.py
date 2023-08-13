@@ -1,11 +1,12 @@
+import logging
 from concurrent.futures import ProcessPoolExecutor
 
-from jonbot import configure_logging
+
 from jonbot.layer0_frontends.discord_bot.discord_main import run_discord_bot
 from jonbot.layer0_frontends.telegram_bot.telegram_bot import run_telegram_bot_sync
 from jonbot.layer1_api_interface.api_main import run_api_sync
 
-logger
+logger = logging.getLogger(__name__)
 
 SERVICES = [
     run_discord_bot,
@@ -38,7 +39,6 @@ def run_services():
 def main():
     # Initializing logging for the main process.
     # If each process needs a separate log, initialize inside the service function.
-    configure_logging()
     logger.info("Starting jonbot...")
     run_services()
 

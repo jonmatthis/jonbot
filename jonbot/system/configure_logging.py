@@ -3,12 +3,13 @@ import logging
 import logging.handlers
 import sys
 from logging.config import dictConfig
-from pathlib import Path
 
-from jonbot.system.path_getters import get_base_data_folder_path, LOG_FILE_FOLDER_NAME, \
-    create_log_file_name
+from jonbot.system.path_getters import get_log_file_path
 
 DEFAULT_LOGGING = {"version": 1, "disable_existing_loggers": False}
+
+format_string = "[%(asctime)s.%(msecs)04d] [%(levelname)8s] [%(name)s] [%(funcName)s():%(lineno)s] [PID:%(process)d TID:%(thread)d] %(message)s"
+default_logging_formatter = logging.Formatter(fmt=format_string, datefmt="%Y-%m-%dT%H:%M:%S")
 
 LOG_FILE_PATH = None
 TRACE_LEVEL = 5
@@ -25,19 +26,7 @@ def trace(self, message, *args, **kws):
 logging.Logger.trace = trace
 
 
-class CustomFormatter(logging.Formatter):
-    def format(self, record):
-        # You can add custom attributes here, like:
-        frame = inspect.stack()[8]
-        record.caller_name = frame[1]
-        record.caller_funcName = frame[3]
-        record.caller_lineno = frame[2]
-        return super().format(record)
 
-
-# Then, use the custom formatter:
-format_string = "[%(asctime)s.%(msecs)04d] [%(levelname)8s] [%(caller_name)s] [%(caller_funcName)s():%(caller_lineno)s] [PID:%(process)d TID:%(thread)d] %(message)s"
-custom_formatter = CustomFormatter(fmt=format_string, datefmt="%Y-%m-%dT%H:%M:%S")
 
 
 def get_logging_handlers():
@@ -49,17 +38,12 @@ def get_logging_handlers():
             console_handler]
 
 
-def get_log_file_path():
-    log_folder_path = Path(get_base_data_folder_path()) / LOG_FILE_FOLDER_NAME
-    log_folder_path.mkdir(exist_ok=True, parents=True)
-    log_file_path = log_folder_path / create_log_file_name()
-    return str(log_file_path)
 
 
 def build_file_handler():
     file_handler = logging.FileHandler(get_log_file_path(), encoding="utf-8")
     file_handler.setLevel(TRACE_LEVEL)
-    file_handler.setFormatter(custom_formatter)
+    file_handler.setFormatter(default_logging_formatter)
     return file_handler
 
 
@@ -87,7 +71,7 @@ class ColoredConsoleHandler(logging.StreamHandler):
 def build_console_handler():
     console_handler = ColoredConsoleHandler(stream=sys.stdout)
     console_handler.setLevel(TRACE_LEVEL)
-    console_handler.setFormatter(custom_formatter)
+    console_handler.setFormatter(default_logging_formatter)
     return console_handler
 
 
@@ -104,16 +88,18 @@ def configure_logging():
         logger.info("Logging already configured")
 
 
-if __name__ == "__main__":
-    # configure the logging
-    configure_logging()
+def log_test_messages():
     logger = logging.getLogger(__name__)
-    # log some test messages
     logger.trace("This is a TRACE message.")
     logger.debug("This is a DEBUG message.")
     logger.info("This is an INFO message.")
     logger.warning("This is a WARNING message.")
     logger.error("This is an ERROR message.")
     logger.critical("This is a CRITICAL message.")
+
+if __name__ == "__main__":
+    # configure the logging
+    configure_logging()
+    log_test_messages()
 
     print("Logging setup and tests completed. Check the console output and the log file.")
