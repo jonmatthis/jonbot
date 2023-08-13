@@ -3,6 +3,7 @@ import logging
 from fastapi import FastAPI
 from starlette.responses import StreamingResponse
 
+from jonbot.layer1_api_interface.endpoints.chat import chat
 from jonbot.layer1_api_interface.endpoints.chat_stream import chat_stream
 from jonbot.layer1_api_interface.endpoints.database import database_upsert
 from jonbot.layer2_core_processes.audio_transcription.transcribe_audio import transcribe_audio
@@ -66,7 +67,7 @@ async def chat_stream_endpoint(chat_request: ChatRequest, response_model=None) -
 
 @app.post(CHAT_ENDPOINT, response_model=ChatResponse)
 async def chat_endpoint(chat_request: ChatRequest) -> ChatResponse:
-    return await chat_stream(chat_request=chat_request)
+    return await chat(chat_request=chat_request)
 
 
 @app.post(DATABASE_UPSERT_ENDPOINT, response_model=DatabaseUpsertResponse)
