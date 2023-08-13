@@ -39,7 +39,6 @@ class AIChatBot(BaseModel):
         memory = await ChatbotMemory.build(conversation_history=conversation_history)
 
         chain = LLMChain(llm=llm,
-                         api_key=OPENAI_API_KEY,
                          prompt=prompt,
                          memory=memory,
                          verbose=True,

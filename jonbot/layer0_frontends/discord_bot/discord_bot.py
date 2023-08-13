@@ -87,7 +87,7 @@ async def log_message_in_database(message: discord.Message):
                                                     collection="discord_messages",
                                                     )
     logger.info(f"Logging message in database: ContextRoute {ContextRoute.from_discord_message(message).full}")
-    response = await api_client.send_request_to_api(api_route=ApiRoute.from_endpoint(DATABASE_UPSERT_ENDPOINT),
+    response = await api_client.send_request_to_api(endpoint_name=DATABASE_UPSERT_ENDPOINT,
                                                     data=database_upsert_request.dict(),
                                                     )
     if not response["success"]:

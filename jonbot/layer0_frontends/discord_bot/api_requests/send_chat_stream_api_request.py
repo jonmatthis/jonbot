@@ -3,6 +3,7 @@ import logging
 import discord
 
 from jonbot.layer1_api_interface.api_client.get_or_create_api_client import api_client
+from jonbot.layer1_api_interface.routes import CHAT_STREAM_ENDPOINT
 from jonbot.models.conversation_models import ChatRequest
 
 logger = logging.getLogger(__name__)
@@ -31,8 +32,7 @@ class DiscordStreamUpdater:
         await self.reply_message.edit(content=self.message_content)
 
 
-async def send_chat_stream_api_request(api_route: str,
-                                       chat_request: ChatRequest,
+async def send_chat_stream_api_request(chat_request: ChatRequest,
                                        message: discord.Message):
     updater = DiscordStreamUpdater()
     await updater.initialize_reply(message)
@@ -42,7 +42,7 @@ async def send_chat_stream_api_request(api_route: str,
         await updater.update_discord_reply(token)
 
     try:
-        return await api_client.send_request_to_api_streaming(api_route=api_route,
+        return await api_client.send_request_to_api_streaming(endpoint_name=CHAT_STREAM_ENDPOINT,
                                                               data=chat_request.dict(),
                                                               callbacks=[callback])
     except Exception as e:

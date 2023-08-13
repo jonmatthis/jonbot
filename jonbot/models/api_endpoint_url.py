@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, validator, AnyUrl
@@ -9,8 +10,8 @@ class ApiRoute(BaseModel):
     host_name: str = HOST_NAME
     url_prefix: str = URL_PREFIX
     port_number: int = int(os.getenv('PORT_NUMBER', '8080'))
-    endpoint: str
-    route: str
+    endpoint: Optional[str]
+
 
     @property
     def url(self) -> str:
@@ -18,11 +19,11 @@ class ApiRoute(BaseModel):
 
     @property
     def endpoint_url(self) -> str:
-        return f"{self.url}:{self.port_number}{self.endpoint}"
+        return f"{self.route}{self.endpoint}"
 
     @property
-    def full_route(self) -> str:
-        return f"{self.url}:{self.port_number}{self.endpoint}/{self.route}"
+    def route(self) -> str:
+        return f"{self.url}:{self.port_number}"
 
     @classmethod
     def from_endpoint(cls, endpoint: str, **kwargs):
@@ -46,23 +47,23 @@ class ApiRoute(BaseModel):
             raise ValueError("port_number should be between 0 and 65535")
         return v
 
-    @validator("endpoint", "route", pre=True, always=True)
+    @validator("endpoint", pre=True, always=True)
     def validate_slash(cls, v):
         if v and not v.startswith("/"):
             return "/" + v
         return v
 
-    def validate_full_route(self):
-        parsed = urlparse(self.full_route)
+    def validate_endpoint_url(self):
+        parsed = urlparse(self.endpoint_url)
         if not all([parsed.scheme, parsed.netloc, parsed.path]):
-            raise ValueError(f"Invalid full route URL: {self.full_route}")
+            raise ValueError(f"Invalid full route URL: {self.endpoint_url}")
 
 if __name__ == "__main__":
     try:
         # Attempting to create an instance with valid parameters
         api_route1 = ApiRoute(endpoint="/api", route="/test")
-        api_route1.validate_full_route()  # Check the full_route validity
-        print("Valid Endpoint:", api_route1.full_route)
+        api_route1.validate_endpoint_url()
+        print("Valid Endpoint:", api_route1.endpoint_url)
 
     except Exception as e:
         print(f"Error: {e}")

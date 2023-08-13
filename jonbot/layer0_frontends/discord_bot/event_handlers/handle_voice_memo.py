@@ -29,7 +29,8 @@ async def send_voice_to_text_api_request(api_route: str,
                                          message: discord.Message):
     logger.info(f"Sending voice to text request payload: {voice_to_text_request.dict()}")
     reply_message = await message.reply("`awaiting bot response...`")
-    response = await api_client.send_request_to_api(api_route=api_route, data=voice_to_text_request.dict())
+    response = await api_client.send_request_to_api(endpoint_name=VOICE_TO_TEXT_ENDPOINT,
+                                                    data=voice_to_text_request.dict())
     await reply_message.reply(
         f"{TRANSCRIBED_AUDIO_PREFIX} from user `{message.author}`:\n > {response['text']}")
     logger.info(f"VoiceToTextResponse payload received: \n {response}\n"

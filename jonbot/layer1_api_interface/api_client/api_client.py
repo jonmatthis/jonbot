@@ -15,10 +15,11 @@ class ApiClient:
                                   endpoint_name: str,
                                   data: dict = None,
                                   type: str = "POST") -> dict:
-        endpoint_url = ApiRoute.from_endpoint(endpoint=endpoint_name).full_route
+        endpoint_url = ApiRoute.from_endpoint(endpoint=endpoint_name).endpoint_url
+
         if not data:
             data = {}
-
+        logger.debug(f"Sending request to API endpoint: {endpoint_url} with payload keys: {list(data.keys())}")
         async with aiohttp.ClientSession() as session:
             if type == "POST":
                 response = await session.post(endpoint_url, json=data)
@@ -38,7 +39,7 @@ class ApiClient:
                                             endpoint_name: str,
                                             data: dict = dict(),
                                             callbacks: Union[Callable, Coroutine] = None) -> list():
-        endpoint_url = ApiRoute.from_endpoint(endpoint=endpoint_name).full_route
+        endpoint_url = ApiRoute.from_endpoint(endpoint=endpoint_name).endpoint_url
         if not callbacks:
             callbacks = []
 
@@ -50,16 +51,16 @@ class ApiClient:
                 async with session.post(endpoint_url, json=data) as response:
                     if response.status == 200:
                         async for line in response.content.iter_any():
-                            await self.run_callbacks(callbacks, line)
+                            await run_callbacks(callbacks, line)
                     else:
                         error_message = await error_message_from_response(response)
                         logger.error(error_message)
-                        await self.run_callbacks(callbacks, error_message.encode('utf-8'))
+                        await run_callbacks(callbacks, error_message.encode('utf-8'))
                         raise Exception(error_message)
         except Exception as e:
             error_msg = f"An error occurred while streaming from the API: {str(e)}"
             logger.exception(error_msg)
-            await self.run_callbacks(callbacks, error_msg.encode('utf-8'))
+            await run_callbacks(callbacks, error_msg.encode('utf-8'))
             raise
 
 

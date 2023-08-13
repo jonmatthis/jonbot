@@ -70,5 +70,5 @@ async def chat_endpoint(chat_request: ChatRequest) -> ChatResponse:
 
 
 @app.post(DATABASE_UPSERT_ENDPOINT, response_model=DatabaseUpsertResponse)
-def database_upsert_endpoint(database_upsert_request: DatabaseUpsertRequest) -> DatabaseUpsertResponse:
-    return database_upsert(database_upsert_request=database_upsert_request)
+async def database_upsert_endpoint(database_upsert_request: DatabaseUpsertRequest) -> DatabaseUpsertResponse:
+    return await database_upsert(database_upsert_request=database_upsert_request)
