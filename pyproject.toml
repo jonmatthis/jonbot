@@ -29,6 +29,7 @@ python-telegram-bot = "^20.4"
 motor = "^3.2.0"
 langchain = "^0.0.263"
 gradio = "^3.40.1"
+pyperclip = "^1.8.2"
 
 [tool.poetry.group.dev.dependencies]
 bumpver = "^2023.1125"

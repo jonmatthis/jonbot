@@ -13,9 +13,9 @@ from fastapi.responses import StreamingResponse
 from langchain import LLMChain, PromptTemplate
 from langchain.callbacks import AsyncIteratorCallbackHandler
 from langchain.chat_models import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate
+from langchain.schema.runnable import RunnableSequence
 from pydantic import BaseModel
-
-from scratchpad.langchain_stuff.langchain_expression_language import create_chain_with_expression_language
 
 # Two ways to load env variables
 # 1.load env variables from .env file
@@ -28,20 +28,26 @@ if "OPENAI_API_KEY" not in os.environ:
 app = FastAPI()
 
 
-async def send_message_expression_language(message: str) -> AsyncIterable[str]:
-    chain = await create_chain_with_expression_language()
+def make_chain_with_expression_language() -> RunnableSequence:
+    prompt = ChatPromptTemplate.from_template("tell me a joke about {topic}")
+    model = ChatOpenAI()
+    chain = model | prompt
+    return chain
 
-    async for token in chain.astream(inputs={"input": message}):
+
+async def send_message_expression_chain(message: str) -> AsyncIterable[str]:
+    chain = make_chain_with_expression_language()
+    async for token in chain.astream({"topic": "goobery"}):
         # Use server-sent-events to stream the response
         print(f"Sending token: {token}")
         yield f"data: {token}\n\n"
 
 
 def make_chain(callback: AsyncIteratorCallbackHandler) -> LLMChain:
-    prompt_template = "Tell me a {adjective} joke"
-    prompt = PromptTemplate(
-        input_variables=["adjective"], template=prompt_template
-    )
+    prompt = PromptTemplate(template="tell me a joke about {topic}",
+                            input_variables=["topic"],
+                            )
+
     llm = ChatOpenAI(
         streaming=True,
         verbose=True,
@@ -50,7 +56,7 @@ def make_chain(callback: AsyncIteratorCallbackHandler) -> LLMChain:
     return LLMChain(llm=llm, prompt=prompt)
 
 
-async def send_message(message: str) -> AsyncIterable[str]:
+async def send_message_trad_chain(message: str) -> AsyncIterable[str]:
     callback = AsyncIteratorCallbackHandler()
     chain = make_chain(callback)
 
@@ -67,7 +73,7 @@ async def send_message(message: str) -> AsyncIterable[str]:
 
     # Begin a task that runs in the background.
     task = asyncio.create_task(wrap_done(
-        chain.agenerate(input_list=[{"adjective": "red"}]),
+        chain.agenerate(input_list=[{"topic": "red"}]),
         callback.done),
     )
 
@@ -84,9 +90,14 @@ class StreamRequest(BaseModel):
     message: str
 
 
-@app.post("/stream")
+@app.post("/stream_trad")
 def stream(body: StreamRequest):
-    return StreamingResponse(send_message(body.message), media_type="text/event-stream")
+    return StreamingResponse(send_message_trad_chain(body.message), media_type="text/event-stream")
+
+
+@app.post("/stream_expression")
+def stream(body: StreamRequest):
+    return StreamingResponse(send_message_expression_chain(body.message), media_type="text/event-stream")
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 from typing import List, Literal
 
+import pyperclip
 from pydantic import BaseModel, Field
 
 
@@ -39,7 +40,7 @@ class StructureFetcherConfig(BaseModel):
 
 
 class QuineConfig(BaseModel):
-    print_mode: Literal["editor", "terminal", "both"]
+    print_mode: Literal["file", "terminal", "clipboard", "all"]
     structure: StructureFetcherConfig
     content: ContentFetcherConfig
     output_file_name: str
@@ -142,7 +143,7 @@ class ContentFetcher:
     def _get_file_content(self, file_path) -> str:
         logger.trace(f"Getting content for file: {file_path}")  # TRACE level log
         try:
-            with open(file_path, 'r') as file:
+            with open(file_path, 'r', encoding="utf-8") as file:
                 content = file.read()
             return f"Content of {file_path}:\n{'=' * 40}\n{content}\n\n"
         except Exception as e:
@@ -161,14 +162,23 @@ class Quine:
         output = self.structure_fetcher.fetch_structure()
         output += "\n\n" + self.content_fetcher.fetch_content()
 
-        if self.config.print_mode in ["terminal", "both"]:
-            print(output)
-
+        logger.debug(f"Writing output to file: {self.config.output_file_path()}")
         with open(self.config.output_file_path(), 'w') as file:
             file.write(output)
 
-        if self.config.print_mode == "editor":
+
+
+        if self.config.print_mode in ["clipboard", "all"]:
+            logger.debug("Copying output to clipboard")
+            pyperclip.copy(output)
+
+
+        if self.config.print_mode in ["file", "all"]:
             self.open_file()
+
+        if self.config.print_mode in ["terminal", "all"]:
+            logger.debug("Printing output to terminal\n\n")
+            print(output)
 
     def open_file(self):
         current_os = platform.system()
@@ -189,7 +199,7 @@ if __name__ == "__main__":
     base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\scratchpad\api_streaming_test"
 
     quine_config = QuineConfig(
-        print_mode="both",
+        print_mode="all",
         structure=StructureFetcherConfig(
             content=ContentFetcherConfig(
                 fetch_content_for=[],
