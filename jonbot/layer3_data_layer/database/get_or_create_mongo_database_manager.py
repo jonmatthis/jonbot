@@ -1,6 +1,7 @@
 import logging
 
 from jonbot.layer3_data_layer.database.mongo_database import MongoDatabaseManager
+from jonbot.layer3_data_layer.utilities.run_mongo_test import run_mongo_test
 
 logger = logging.getLogger(__name__)
 
@@ -12,5 +13,5 @@ async def get_or_create_mongo_database_manager() -> MongoDatabaseManager:
     if MONGO_DATABASE_MANAGER is None:
         logger.info("Creating new MongoDatabaseManager instance")
         MONGO_DATABASE_MANAGER = MongoDatabaseManager()
-        await MONGO_DATABASE_MANAGER.test_startup()
+        assert await run_mongo_test(MONGO_DATABASE_MANAGER), "MongoDatabaseManager startup test failed."
     return MONGO_DATABASE_MANAGER

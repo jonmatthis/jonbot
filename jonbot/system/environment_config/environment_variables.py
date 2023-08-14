@@ -2,11 +2,11 @@ import os
 
 from dotenv import load_dotenv
 
-from jonbot.system.environment_config.discord_config.load_discord_config import BOT_NICK_NAME
 
 load_dotenv()
 
-
+#Get Bot Nick Name list
+BOT_NICK_NAMES = os.getenv("BOT_NICK_NAMES").split(",")
 
 #API Keys and tokens
 OPENAI_API_KEY = os.getenv("OPEN_AI_API_KEY")
@@ -19,7 +19,6 @@ DATABASE_BACKUP = "database_backup"
 
 #Database stuff
 MONGO_URI = os.getenv('MONGO_URI')
-DATABASE_NAME = f"{BOT_NICK_NAME}_database"
 USERS_COLLECTION_NAME = f"users"
 CONVERSATION_HISTORY_COLLECTION_NAME = "conversation_history"
 
@@ -32,6 +31,4 @@ if os.path.exists('/.dockerenv'):
     API_HOST_NAME = 'api'
     HOST_NAME = '0.0.0.0'
     PORT_NUMBER = 8091
-
-
 

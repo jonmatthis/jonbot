@@ -1,10 +1,11 @@
+import copy
+
 import yaml
 
-bot_tokens = {
-    "bot_1": 33423,
-    "bot_2": 2832,
-    "bot_3": 324525,
-}
+bot_nick_names = [
+    "jonbot",
+    "golembot",
+]
 
 base_service = {
     'build': {
@@ -26,17 +27,17 @@ services = {
     }
 }
 
-for bot_name, token in bot_tokens.items():
-    service = base_service.copy()
+for bot_nick_name in bot_nick_names:
+    service = copy.deepcopy(base_service)
     service['environment'] = {
-        'BOT_TOKEN': token
+        'BOT_NICK_NAME': bot_nick_name
     }
-    services[bot_name] = service
+    services[bot_nick_name] = service
 
 compose_data = {
     'version': '3.7',
     'services': services,
 }
 
-with open('docker-compose_og.yml', 'w') as f:
-    yaml.dump(compose_data, f, default_flow_style=False)
+with open('docker-compose.yml', 'w') as f:
+    yaml.dump(compose_data, f, default_flow_style=False, Dumper=yaml.SafeDumper)

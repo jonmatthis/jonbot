@@ -16,6 +16,7 @@ bot.
 """
 import asyncio
 import logging
+from typing import Union
 
 from telegram import __version__ as TG_VER
 
@@ -87,7 +88,7 @@ async def run_telegram_bot_async():
     loop.run_until_complete(run_telegram_bot())
 
 
-def run_telegram_bot_sync():
+def run_telegram_bot_sync(bot_name_or_index: Union[str, int] = 0):
     loop = asyncio.get_event_loop()
     loop.run_until_complete(run_telegram_bot_async())
 
