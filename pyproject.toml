@@ -29,6 +29,7 @@ langchain = "^0.0.263"
 pyperclip = "^1.8.2"
 tenacity = "^8.2.2"
 pydub = "^0.25.1"
+toml = "^0.10.2"
 
 
 [tool.poetry.group.dev.dependencies]

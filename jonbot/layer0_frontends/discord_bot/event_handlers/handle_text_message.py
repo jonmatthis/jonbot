@@ -11,7 +11,7 @@ from jonbot.layer1_api_interface.api_client.get_or_create_api_client import api_
 from jonbot.layer1_api_interface.routes import DATABASE_UPSERT_ENDPOINT
 from jonbot.models.conversation_models import ChatRequest, ContextRoute
 from jonbot.models.database_upsert_models import DatabaseUpsertRequest
-from jonbot.system.environment_variables import CONVERSATION_HISTORY_COLLECTION_NAME
+from jonbot.system.environment_config.environment_variables import CONVERSATION_HISTORY_COLLECTION_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -21,18 +21,17 @@ conversations = {}
 async def handle_text_message(message: discord.Message,
                               streaming: bool,
                               ):
-    async with aiohttp.ClientSession() as session:
 
-        await update_conversation_history_in_database(message=message)
+    await update_conversation_history_in_database(message=message)
 
-        chat_request = ChatRequest.from_discord_message(message=message, )
+    chat_request = ChatRequest.from_discord_message(message=message, )
 
-        if streaming:
-            await discord_send_chat_stream_api_request(chat_request=chat_request,
-                                                       message=message)
-        else:
-            await send_chat_api_request(chat_request=chat_request,
-                                        message=message)
+    if streaming:
+        await discord_send_chat_stream_api_request(chat_request=chat_request,
+                                                   message=message)
+    else:
+        await send_chat_api_request(chat_request=chat_request,
+                                    message=message)
 
 
 async def update_conversation_history_in_database(message: discord.Message):

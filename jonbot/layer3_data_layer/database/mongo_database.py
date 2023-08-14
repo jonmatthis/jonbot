@@ -6,7 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from jonbot.models.conversation_models import ContextRoute, ConversationHistory
 from jonbot.models.user_id_models import DiscordUserID, TelegramUserID, UserID
-from jonbot.system.environment_variables import MONGO_URI, DATABASE_NAME, USERS_COLLECTION_NAME, \
+from jonbot.system.environment_config.environment_variables import MONGO_URI, DATABASE_NAME, USERS_COLLECTION_NAME, \
     CONVERSATION_HISTORY_COLLECTION_NAME
 
 logger = logging.getLogger(__name__)

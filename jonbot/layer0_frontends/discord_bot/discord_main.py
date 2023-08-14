@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from jonbot.layer0_frontends.discord_bot.discord_bot import DiscordBot
-from jonbot.system.environment_variables import DISCORD_BOT_TOKEN
+from jonbot.system.environment_config.discord_config.load_discord_config import DISCORD_TOKEN
 
 logging.getLogger("discord").setLevel(logging.INFO)
 
@@ -19,7 +19,7 @@ async def run_discord_bot_async():
         logger.exception(f"An error occurred while starting the Discord bot: {str(e)}")
         raise
 
-    await discord_bot.start(DISCORD_BOT_TOKEN)
+    await discord_bot.start(DISCORD_TOKEN)
 
 
 def run_discord_bot():

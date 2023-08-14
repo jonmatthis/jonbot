@@ -20,7 +20,7 @@ import logging
 from telegram import __version__ as TG_VER
 
 from jonbot.layer0_frontends.telegram_bot.handlers.telegram_chat import telegram_chat
-from jonbot.system.environment_variables import TELEGRAM_BOT_TOKEN
+from jonbot.system.environment_config.environment_variables import TELEGRAM_BOT_TOKEN
 
 try:
     from jonbot.layer0_frontends.telegram_bot.utilities.check_version_compatibility import __version_info__
