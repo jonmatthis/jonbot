@@ -3,14 +3,14 @@ version: '3.7'
 services:
   api:
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile.api
     ports:
       - "8091:8091"
 
   discord:
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile.discord
     depends_on:
       - api

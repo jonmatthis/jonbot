@@ -1,0 +1,25 @@
+# A nickname for the bot, doesn't need to match the actual bot name.
+bot_nick_name = "<your bot nick name>"
+
+# Your discord bot token.
+discord_token = "<your discord bot token>"
+
+# Names can be anything you want, the actual IDs and details are provided below.
+allowed_servers = ["server1_nick_name", "server2_nick_name"]
+
+# Set to true if you want the bot to respond to direct messages.
+direct_messages_allowed = true
+
+# Configuration for server1_nick_name
+[server1_nick_name]
+server_id = "<server1_id>"
+# These are the channels that the bot will respond to commands.
+allowed_channel_ids = ["<channel1_id>", "<channel2_id>"]
+# These are the users that can use the admin commands.
+admin_user_ids = ["<user1_id>", "<user2_id>"]
+
+# Configuration for server2_nick_name
+[server2_nick_name]
+server_id = "<server2_id>"
+allowed_channel_ids = ["<channel1_id>", "<channel2_id>"]
+admin_user_ids = ["<user1_id>", "<user2_id>"]

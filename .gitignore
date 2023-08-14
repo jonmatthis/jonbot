@@ -160,3 +160,9 @@ cython_debug/
 .idea/
 output/
 quine_output/
+
+# Ignore all TOML configs in the directory
+config/discord_bots/*.toml
+
+# Then, explicitly allow the sample config (prefix with !)
+!config/discord_bots/sample_config.toml
