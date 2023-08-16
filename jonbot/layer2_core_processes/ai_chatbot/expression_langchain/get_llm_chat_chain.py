@@ -12,5 +12,5 @@ def get_llm_chain_for_chat_request(chat_request: ChatRequest) -> LLMChatChain:
     if context_route in active_chats:
         return active_chats[context_route]
     else:
-        active_chats[context_route] = LLMChatChain(message=chat_request.chat_input.message)
+        active_chats[context_route] = LLMChatChain()
         return active_chats[context_route]

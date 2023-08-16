@@ -8,7 +8,7 @@ from jonbot.models.conversation_models import ChatRequest
 
 async def chat_stream_function(chat_request: ChatRequest) -> AsyncIterable[str]:
     llm_chain = get_llm_chain_for_chat_request(chat_request)
-    async for response in llm_chain.execute():
+    async for response in llm_chain.execute(message_string=chat_request.chat_input.message):
         yield response
 
 

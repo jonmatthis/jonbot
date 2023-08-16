@@ -16,8 +16,7 @@ logger = get_logger()
 
 
 class LLMChatChain:
-    def __init__(self, message: str):
-        self.message = message
+    def __init__(self):
         self.model = ChatOpenAI(temperature=0.8, model_name="gpt-4", verbose=True)
         self.prompt = self._create_prompt()
         self.memory = ConversationBufferMemory(return_messages=True)
@@ -39,8 +38,8 @@ class LLMChatChain:
             "history": lambda x: x["memory"]["history"]
         } | self.prompt | self.model
 
-    async def execute(self) -> AsyncIterable[str]:
-        inputs = {"input": self.message}
+    async def execute(self, message_string:str) -> AsyncIterable[str]:
+        inputs = {"input": message_string}
         response_message = ""
         try:
             async for token in self.chain.astream(inputs):
