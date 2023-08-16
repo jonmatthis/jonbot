@@ -14,6 +14,9 @@ class DiscordEnvironmentConfig(BaseModel):
     _SERVERS_DETAILS: Dict[str, Any]
     _OWNER_IDS: List[str]
 
+    def __init__(__pydantic_self__, **data: Any):
+        super().__init__(data)
+        __pydantic_self__.DEBUG_GUILDS = None
 
     @classmethod
     def configure(cls,

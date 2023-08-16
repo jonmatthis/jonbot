@@ -1,11 +1,13 @@
 import discord
 
 from jonbot import get_logger
-from jonbot.layer0_frontends.discord_bot.commands.voice_channel_cog import VoiceChannelCog
+from jonbot.layer0_frontends.discord_bot.commands.cogs.thread_scraper_cog.server_scraper_cog import ServerScraperCog
+from jonbot.layer0_frontends.discord_bot.commands.cogs.voice_channel_cog import VoiceChannelCog
 from jonbot.layer0_frontends.discord_bot.handlers.handle_message_responses import DiscordStreamUpdater, \
     update_discord_message
-from jonbot.layer0_frontends.discord_bot.utilities.get_conversation_history_from_message import \
-    get_conversation_history_from_message
+from jonbot.layer0_frontends.discord_bot.operations.database_operations import DatabaseOperations
+from jonbot.layer0_frontends.discord_bot.utilities.print_pretty_terminal_message import \
+    print_pretty_startup_message_in_terminal
 from jonbot.layer0_frontends.discord_bot.utilities.should_process_message import should_process_message, \
     TRANSCRIBED_AUDIO_PREFIX
 from jonbot.layer1_api_interface.api_client.api_client import ApiClient
@@ -30,12 +32,14 @@ class DiscordBot(discord.Bot):
                  **kwargs
                  ):
         super().__init__(**kwargs)
-
-        # self.add_cog(ServerScraperCog())
+        self.debug_guilds = environment_config.DEBUG_GUILDS
+        self.add_cog(ServerScraperCog())
         self._api_client = api_client
         self._database_name = f"{environment_config.BOT_NICK_NAME}_database"
         self._database_collection_name = "discord_messages"
-
+        self._database_operations = DatabaseOperations(api_client=api_client,
+                                                       database_name=self._database_name,
+                                                       collection_name=self._database_collection_name)
         self._conversations = {}
 
         for cog in cogs:
@@ -44,21 +48,8 @@ class DiscordBot(discord.Bot):
     @discord.Cog.listener()
     async def on_ready(self):
         logger.info(f"Logged in as {self.user.name} ({self.user.id}) - checking API health...")
-        self.print_pretty_startup_message_in_terminal()
+        print_pretty_startup_message_in_terminal(self.user.name)
 
-    def print_pretty_startup_message_in_terminal(self):
-        message = f"{self.user.name} is ready to roll!!!"
-        padding = 10  # Adjust as needed
-        total_length = len(message) + padding
-
-        border = '═' * total_length
-        space_padding = (total_length - len(message)) // 2
-
-        print(f"""
-        ╔{border}╗
-        ║{' ' * space_padding}{message}{' ' * space_padding}║
-        ╚{border}╝
-        """)
 
     @discord.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
@@ -122,24 +113,8 @@ class DiscordBot(discord.Bot):
         if not response["success"]:
             logger.error(f"Failed to log message in database!! \n\n response: \n {response}")
 
-        await self.update_conversation_history_in_database(message=message)
+        await self._database_operations.update_conversation_history_in_database(message=message)
 
-    async def update_conversation_history_in_database(self,
-                                                      message: discord.Message):
-
-        conversation_history = await get_conversation_history_from_message(message=message)
-        upsert_request = DatabaseUpsertRequest(database_name=self._database_name,
-                                               collection_name=self._database_collection_name,
-                                               data=conversation_history.dict(),
-                                               query={"context_route_parent": ContextRoute.from_discord_message(
-                                                   message=message).parent},
-                                               )
-
-        await self._api_client.send_request_to_api(endpoint_name=DATABASE_UPSERT_ENDPOINT,
-                                             data=upsert_request.dict())
-
-        logger.info(
-            f"Updated conversation history for context_route_key: {ContextRoute.from_discord_message(message=message)}")
 
     async def send_chat_api_request(self,
                                     chat_request: ChatRequest,
