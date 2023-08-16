@@ -19,7 +19,8 @@ from jonbot.models.database_upsert_models import DatabaseUpsertResponse, Databas
 from jonbot.models.health_check_status import HealthCheckResponse
 from jonbot.models.voice_to_text_request import VoiceToTextResponse, VoiceToTextRequest
 
-logger = logging.getLogger(__name__)
+from jonbot import get_logger
+logger = get_logger()
 
 HEALTH_ENDPOINT = "/health"
 CHAT_ENDPOINT = "/chat"

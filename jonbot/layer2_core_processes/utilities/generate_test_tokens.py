@@ -2,7 +2,8 @@ import asyncio
 
 import logging
 
-logger = logging.getLogger(__name__)
+from jonbot import get_logger
+logger = get_logger()
 
 
 async def generate_test_tokens():

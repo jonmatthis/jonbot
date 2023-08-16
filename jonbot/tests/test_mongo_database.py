@@ -4,7 +4,8 @@ import uuid
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 from jonbot.layer3_data_layer.database.mongo_database import MongoDatabaseManager
 
-logger = logging.getLogger(__name__)
+from jonbot import get_logger
+logger = get_logger()
 
 async def test_mongo_database(manager: MongoDatabaseManager = get_or_create_mongo_database_manager(),
                         database_name: str = 'test_database'):

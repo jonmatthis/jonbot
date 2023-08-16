@@ -16,7 +16,8 @@ from jonbot.layer2_core_processes.ai_chatbot.components.prompt.prompt_builder im
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 from jonbot.models.conversation_models import ConversationContext, ConversationHistory, ChatRequest, ChatResponse
 
-logger = logging.getLogger(__name__)
+from jonbot import get_logger
+logger = get_logger()
 
 
 class AIChatBot(BaseModel):

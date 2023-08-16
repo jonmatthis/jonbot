@@ -2,7 +2,8 @@ import logging
 
 from jonbot.layer1_api_interface.api_client.api_client import ApiClient
 
-logger = logging.getLogger(__name__)
+from jonbot import get_logger
+logger = get_logger()
 
 API_CLIENT = None
 

@@ -5,7 +5,8 @@ from typing import Union
 from langchain.callbacks.base import AsyncCallbackHandler
 from pydantic import BaseModel
 
-logger = logging.getLogger(__name__)
+from jonbot import get_logger
+logger = get_logger()
 
 
 class AsyncQueueStuffingCallbackHandler(AsyncCallbackHandler):

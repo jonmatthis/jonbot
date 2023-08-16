@@ -4,7 +4,8 @@ import discord
 
 from jonbot.models.discord_stuff.environment_config.load_discord_config import get_or_create_discord_environment_config
 
-logger = logging.getLogger(__name__)
+from jonbot import get_logger
+logger = get_logger()
 
 VOICE_RECORDING_PREFIX = "Finished! Recorded audio for"
 TRANSCRIBED_AUDIO_PREFIX = "Transcribed audio for"

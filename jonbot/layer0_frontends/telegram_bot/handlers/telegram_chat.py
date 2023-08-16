@@ -17,7 +17,8 @@ logger.setLevel(logging.INFO)
 
 import logging
 
-logger = logging.getLogger(__name__)
+from jonbot import get_logger
+logger = get_logger()
 
 api_client = get_or_create_api_client()
 

@@ -9,7 +9,8 @@ from jonbot.models.discord_stuff.environment_config.load_discord_config import g
 
 logging.getLogger("discord").setLevel(logging.INFO)
 
-logger = logging.getLogger(__name__)
+from jonbot import get_logger
+logger = get_logger()
 
 
 async def run_discord_bot_async(bot_name_or_index: Union[str, int] = 0):

@@ -20,7 +20,8 @@ from jonbot.models.discord_stuff.environment_config.discord_environment import D
 from jonbot.models.voice_to_text_request import VoiceToTextRequest
 
 
-logger = logging.getLogger(__name__)
+from jonbot import get_logger
+logger = get_logger()
 
 
 class DiscordBot(discord.Bot):

@@ -4,7 +4,8 @@ import discord
 
 from jonbot.models.conversation_models import ChatResponse
 
-logger = logging.getLogger(__name__)
+from jonbot import get_logger
+logger = get_logger()
 class DiscordStreamUpdater:
     def __init__(self):
         self.message_content = ""

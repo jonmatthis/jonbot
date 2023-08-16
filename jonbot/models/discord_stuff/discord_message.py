@@ -8,7 +8,8 @@ from pydantic import BaseModel
 from jonbot.models.conversation_models import ConversationContext, ContextRoute
 from jonbot.models.timestamp_model import Timestamp
 
-logger = logging.getLogger(__name__)
+from jonbot import get_logger
+logger = get_logger()
 from jonbot.system.path_getters import get_new_attachments_folder_path
 
 

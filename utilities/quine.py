@@ -15,10 +15,12 @@ from pydantic import BaseModel, Field
 try:
     from jonbot import configure_logging
     configure_logging()
-    logger = logging.getLogger(__name__)
+    from jonbot import get_logger
+logger = get_logger()
 except Exception as e:
     print(f"Error while importing configure_logging: {str(e)}")
-    logger = logging.getLogger(__name__)
+    from jonbot import get_logger
+logger = get_logger()
     logger.exception(f"Error while importing configure_logging: {str(e)}")
 
 

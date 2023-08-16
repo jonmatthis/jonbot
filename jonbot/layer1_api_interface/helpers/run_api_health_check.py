@@ -5,7 +5,8 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from jonbot.layer1_api_interface.api_client.get_or_create_api_client import api_client
 from jonbot.layer1_api_interface.routes import HEALTH_ENDPOINT
 
-logger = logging.getLogger(__name__)
+from jonbot import get_logger
+logger = get_logger()
 
 @retry(
     stop=stop_after_attempt(60),

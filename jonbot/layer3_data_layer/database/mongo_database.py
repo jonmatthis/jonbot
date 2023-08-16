@@ -10,7 +10,8 @@ from jonbot.models.user_stuff.user_ids import TelegramUserID, UserID
 from jonbot.system.environment_variables import MONGO_URI, USERS_COLLECTION_NAME, \
     CONVERSATION_HISTORY_COLLECTION_NAME
 
-logger = logging.getLogger(__name__)
+from jonbot import get_logger
+logger = get_logger()
 
 
 class MongoDatabaseManager:

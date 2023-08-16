@@ -6,7 +6,8 @@ from jonbot.layer0_frontends.telegram_bot.telegram_bot import run_telegram_bot_s
 from jonbot.layer1_api_interface.api_main import run_api_sync
 from jonbot.system.environment_variables import BOT_NICK_NAMES
 
-logger = logging.getLogger(__name__)
+from jonbot import get_logger
+logger = get_logger()
 
 
 # Note: At the end, the final SERVICES list will be built dynamically

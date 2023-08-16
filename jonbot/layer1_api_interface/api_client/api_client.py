@@ -8,7 +8,8 @@ from jonbot.layer1_api_interface.helpers.error_message_from_response import erro
 from jonbot.models.api_endpoint_url import ApiRoute
 from jonbot.system.environment_variables import API_HOST_NAME
 
-logger = logging.getLogger(__name__)
+from jonbot import get_logger
+logger = get_logger()
 
 
 class ApiClient:

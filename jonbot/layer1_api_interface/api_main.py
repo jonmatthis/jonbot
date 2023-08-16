@@ -6,7 +6,8 @@ from uvicorn import Config, Server
 from jonbot.layer1_api_interface.routes import get_or_create_fastapi_app
 from jonbot.system.environment_variables import HOST_NAME, PORT_NUMBER
 
-logger = logging.getLogger(__name__)
+from jonbot import get_logger
+logger = get_logger()
 
 app = get_or_create_fastapi_app()
 

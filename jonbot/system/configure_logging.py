@@ -22,6 +22,12 @@ logging.addLevelName(LogLevel.SUCCESS.value, "SUCCESS")
 
 
 
+
+
+
+
+
+
 class MicrosecondFormatter(logging.Formatter):
     """A custom Formatter class to include microseconds in log timestamps."""
 
@@ -45,26 +51,13 @@ class LoggerBuilder:
         self.default_logging_formatter = MicrosecondFormatter(
             fmt=self.format_string, datefmt="%Y-%m-%dT%H:%M:%S")
         dictConfig(self.DEFAULT_LOGGING)
-        self._add_trace_method_to_logger()
-        self._add_success_method_to_logger()
+
         self._set_logging_level(level)
 
     def _set_logging_level(self, level: LogLevel):
         logging.root.setLevel(level.value)
 
-    def _add_trace_method_to_logger(self):
-        def trace(self, message, *args, **kws):
-            if self.isEnabledFor(LogLevel.TRACE.value):
-                self._log(LogLevel.TRACE.value, message, args, **kws)
 
-        logging.Logger.trace = trace
-
-    def _add_success_method_to_logger(self):
-        def success(self, message, *args, **kws):
-            if self.isEnabledFor(LogLevel.SUCCESS.value):
-                self._log(LogLevel.SUCCESS.value, message, args, **kws)
-
-        logging.Logger.success = success
 
     def build_file_handler(self):
         file_handler = logging.FileHandler(get_log_file_path(), encoding="utf-8")
@@ -101,17 +94,31 @@ class LoggerBuilder:
                 if handler not in logging.getLogger("").handlers:
                     logging.getLogger("").handlers.append(handler)
         else:
-            logger = logging.getLogger(__name__)
+            from jonbot import get_logger
+            logger = get_logger()
             logger.info("Logging already configured")
 
 
 def configure_logging(level: LogLevel = LogLevel.INFO):
+    def trace(self, message, *args, **kws):
+        if self.isEnabledFor(LogLevel.TRACE.value):
+            self._log(LogLevel.TRACE.value, message, args, **kws)
+
+    logging.Logger.trace = trace
+
+    def success(self, message, *args, **kws):
+        if self.isEnabledFor(LogLevel.SUCCESS.value):
+            self._log(LogLevel.SUCCESS.value, message, args, **kws)
+
+    logging.Logger.success = success
+
     builder = LoggerBuilder(level)
     builder.configure()
 
 
 def log_test_messages():
-    logger = logging.getLogger(__name__)
+    from jonbot import get_logger
+    logger = get_logger()
     logger.trace("This is a TRACE message.")
     logger.debug("This is a DEBUG message.")
     logger.info("This is an INFO message.")
