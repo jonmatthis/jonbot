@@ -76,12 +76,14 @@ class ApiClient:
 
 async def run_callbacks(callbacks: List[Callable], line: bytes):
     try:
+        line_str = line.decode('utf-8')
+        logger.trace(f"Received line from server: {line_str}")
         for callback in callbacks:
             logger.trace(f"Running callback: {callback.__name__}")
             if asyncio.iscoroutinefunction(callback):
-                await callback(line.decode('utf-8').strip())
+                await callback(line_str)
             else:
-                callback(line.decode('utf-8').strip())
+                callback(line_str)
     except Exception as e:
         logger.exception(f"An error occurred while running a callback: {str(e)}")
         raise
