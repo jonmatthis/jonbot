@@ -20,11 +20,9 @@ class LLMChatChain:
         self.model = ChatOpenAI(temperature=0.8, model_name="gpt-4", verbose=True)
 
         self.prompt = ChatbotPrompt.build(chat_history_placeholder_name=chat_history_placeholder_name)
-        self._set_up_memory(chat_history_placeholder_name=chat_history_placeholder_name)
+        self.memory = ConversationBufferMemory(return_messages=True)
         self.chain = self._build_chain()
 
-    def _set_up_memory(self, chat_history_placeholder_name:str):
-        self.memory = ConversationBufferMemory(return_messages=True)
 
     def _build_chain(self) -> RunnableSequence:
         return RunnableMap({
