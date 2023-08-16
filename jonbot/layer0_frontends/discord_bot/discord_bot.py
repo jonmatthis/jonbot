@@ -176,26 +176,24 @@ class DiscordBot(discord.Bot):
 
     async def handle_voice_memo(self,
                                 message: discord.Message):
-
-        reply_message = await message.reply("Transcribing audio...")
+        logger.info(f"Received voice memo from user: {message.author}")
         for attachment in message.attachments:
-            if attachment.filename.startswith("audio"):
-                voice_to_text_request = VoiceToTextRequest(audio_file_url=message.attachments[0].url)
+            if attachment.content_type.startswith('audio'):
+                voice_to_text_request = VoiceToTextRequest(audio_file_url=attachment.url)
 
                 await self.send_voice_to_text_api_request(voice_to_text_request=voice_to_text_request,
-                                                     message=message,
-                                                     reply_message=reply_message)
+                                                     message=message)
 
 
     async def send_voice_to_text_api_request(self,
                                              voice_to_text_request: VoiceToTextRequest,
-                                             message: discord.Message,
-                                             reply_message: discord.Message):
+                                             message: discord.Message)->dict:
         logger.info(f"Sending voice to text request payload: {voice_to_text_request.dict()}")
         response = await self._api_client.send_request_to_api(endpoint_name=VOICE_TO_TEXT_ENDPOINT,
                                                         data=voice_to_text_request.dict())
-        tmp = reply_message.content
-        await reply_message.edit(
-            content=tmp + "\n" + f"{TRANSCRIBED_AUDIO_PREFIX} from user `{message.author}`:\n > {response['text']}")
+
+        await message.reply(f"{TRANSCRIBED_AUDIO_PREFIX} from user `{message.author}`:\n > {response['text']}")
         logger.info(f"VoiceToTextResponse payload received: \n {response}\n"
                     f"Successfully sent voice to text request payload to API!")
+
+
