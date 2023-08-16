@@ -5,10 +5,10 @@ import discord
 from discord import Forbidden
 from discord.ext import commands
 
+from jonbot import get_logger
 from jonbot.layer3_data_layer.database.mongo_database import MongoDatabaseManager
 from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
 
-from jonbot import get_logger
 logger = get_logger()
 
 logging.getLogger('discord').setLevel(logging.INFO)

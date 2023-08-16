@@ -1,6 +1,6 @@
 import logging
 import sys
-from datetime import datetime, time
+from datetime import datetime
 from enum import Enum
 from logging.config import dictConfig
 

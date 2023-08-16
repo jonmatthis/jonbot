@@ -1,10 +1,10 @@
 import logging
 import uuid
 
+from jonbot import get_logger
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 from jonbot.layer3_data_layer.database.mongo_database import MongoDatabaseManager
 
-from jonbot import get_logger
 logger = get_logger()
 
 async def test_mongo_database(manager: MongoDatabaseManager = get_or_create_mongo_database_manager(),

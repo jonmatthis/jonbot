@@ -1,10 +1,8 @@
-import logging
-
 import discord
 
+from jonbot import get_logger
 from jonbot.models.discord_stuff.environment_config.load_discord_config import get_or_create_discord_environment_config
 
-from jonbot import get_logger
 logger = get_logger()
 
 VOICE_RECORDING_PREFIX = "Finished! Recorded audio for"

@@ -4,7 +4,6 @@ from enum import Enum
 import discord
 
 
-
 class Sinks(Enum):
     mp3 = discord.sinks.MP3Sink()
     wav = discord.sinks.WaveSink()

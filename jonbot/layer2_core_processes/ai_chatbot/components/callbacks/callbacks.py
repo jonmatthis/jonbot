@@ -3,9 +3,9 @@ import logging
 from typing import Union
 
 from langchain.callbacks.base import AsyncCallbackHandler
-from pydantic import BaseModel
 
 from jonbot import get_logger
+
 logger = get_logger()
 
 

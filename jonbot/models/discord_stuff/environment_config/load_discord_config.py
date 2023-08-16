@@ -1,6 +1,7 @@
 from typing import Union
-import logging
+
 from dotenv import load_dotenv
+
 from jonbot.models.discord_stuff.environment_config.discord_environment import DiscordEnvironmentConfig
 
 load_dotenv()

@@ -1,12 +1,10 @@
-import logging
-
 from langchain.callbacks import StreamingStdOutCallbackHandler
 
+from jonbot import get_logger
 from jonbot.layer2_core_processes.ai_chatbot.ai_chatbot import AIChatBot
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 from jonbot.models.conversation_models import ChatResponse, ChatRequest
 
-from jonbot import get_logger
 logger = get_logger()
 
 

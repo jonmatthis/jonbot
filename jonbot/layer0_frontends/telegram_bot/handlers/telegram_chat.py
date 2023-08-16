@@ -15,8 +15,6 @@ logger.setLevel(logging.INFO)
 logger = logging.getLogger('telegram')
 logger.setLevel(logging.INFO)
 
-import logging
-
 from jonbot import get_logger
 logger = get_logger()
 

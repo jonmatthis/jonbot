@@ -2,6 +2,7 @@ import asyncio
 
 import httpx
 
+
 async def call_streaming_endpoint_trad(message: str) -> str:
     url = "http://localhost:8000/stream_trad"
     payload = {"message": "this is a langchain TRADITIONAL chain test"}

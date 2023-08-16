@@ -1,9 +1,7 @@
-import logging
-
+from jonbot import get_logger
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 from jonbot.models.database_upsert_models import DatabaseUpsertRequest, DatabaseUpsertResponse
 
-from jonbot import get_logger
 logger = get_logger()
 
 

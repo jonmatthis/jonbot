@@ -1,14 +1,13 @@
-import logging
 from pathlib import Path
 from typing import List, Optional, Union
 
 import discord
 from pydantic import BaseModel
 
+from jonbot import get_logger
 from jonbot.models.conversation_models import ConversationContext, ContextRoute
 from jonbot.models.timestamp_model import Timestamp
 
-from jonbot import get_logger
 logger = get_logger()
 from jonbot.system.path_getters import get_new_attachments_folder_path
 

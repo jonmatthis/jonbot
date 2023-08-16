@@ -1,14 +1,12 @@
-import logging
-
 import aiohttp
 from jonbot.layer1_api_interface.app import API_VOICE_TO_TEXT_URL
 from telegram import Update
 from telegram.ext import ContextTypes
 
+from jonbot import get_logger
 from jonbot.layer3_data_layer.database.mongo_database import mongo_database_manager
 from jonbot.models import ChatResponse
 
-from jonbot import get_logger
 logger = get_logger()
 
 

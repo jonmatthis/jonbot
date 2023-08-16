@@ -1,15 +1,9 @@
-import asyncio
-import logging
-from typing import AsyncIterable, Awaitable
-
 from fastapi import FastAPI
-from langchain.callbacks import AsyncIteratorCallbackHandler
-from langchain.chat_models import ChatOpenAI
-from langchain.schema import HumanMessage
 from starlette.responses import StreamingResponse
 
+from jonbot import get_logger
 from jonbot.layer1_api_interface.endpoints.chat import chat
-from jonbot.layer1_api_interface.endpoints.chat_stream import  chat_stream_function
+from jonbot.layer1_api_interface.endpoints.chat_stream import chat_stream_function
 from jonbot.layer1_api_interface.endpoints.database import database_upsert
 from jonbot.layer2_core_processes.audio_transcription.transcribe_audio import transcribe_audio
 from jonbot.layer2_core_processes.utilities.generate_test_tokens import generate_test_tokens
@@ -19,7 +13,6 @@ from jonbot.models.database_upsert_models import DatabaseUpsertResponse, Databas
 from jonbot.models.health_check_status import HealthCheckResponse
 from jonbot.models.voice_to_text_request import VoiceToTextResponse, VoiceToTextRequest
 
-from jonbot import get_logger
 logger = get_logger()
 
 HEALTH_ENDPOINT = "/health"

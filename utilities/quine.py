@@ -1,6 +1,5 @@
 import ast
 import datetime
-import logging
 import os
 import platform
 import subprocess
@@ -9,8 +8,6 @@ from typing import List, Literal
 
 import pyperclip
 from pydantic import BaseModel, Field
-
-
 
 try:
     from jonbot import configure_logging

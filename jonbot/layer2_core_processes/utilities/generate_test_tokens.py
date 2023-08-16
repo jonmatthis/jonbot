@@ -1,8 +1,7 @@
 import asyncio
 
-import logging
-
 from jonbot import get_logger
+
 logger = get_logger()
 
 

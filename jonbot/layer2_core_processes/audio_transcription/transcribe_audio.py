@@ -1,4 +1,3 @@
-import logging
 import os
 
 import aiofiles
@@ -7,6 +6,7 @@ import openai
 from pydub import AudioSegment
 
 from jonbot import get_logger
+
 logger = get_logger()
 
 

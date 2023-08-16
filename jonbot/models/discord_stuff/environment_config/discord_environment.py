@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 from typing import List, Dict, Any, Union
 
-import discord
 import toml
 from pydantic import BaseModel
 

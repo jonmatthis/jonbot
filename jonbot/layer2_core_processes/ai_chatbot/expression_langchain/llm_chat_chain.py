@@ -3,10 +3,9 @@ from typing import AsyncIterable
 import langchain
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
-from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain.schema.runnable import RunnableMap
+from langchain.schema.runnable import RunnableMap, RunnableSequence
 
-from jonbot.models.conversation_models import ChatRequest
+from jonbot.layer2_core_processes.ai_chatbot.components.prompt.prompt_builder import ChatbotPrompt
 
 langchain.debug = True
 
@@ -16,30 +15,28 @@ logger = get_logger()
 
 
 class LLMChatChain:
-    def __init__(self):
+    def __init__(self,
+                 chat_history_placeholder_name:str="chat_history"):
         self.model = ChatOpenAI(temperature=0.8, model_name="gpt-4", verbose=True)
-        self.prompt = self._create_prompt()
-        self.memory = ConversationBufferMemory(return_messages=True)
+
+        self.prompt = ChatbotPrompt.build(chat_history_placeholder_name=chat_history_placeholder_name)
+        self._set_up_memory(chat_history_placeholder_name=chat_history_placeholder_name)
         self.chain = self._build_chain()
 
-    def _create_prompt(self) -> ChatPromptTemplate:
-        return ChatPromptTemplate.from_messages([
-            ("system", "You are a helpful chatbot. You are super chill and lowkey. Your personality is kind, reserved, and very casual."),
-            MessagesPlaceholder(variable_name="history"),
-            ("human", "{input}")
-        ])
+    def _set_up_memory(self, chat_history_placeholder_name:str):
+        self.memory = ConversationBufferMemory(return_messages=True)
 
-    def _build_chain(self) -> RunnableMap:
+    def _build_chain(self) -> RunnableSequence:
         return RunnableMap({
-            "input": lambda x: x["input"],
-            "memory": self.memory.load_memory_variables
+            "human_input": lambda x: x["human_input"],
+            "memory": self.memory.load_memory_variables,
         }) | {
-            "input": lambda x: x["input"],
-            "history": lambda x: x["memory"]["history"]
+            "human_input": lambda x: x["human_input"],
+            "chat_history": lambda x: x["memory"]["history"]
         } | self.prompt | self.model
 
     async def execute(self, message_string:str) -> AsyncIterable[str]:
-        inputs = {"input": message_string}
+        inputs = {"human_input": message_string}
         response_message = ""
         try:
             async for token in self.chain.astream(inputs):

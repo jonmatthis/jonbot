@@ -1,5 +1,6 @@
 from langchain import PromptTemplate
-from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
+from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate, \
+    MessagesPlaceholder
 
 from jonbot.layer2_core_processes.ai_chatbot.components.prompt.prompt_strings import DEFAULT_RULES_FOR_LIVING, \
     DEFAULT_CHATBOT_SYSTEM_PROMPT_TEMPLATE
@@ -8,8 +9,10 @@ from jonbot.models.timestamp_model import Timestamp
 
 
 class ChatbotPrompt(ChatPromptTemplate):
+
     @classmethod
     def build(cls,
+              chat_history_placeholder_name: str,
               conversation_context: ConversationContext = None,
               system_prompt_template: str = DEFAULT_CHATBOT_SYSTEM_PROMPT_TEMPLATE,
               ) -> ChatPromptTemplate:
@@ -18,7 +21,6 @@ class ChatbotPrompt(ChatPromptTemplate):
                                                         "rules_for_living",
                                                         "context_route",
                                                         "context_description",
-                                                        # "chat_memory",
                                                         # "vectorstore_memory"
                                                         ],
                                        )
@@ -37,5 +39,13 @@ class ChatbotPrompt(ChatPromptTemplate):
         )
 
         return cls.from_messages(
-            [system_message_prompt, human_message_prompt]
+            [system_message_prompt,
+             MessagesPlaceholder(variable_name=chat_history_placeholder_name,),
+             human_message_prompt]
         )
+
+if __name__ == "__main__":
+    print(ChatbotPrompt.build())
+    f=9
+
+

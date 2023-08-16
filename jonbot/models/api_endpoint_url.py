@@ -6,6 +6,7 @@ from pydantic import BaseModel, validator
 
 from jonbot.system.environment_variables import URL_PREFIX, HOST_NAME
 
+
 class ApiRoute(BaseModel):
     host_name: str = HOST_NAME
     url_prefix: str = URL_PREFIX

@@ -5,8 +5,6 @@ from jonbot.models.conversation_models import ConversationHistory
 
 CONVERSATION_HISTORY_MAX_TOKENS = 1000
 
-import logging
-
 from jonbot import get_logger
 logger = get_logger()
 

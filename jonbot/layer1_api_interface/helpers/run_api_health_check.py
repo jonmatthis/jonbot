@@ -1,11 +1,9 @@
-import asyncio
-import logging
 from tenacity import retry, stop_after_attempt, wait_exponential
 
+from jonbot import get_logger
 from jonbot.layer1_api_interface.api_client.get_or_create_api_client import api_client
 from jonbot.layer1_api_interface.routes import HEALTH_ENDPOINT
 
-from jonbot import get_logger
 logger = get_logger()
 
 @retry(

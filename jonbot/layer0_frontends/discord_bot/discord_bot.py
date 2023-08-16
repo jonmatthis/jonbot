@@ -1,7 +1,6 @@
-import logging
-
 import discord
 
+from jonbot import get_logger
 from jonbot.layer0_frontends.discord_bot.commands.voice_channel_cog import VoiceChannelCog
 from jonbot.layer0_frontends.discord_bot.handlers.handle_message_responses import DiscordStreamUpdater, \
     update_discord_message
@@ -19,8 +18,6 @@ from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
 from jonbot.models.discord_stuff.environment_config.discord_environment import DiscordEnvironmentConfig
 from jonbot.models.voice_to_text_request import VoiceToTextRequest
 
-
-from jonbot import get_logger
 logger = get_logger()
 
 

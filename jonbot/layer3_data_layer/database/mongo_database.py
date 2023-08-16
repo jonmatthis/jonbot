@@ -4,13 +4,13 @@ from typing import Union
 
 from motor.motor_asyncio import AsyncIOMotorClient
 
+from jonbot import get_logger
 from jonbot.models.conversation_models import ContextRoute, ConversationHistory
 from jonbot.models.discord_stuff.discord_id import DiscordUserID
 from jonbot.models.user_stuff.user_ids import TelegramUserID, UserID
 from jonbot.system.environment_variables import MONGO_URI, USERS_COLLECTION_NAME, \
     CONVERSATION_HISTORY_COLLECTION_NAME
 
-from jonbot import get_logger
 logger = get_logger()
 
 

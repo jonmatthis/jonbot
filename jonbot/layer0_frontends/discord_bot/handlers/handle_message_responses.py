@@ -1,10 +1,8 @@
-import logging
-
 import discord
 
+from jonbot import get_logger
 from jonbot.models.conversation_models import ChatResponse
 
-from jonbot import get_logger
 logger = get_logger()
 class DiscordStreamUpdater:
     def __init__(self):

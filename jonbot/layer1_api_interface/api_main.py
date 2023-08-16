@@ -1,12 +1,11 @@
 import asyncio
-import logging
 
 from uvicorn import Config, Server
 
+from jonbot import get_logger
 from jonbot.layer1_api_interface.routes import get_or_create_fastapi_app
 from jonbot.system.environment_variables import HOST_NAME, PORT_NUMBER
 
-from jonbot import get_logger
 logger = get_logger()
 
 app = get_or_create_fastapi_app()
