@@ -16,10 +16,9 @@ class DiscordStreamUpdater:
         self.reply_message = await message.reply("response incoming...")
 
     async def update_discord_reply(self, token: str):
-        clean_token = token.replace("data: ", "").replace("data:", "").replace("\n\n", "")
-        if not clean_token == "":
-            logger.trace(f"updating discord reply with token: received: `{token}`,  cleaned: `{clean_token}`")
-            self.message_content += clean_token
+        if not token == "":
+            logger.trace(f"updating discord reply with token: {repr(token)}")
+            self.message_content += token
             await self.reply_message.edit(content=self.message_content)
 
 

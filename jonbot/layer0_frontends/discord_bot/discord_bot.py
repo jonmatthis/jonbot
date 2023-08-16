@@ -161,9 +161,8 @@ class DiscordBot(discord.Bot):
         await updater.initialize_reply(message)
 
         async def callback(token: str):
-            logger.trace(f"Frontend received token: `{token}`")
-            clean_token = token.replace("data: ", "").replace("\n\n", "")
-            await updater.update_discord_reply(clean_token)
+            logger.trace(f"Frontend received token: `{repr(token)}`")
+            await updater.update_discord_reply(token)
 
         try:
             return await self._api_client.send_request_to_api_streaming(endpoint_name=CHAT_STREAM_ENDPOINT,

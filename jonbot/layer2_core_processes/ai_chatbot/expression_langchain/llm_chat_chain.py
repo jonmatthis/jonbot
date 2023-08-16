@@ -7,7 +7,7 @@ from langchain.schema.runnable import RunnableMap, RunnableSequence
 
 from jonbot.layer2_core_processes.ai_chatbot.components.prompt.prompt_builder import ChatbotPrompt
 
-langchain.debug = True
+# langchain.debug = True
 
 from jonbot import get_logger
 logger = get_logger()
@@ -38,9 +38,9 @@ class LLMChatChain:
         response_message = ""
         try:
             async for token in self.chain.astream(inputs):
-                logger.trace(f"Sending token: {token.content}")
+                logger.trace(f"Yielding token: {repr(token.content)}")
                 response_message += token.content
-                yield f"data: {token.content}\n\n"  # Use server-sent-events format to stream the response
+                yield token.content
 
             self.memory.save_context(inputs, {"output": response_message})
             logger.trace(f"Response message: {response_message}")
