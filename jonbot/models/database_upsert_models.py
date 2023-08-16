@@ -2,7 +2,8 @@ from pydantic import BaseModel
 
 
 class DatabaseUpsertRequest(BaseModel):
-    collection: str
+    database_name: str
+    collection_name: str
     data: dict
     query: dict
 

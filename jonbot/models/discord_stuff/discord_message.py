@@ -25,7 +25,7 @@ class DiscordMessageDocument(BaseModel):
     in_thread: bool
     thread_id: Optional[int]
     server: str
-    server_id: int
+    SERVER_ID: int
     timestamp: Timestamp
     edited_timestamp: Union[Timestamp, str]
     received_timestamp: Timestamp
@@ -51,7 +51,7 @@ class DiscordMessageDocument(BaseModel):
             channel=message.channel.name if message.guild else f"DM_with_{message.author.name}",
             channel_id=message.channel.id,
             server=message.guild.name if message.guild else f"DM_with_{message.author.name}",
-            server_id=message.guild.id if message.guild else 0,
+            SERVER_ID=message.guild.id if message.guild else 0,
             timestamp=Timestamp.from_datetime(message.created_at),
             edited_timestamp=Timestamp.from_datetime(message.edited_at) if message.edited_at else '',
             mentions=[mention.name for mention in message.mentions],

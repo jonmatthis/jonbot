@@ -5,10 +5,10 @@ from typing import Union
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from jonbot.models.conversation_models import ContextRoute, ConversationHistory
-from jonbot.models.user_id_models import DiscordUserID, TelegramUserID, UserID
-from jonbot.system.environment_config.environment_variables import MONGO_URI, USERS_COLLECTION_NAME, \
+from jonbot.models.discord_stuff.discord_id import DiscordUserID
+from jonbot.models.user_stuff.user_ids import TelegramUserID, UserID
+from jonbot.system.environment_variables import MONGO_URI, USERS_COLLECTION_NAME, \
     CONVERSATION_HISTORY_COLLECTION_NAME
-
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,6 @@ class MongoDatabaseManager:
     def __init__(self):
         logger.info(f'Initializing MongoDatabaseManager...')
         self._client = AsyncIOMotorClient(MONGO_URI)
-
 
     def _get_database(self, database_name: str):
         return self._client[database_name]
@@ -55,14 +54,15 @@ class MongoDatabaseManager:
     async def upsert(self,
                      database_name: str,
                      data: dict,
-                     collection: str,
+                     collection_name: str,
                      query: dict = None) -> bool:
         if not query:
             query = {}
         update_data = {"$set": data}
-        collection = self._get_collection(database_name, collection)
+        collection_name = self._get_collection(database_name=database_name,
+                                               collection_name=collection_name)
         try:
-            await collection.update_one(query, update_data, upsert=True)
+            await collection_name.update_one(query, update_data, upsert=True)
             return True
         except Exception as e:
             logging.error(f'Error occurred while upserting. Error: {e}')
@@ -84,4 +84,3 @@ class MongoDatabaseManager:
         user_id = UserID(uuid=str(uuid.uuid4()), discord_id=discord_id, telegram_id=telegram_id)
         await users_collection.insert_one(user_id.dict())
         return user_id
-

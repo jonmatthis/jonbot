@@ -6,7 +6,7 @@ from discord import Forbidden
 from discord.ext import commands
 
 from jonbot.layer3_data_layer.database.mongo_database import MongoDatabaseManager
-from jonbot.models.discord_message import DiscordMessageDocument
+from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
 
 logger = logging.getLogger(__name__)
 

@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 
 from pydantic import BaseModel, validator
 
-from jonbot.system.environment_config.environment_variables import URL_PREFIX, HOST_NAME
+from jonbot.system.environment_variables import URL_PREFIX, HOST_NAME
 
 class ApiRoute(BaseModel):
     host_name: str = HOST_NAME

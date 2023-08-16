@@ -2,13 +2,9 @@ import logging
 
 import discord
 
-from jonbot.layer1_api_interface.api_client.get_or_create_api_client import api_client
-from jonbot.layer1_api_interface.routes import CHAT_STREAM_ENDPOINT
-from jonbot.models.conversation_models import ChatRequest
+from jonbot.models.conversation_models import ChatResponse
 
 logger = logging.getLogger(__name__)
-
-
 class DiscordStreamUpdater:
     def __init__(self):
         self.message_content = ""
@@ -35,22 +31,19 @@ class DiscordStreamUpdater:
                 self.reply_message = await self.reply_message.reply(self.message_content)
 
 
+async def update_discord_message(chat_response: ChatResponse,
+                                 message: discord.Message,
+                                 max_message_length: int = 2000):
+    comfy_message_length = int(max_message_length * .9)
+    if len(chat_response.text) > comfy_message_length:
+        await handle_long_message(chat_response, max_message_length, message)
+    else:
+        await message.edit(content=chat_response.text)
 
 
-async def discord_send_chat_stream_api_request(chat_request: ChatRequest,
-                                               message: discord.Message):
-    updater = DiscordStreamUpdater()
-    await updater.initialize_reply(message)
-
-    async def callback(token: str):
-        logger.trace(f"Frontend received token: `{token}`")
-        clean_token = token.replace("data: ", "").replace("\n\n", "")
-        await updater.update_discord_reply(clean_token)
-
-    try:
-        return await api_client.send_request_to_api_streaming(endpoint_name=CHAT_STREAM_ENDPOINT,
-                                                              data=chat_request.dict(),
-                                                              callbacks=[callback])
-    except Exception as e:
-        await updater.update_discord_reply(f"Error while streaming reply: \n >  {e}")
-        raise
+async def handle_long_message(chat_response, max_message_length, message):
+    message_chunks = [chat_response.text[index:index + max_message_length] for index in
+                      range(0, len(chat_response.text), max_message_length)]
+    for chunk_number, message_chunk in enumerate(message_chunks):
+        message = await message.edit(
+            content=f"`Message {chunk_number + 1} out of {len(message_chunks)}` {message_chunk}")

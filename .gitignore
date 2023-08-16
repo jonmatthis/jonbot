@@ -164,5 +164,5 @@ quine_output/
 # Ignore all TOML configs in the directory
 jonbot/system/environment_config/discord_config/bot_tomls/*.toml
 # Then, explicitly allow the sample environment_config (prefix with !)
-!jonbot/system/environment_config/discord_config/bot_tomls/sample_config.toml
+!jonbot/models/discord_stuff/environment_config/bot_tomls/sample_config.toml
 

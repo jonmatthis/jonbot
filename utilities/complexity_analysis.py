@@ -35,7 +35,7 @@ def main(directory):
     print("Areas to consider based on Cyclomatic Complexity:")
     for result in cc_results:
         if result.complexity > CC_THRESHOLD:
-            print(f"{result.name} in {result.filename}, Line {result.lineno}, CC: {result.complexity}")
+            print(f"{result.nick_name} in {result.filename}, Line {result.lineno}, CC: {result.complexity}")
     print("\n" + "-"*50)  # Add separator for readability
 
     print("\nAreas to consider based on Raw Metrics:")

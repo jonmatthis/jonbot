@@ -5,7 +5,7 @@ import aiohttp
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from jonbot.layer1_api_interface.api_client.get_or_create_api_client import api_client
+from jonbot.layer1_api_interface.api_client.get_or_create_api_client import get_or_create_api_client
 from jonbot.layer1_api_interface.routes import CHAT_ENDPOINT
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 from jonbot.models.conversation_models import ChatInput, ChatResponse
@@ -19,6 +19,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+api_client = get_or_create_api_client()
 
 async def telegram_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_input = ChatInput(message=update.message.text,

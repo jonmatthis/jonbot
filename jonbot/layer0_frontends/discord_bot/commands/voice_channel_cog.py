@@ -3,7 +3,6 @@ from enum import Enum
 
 import discord
 
-VOICE_RECORDING_PREFIX = "Finished! Recorded audio for"
 
 
 class Sinks(Enum):
