@@ -1,5 +1,6 @@
 import logging
 import sys
+from datetime import datetime, time
 from enum import Enum
 from logging.config import dictConfig
 
@@ -20,13 +21,28 @@ logging.addLevelName(LogLevel.TRACE.value, "TRACE")
 logging.addLevelName(LogLevel.SUCCESS.value, "SUCCESS")
 
 
+
+class MicrosecondFormatter(logging.Formatter):
+    """A custom Formatter class to include microseconds in log timestamps."""
+
+    def formatTime(self, record, datefmt=None):
+        created = record.created
+        if isinstance(created, float) or isinstance(created, int):
+            timestamp = created
+        else:
+            raise TypeError("Invalid type for 'created'")
+
+        date_format_with_microseconds = "%Y-%m-%dT%H:%M:%S.%f"  # Including microseconds with %f
+        return datetime.strftime(datetime.fromtimestamp(timestamp), date_format_with_microseconds)
+
+
 class LoggerBuilder:
     DEFAULT_LOGGING = {"version": 1, "disable_existing_loggers": False}
-    format_string = ("[%(asctime)s.%(msecs)04d] [%(levelname)8s] [%(name)s] "
+    format_string = ("[%(asctime)s] [%(levelname)8s] [%(name)s] "
                      "[%(funcName)s():%(lineno)s] [PID:%(process)d TID:%(thread)d] %(message)s")
 
     def __init__(self, level: LogLevel):
-        self.default_logging_formatter = logging.Formatter(
+        self.default_logging_formatter = MicrosecondFormatter(
             fmt=self.format_string, datefmt="%Y-%m-%dT%H:%M:%S")
         dictConfig(self.DEFAULT_LOGGING)
         self._add_trace_method_to_logger()
