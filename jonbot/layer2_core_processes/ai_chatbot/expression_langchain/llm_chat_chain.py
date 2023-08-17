@@ -25,7 +25,7 @@ class LLMChatChain:
                                 )
         self.prompt = ChatbotPrompt.build(chat_history_placeholder_name=chat_history_placeholder_name)
 
-        self.memory = ChatbotConversationMemoryBuilder.build()
+        self.memory = ChatbotConversationMemoryBuilder.build(conversation_history=conversation_history)
         self.chain = self._build_chain()
 
     def _build_chain(self) -> RunnableSequence:

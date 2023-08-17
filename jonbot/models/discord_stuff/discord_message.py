@@ -21,6 +21,7 @@ class DiscordMessageDocument(BaseModel):
     attachment_local_paths: List[str]
     author: str
     author_id: int
+    is_bot: bool
     timestamp: Timestamp
     edited_timestamp: Union[Timestamp, str]
     received_timestamp: Timestamp
@@ -47,6 +48,7 @@ class DiscordMessageDocument(BaseModel):
             attachment_local_paths=[],
             author=message.author.name,
             author_id=message.author.id,
+            is_bot=message.author.bot,
             timestamp=Timestamp.from_datetime(message.created_at),
             edited_timestamp=Timestamp.from_datetime(message.edited_at) if message.edited_at else '',
             mentions=[mention.name for mention in message.mentions],

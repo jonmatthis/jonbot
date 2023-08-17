@@ -5,8 +5,8 @@ import discord
 from pydantic import BaseModel, Field
 
 from jonbot.models.ai_chatbot_models import VectorStoreMemoryConfig
-from jonbot.models.conversation_context import ConversationContextDescription
 from jonbot.models.context_route import ContextRoute
+from jonbot.models.conversation_context import ConversationContextDescription
 from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
 from jonbot.models.timestamp_model import Timestamp
 
@@ -49,17 +49,21 @@ class ChatMessage(BaseModel):
     metadata: dict = {}
 
     @classmethod
-    def from_discord_message(cls, message: Union[discord.Message, DiscordMessageDocument]):
-        if isinstance(message, DiscordMessageDocument):
-            context_route = message.context_route
-        elif isinstance(message, discord.Message):
-            context_route = ContextRoute.from_discord_message(message=message)
-        else:
-            raise ValueError(f"Cannot create ChatMessage from {type(message)}")
+    def from_discord_message(cls, message: discord.Message):
         return cls(message=message.content,
                    speaker=Speaker.from_discord_message(message=message),
                    timestamp=Timestamp.from_datetime(message.created_at),
-                   context_route=context_route,
+                   context_route=ContextRoute.from_discord_message(message=message),
+                   )
+
+    @classmethod
+    def from_discord_message_document(cls, message_document: DiscordMessageDocument):
+        return cls(message=message_document.content,
+                   speaker=Speaker(name=message_document.author,
+                                   id=message_document.author_id,
+                                   type='bot' if message_document.is_bot else 'human'),
+                   timestamp=message_document.timestamp,
+                   context_route=message_document.context_route_object,
                    )
 
 
@@ -68,6 +72,7 @@ class ConversationHistory(BaseModel):
 
     def add_message(self, chat_message: ChatMessage):
         self.history.append(chat_message)
+        self.history.sort(key=lambda chat_message: chat_message.timestamp.utc)  # Sorting the history by timestamp
 
     def get_all_messages(self) -> List[ChatMessage]:
         return self.history

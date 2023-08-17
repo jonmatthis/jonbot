@@ -43,6 +43,10 @@ class Timestamp(BaseModel):
     def now(cls):
         return cls.from_datetime(datetime.now())
 
+    @property
+    def utc(self)->float:
+        return self.unix_timestamp_utc
+
     def __str__(self):
         return f"{self.day_of_week}, {self.human_readable_local} (local timezone: {self.local_time_zone})"
 
