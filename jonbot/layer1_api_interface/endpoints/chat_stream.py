@@ -1,3 +1,4 @@
+import asyncio
 from typing import AsyncIterable
 
 from jonbot import get_logger
@@ -11,6 +12,9 @@ async def chat_stream_function(chat_request: ChatRequest) -> AsyncIterable[str]:
     logger.info(f"Received chat stream request: {chat_request}")
     llm_chain = get_llm_chain_for_chat_request(chat_request)
     async for response in llm_chain.execute(message_string=chat_request.chat_input.message):
+        logger.trace(f"Yielding response: {response}")
         yield response
+    logger.info(f"Chat stream request complete: {chat_request}")
+
 
 

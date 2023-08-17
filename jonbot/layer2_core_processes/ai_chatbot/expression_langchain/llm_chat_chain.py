@@ -1,3 +1,4 @@
+import asyncio
 from typing import AsyncIterable
 
 import langchain
@@ -42,6 +43,7 @@ class LLMChatChain:
                 response_message += token.content
                 yield token.content
 
+            logger.debug(f"Succesfully executed chain! - Saving context to memory...")
             self.memory.save_context(inputs, {"output": response_message})
             logger.trace(f"Response message: {response_message}")
         except Exception as e:
