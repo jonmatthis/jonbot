@@ -4,7 +4,7 @@ from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, H
 
 from jonbot.layer2_core_processes.ai_chatbot.components.prompt.prompt_strings import DEFAULT_RULES_FOR_LIVING, \
     DEFAULT_CHATBOT_SYSTEM_PROMPT_TEMPLATE
-from jonbot.models.conversation_context import ConversationContext
+from jonbot.models.conversation_context import ConversationContextDescription
 from jonbot.models.timestamp_model import Timestamp
 
 
@@ -13,7 +13,7 @@ class ChatbotPrompt(ChatPromptTemplate):
     @classmethod
     def build(cls,
               chat_history_placeholder_name: str,
-              conversation_context: ConversationContext = None,
+              conversation_context: ConversationContextDescription = None,
               system_prompt_template: str = DEFAULT_CHATBOT_SYSTEM_PROMPT_TEMPLATE,
               ) -> ChatPromptTemplate:
         system_prompt = PromptTemplate(template=system_prompt_template,
@@ -27,7 +27,7 @@ class ChatbotPrompt(ChatPromptTemplate):
         partial_system_prompt = system_prompt.partial(timestamp=str(Timestamp.now()),
                                                       rules_for_living=DEFAULT_RULES_FOR_LIVING,
                                                       context_route=conversation_context.context_route.parent if conversation_context else '',
-                                                      context_description=conversation_context.context_description if conversation_context else '', )
+                                                      context_description=conversation_context.description if conversation_context else '', )
 
         system_message_prompt = SystemMessagePromptTemplate(
             prompt=partial_system_prompt,

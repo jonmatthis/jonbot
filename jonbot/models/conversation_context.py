@@ -1,5 +1,3 @@
-from typing import Union
-
 import discord
 from pydantic import BaseModel
 
@@ -12,17 +10,13 @@ NOTE THAT CONVERSATIONS IN THIS CHANNEL ARE STILL LOGGED AND MAY BE USED AS PART
 """
 
 
-class ConversationContext(BaseModel):
-    context_description: str = "unknown"
-    timestamp: Union[Timestamp, str] = "unknown"
+class ConversationContextDescription(BaseModel):
+    description: str = "unknown"
 
     @classmethod
     def from_discord_message(cls, message: discord.Message):
         context_description = cls.get_context_description(message)
-
-        return cls(context_description=context_description,
-                   timestamp=Timestamp.from_datetime(message.created_at)
-                   )
+        return cls(description=context_description)
 
     @staticmethod
     def get_context_description(message: discord.Message):
@@ -30,9 +24,11 @@ class ConversationContext(BaseModel):
             context_description = DIRECT_MESSAGE_CHANNEL_DESCRIPTION
         else:
             if "thread" in message.channel.type.name:
-                context_description = f"Thread {message.channel.name} " \
-                                      f"in channel {message.channel.parent.name}" \
-                                      f" in server {message.guild.name}"
+                context_description = f"This conversation is happening on Discord, " \
+                                      f"in a Thread named `{message.channel.name}` " \
+                                      f"in channel named `{message.channel.parent.name}`" \
+                                      f" in server name `{message.guild.name}`. The local time/date of the sender is" \
+                                      f"str({Timestamp.from_datetime(message.created_at)})"
 
             elif message.channel.topic:
                 context_description = message.channel.topic

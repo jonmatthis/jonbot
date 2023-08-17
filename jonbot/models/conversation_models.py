@@ -5,7 +5,7 @@ import discord
 from pydantic import BaseModel, Field
 
 from jonbot.models.ai_chatbot_models import VectorStoreMemoryConfig
-from jonbot.models.conversation_context import ConversationContext
+from jonbot.models.conversation_context import ConversationContextDescription
 from jonbot.models.context_route import ContextRoute
 from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
 from jonbot.models.timestamp_model import Timestamp
@@ -85,7 +85,7 @@ class ChatRequest(BaseModel):
     chat_input: ChatInput
     database_name: str
     context_route: ContextRoute
-    conversation_context: ConversationContext
+    conversation_context: ConversationContextDescription
     config: ChatRequestConfig = ChatRequestConfig()
     uuid: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
@@ -101,9 +101,9 @@ class ChatRequest(BaseModel):
         return cls(chat_input=ChatInput(message=text),
                    database_name=database_name,
                    context_route=context_route,
-                   conversation_context=ConversationContext(timestamp=timestamp,
-                                                            context_description=context_description,
-                                                            ),
+                   conversation_context=ConversationContextDescription(timestamp=timestamp,
+                                                                       context_description=context_description,
+                                                                       ),
                    **kwargs
                    )
 
@@ -116,5 +116,5 @@ class ChatRequest(BaseModel):
                              timestamp=Timestamp.from_datetime(message.created_at),
                              database_name=database_name,
                              context_route=ContextRoute.from_discord_message(message),
-                             context_description=ConversationContext.get_context_description(message),
+                             context_description=ConversationContextDescription.get_context_description(message),
                              **kwargs)

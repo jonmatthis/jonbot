@@ -45,19 +45,19 @@ class ContextRoute(BaseModel):
     def from_discord_message(cls, message: discord.Message):
         frontend = Frontends.DISCORD.value
         if message.guild:
-            server = SubContextComponent(name=f"server-{message.guild.name}",
+            server = SubContextComponent(name=f"{message.guild.name}",
                                          id=message.guild.id,
                                          parent=frontend,
                                          type=SubContextComponentTypes.SERVER.value, )
 
             if "thread" in message.channel.type.name:
 
-                channel = SubContextComponent(name=f"channel-{message.channel.parent.name}",
+                channel = SubContextComponent(name=f"{message.channel.parent.name}",
                                               id=message.channel.parent.id,
                                               parent=str(server),
                                               type=SubContextComponentTypes.CHANNEL.value, )
 
-                thread = SubContextComponent(name=f"thread-{message.channel.name}",
+                thread = SubContextComponent(name=f"{message.channel.name}",
                                              id=message.channel.id,
                                              parent=str(channel),
                                              type=SubContextComponentTypes.THREAD.value,
@@ -88,9 +88,17 @@ class ContextRoute(BaseModel):
     @property
     def as_path(self):
         if self.thread:
-            return f"frontend-{self.frontend.value}/{str(self.server)}/{str(self.channel)}/{str(self.thread)}/"
+            return f"frontend-{self.frontend}/{str(self.server)}/{str(self.channel)}/{str(self.thread)}/"
         else:
-            return f"frontend-{self.frontend.value}/{str(self.server)}/{str(self.channel)}/messages/"
+            return f"frontend-{self.frontend}/{str(self.server)}/{str(self.channel)}/messages/"
+
+    @property
+    def as_query(self):
+        return {"frontend": self.frontend,
+                "server_id": self.server.id,
+                "channel_id": self.channel.id,
+                "thread_id": self.thread.id if self.thread else ''
+                }
 
     @classmethod
     def dummy(cls, dummy_text: str):

@@ -5,7 +5,7 @@ import discord
 from pydantic import BaseModel
 
 from jonbot import get_logger
-from jonbot.models.conversation_context import ConversationContext
+from jonbot.models.conversation_context import ConversationContextDescription
 from jonbot.models.context_route import ContextRoute
 from jonbot.models.timestamp_model import Timestamp
 
@@ -30,9 +30,10 @@ class DiscordMessageDocument(BaseModel):
     reactions: List[str]
     parent_message_id: Optional[int]
     parent_message_jump_url: Optional[str]
-    conversational_context: ConversationContext
+    context_description: str
     context_route: ContextRoute
     context_route_path: str
+    context_route_query: dict
 
     @classmethod
     async def from_message(cls, message: discord.Message):
@@ -54,9 +55,10 @@ class DiscordMessageDocument(BaseModel):
             reactions=[str(reaction) for reaction in message.reactions],
             parent_message_id=message.reference.message_id if message.reference else 0,
             parent_message_jump_url=message.reference.jump_url if message.reference else '',
-            conversational_context=ConversationContext.from_discord_message(message),
+            context_description=ConversationContextDescription.from_discord_message(message).description,
             context_route=context_route.dict(),
             context_route_path=context_route.as_path,
+            context_route_query=context_route.as_query,
         )
         await discord_message_document._add_attachments_to_message(message)
         return discord_message_document
