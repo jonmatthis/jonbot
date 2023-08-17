@@ -1,5 +1,6 @@
 from typing import AsyncIterable
 
+import langchain
 from langchain.chat_models import ChatOpenAI
 from langchain.schema.runnable import RunnableMap, RunnableSequence
 
@@ -10,7 +11,7 @@ from jonbot.layer2_core_processes.ai_chatbot.components.memory.sub_memory_builde
 from jonbot.layer2_core_processes.ai_chatbot.components.prompt.prompt_builder import ChatbotPrompt
 from jonbot.models.conversation_models import ConversationHistory
 
-# langchain.debug = True
+langchain.debug = True
 
 logger = get_logger()
 

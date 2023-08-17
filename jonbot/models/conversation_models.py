@@ -84,7 +84,7 @@ class ConversationHistory(BaseModel):
 class ChatRequestConfig(BaseModel):
     dummy: str = "hi:D"
     vector_store_memory_config: VectorStoreMemoryConfig = VectorStoreMemoryConfig()
-
+    limit_messages: Optional[int] = 20
 
 class ChatRequest(BaseModel):
     chat_input: ChatInput

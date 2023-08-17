@@ -19,7 +19,8 @@ async def get_llm_chain_for_chat_request(chat_request: ChatRequest) -> LLMChatCh
         return active_chats[context_path]
     else:
         conversation_history_request = ConversationHistoryRequest(database_name=chat_request.database_name,
-                                                                  context_route=chat_request.context_route)
+                                                                  context_route=chat_request.context_route,
+                                                                  limit_messages=chat_request.config.limit_messages)
         conversation_history = await get_conversation_history(conversation_history_request=conversation_history_request)
         active_chats[context_path] = LLMChatChain(conversation_history=conversation_history)
         return active_chats[context_path]

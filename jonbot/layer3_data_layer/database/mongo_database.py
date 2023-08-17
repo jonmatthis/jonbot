@@ -86,12 +86,17 @@ class MongoDatabaseManager:
 
     async def get_conversation_history(self,
                                        database_name: str,
-                                       context_route_query: dict) -> ConversationHistory:
+                                       context_route_query: dict,
+                                       limit_messages:int=None) -> ConversationHistory:
         messages_collection = self._get_collection(database_name, DISCORD_MESSAGES_COLLECTION_NAME)
         query = {"context_route_query": context_route_query}
         result = messages_collection.find(query)
         conversation_history = ConversationHistory()
+        message_count = 0
         async for document in result:
+            if limit_messages is not None and message_count >= limit_messages:
+                break
+            message_count += 1
             discord_message_document = DiscordMessageDocument(**document)
             chat_message = ChatMessage.from_discord_message_document(discord_message_document)
             conversation_history.add_message(chat_message)

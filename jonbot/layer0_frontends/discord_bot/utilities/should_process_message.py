@@ -42,6 +42,7 @@ def want_to_reply(message: discord.Message) -> bool:
 
 
 def allowed_to_reply(message: discord.Message) -> bool:
+
     discord_config = get_or_create_discord_environment_config()
 
     # Handle DMs

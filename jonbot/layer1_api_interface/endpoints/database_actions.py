@@ -23,5 +23,6 @@ async def get_conversation_history(conversation_history_request: ConversationHis
     mongo_database = await get_or_create_mongo_database_manager()
     conversation_history = await mongo_database.get_conversation_history(
         database_name=conversation_history_request.database_name,
-        context_route_query=conversation_history_request.context_route.as_query)
+        context_route_query=conversation_history_request.context_route.as_query,
+        limit_messages=conversation_history_request.limit_messages,)
     return conversation_history
