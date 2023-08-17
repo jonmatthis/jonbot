@@ -27,7 +27,7 @@ class DatabaseOperations:
                                                         query={"message_id": discord_message_document.message_id},
                                                         )
         logger.info(
-            f"Sending database upsert request for message content: {message.content} "
+            f"Sending database upsert request for message content: `{message.content}` "
             f"with route: {discord_message_document.context_route_path}")
         response = await self._api_client.send_request_to_api(endpoint_name=DATABASE_UPSERT_ENDPOINT,
                                                               data=database_upsert_request.dict(),
