@@ -5,11 +5,12 @@ from typing import Union
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from jonbot import get_logger
-from jonbot.models.conversation_models import ContextRoute, ConversationHistory
+from jonbot.models.conversation_models import ConversationHistory
+from jonbot.models.context_models import ContextRoute
 from jonbot.models.discord_stuff.discord_id import DiscordUserID
 from jonbot.models.user_stuff.user_ids import TelegramUserID, UserID
 from jonbot.system.environment_variables import MONGO_URI, USERS_COLLECTION_NAME, \
-    CONVERSATION_HISTORY_COLLECTION_NAME
+    CONVERSATION_HISTORY_COLLECTION_NAME, DISCORD_MESSAGES_COLLECTION_NAME
 
 logger = get_logger()
 
@@ -69,12 +70,17 @@ class MongoDatabaseManager:
             logging.error(f'Error occurred while upserting. Error: {e}')
             return False
 
-    async def get_conversation_history(self, database_name: str, context_route: ContextRoute) -> ConversationHistory:
-        conversation_collection = self._get_collection(database_name, CONVERSATION_HISTORY_COLLECTION_NAME)
-        query = {"context_route": context_route.dict()}
-        result = await conversation_collection.find_one(query)
+    async def get_conversation_history(self,
+                                       database_name: str,
+                                       context_route: dict) -> ConversationHistory:
+        conversation_collection = self._get_collection(database_name, DISCORD_MESSAGES_COLLECTION_NAME)
+        query = {"context_route": context_route}
+        result =  conversation_collection.find(query)
+        conversation_history = ConversationHistory()
+        async for document in result:
+            conversation_history.add_message(document)
+        return conversation_history
 
-        return ConversationHistory(**result) if result is not None else None
 
     async def create_user(self,
                           database_name: str,

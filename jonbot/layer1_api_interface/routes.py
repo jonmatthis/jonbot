@@ -1,15 +1,18 @@
+import asyncio
+
 from fastapi import FastAPI
 from starlette.responses import StreamingResponse
 
 from jonbot import get_logger
 from jonbot.layer1_api_interface.endpoints.chat import chat
 from jonbot.layer1_api_interface.endpoints.chat_stream import chat_stream_function
-from jonbot.layer1_api_interface.endpoints.database import database_upsert
+from jonbot.layer1_api_interface.endpoints.database_actions import database_upsert, get_conversation_history
 from jonbot.layer2_core_processes.audio_transcription.transcribe_audio import transcribe_audio
 from jonbot.layer2_core_processes.utilities.generate_test_tokens import generate_test_tokens
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
-from jonbot.models.conversation_models import ChatResponse, ChatRequest
-from jonbot.models.database_upsert_models import DatabaseUpsertResponse, DatabaseUpsertRequest
+from jonbot.models.conversation_models import ChatResponse, ChatRequest, ConversationHistory
+from jonbot.models.database_request_response_models import DatabaseUpsertResponse, DatabaseUpsertRequest, \
+    ConversationHistoryRequest
 from jonbot.models.health_check_status import HealthCheckResponse
 from jonbot.models.voice_to_text_request import VoiceToTextResponse, VoiceToTextRequest
 
@@ -20,7 +23,10 @@ CHAT_ENDPOINT = "/chat"
 CHAT_STREAM_ENDPOINT = "/chat_stream"
 STREAMING_RESPONSE_TEST_ENDPOINT = "/test_streaming_response"
 VOICE_TO_TEXT_ENDPOINT = "/voice_to_text"
+
 DATABASE_UPSERT_ENDPOINT = "/database_upsert"
+CONVERSATION_HISTORY_ENDPOINT = "/conversation_history"
+
 
 APP = None
 
@@ -39,7 +45,7 @@ app = get_or_create_fastapi_app()
 async def startup_event():
     logger.info("Starting up...")
     logger.info("Creating MongoDatabaseManager instance")
-    await get_or_create_mongo_database_manager()
+    asyncio.create_task(get_or_create_mongo_database_manager())
     logger.info("Startup complete!")
 
 
@@ -79,3 +85,8 @@ async def chat_endpoint(chat_request: ChatRequest) -> ChatResponse:
 @app.post(DATABASE_UPSERT_ENDPOINT, response_model=DatabaseUpsertResponse)
 async def database_upsert_endpoint(database_upsert_request: DatabaseUpsertRequest) -> DatabaseUpsertResponse:
     return await database_upsert(database_upsert_request=database_upsert_request)
+
+
+@app.post(CONVERSATION_HISTORY_ENDPOINT, response_model=ConversationHistory)
+async def conversation_history_endpoint(conversation_history_request: ConversationHistoryRequest) -> ConversationHistory:
+    return await get_conversation_history(conversation_history_request=conversation_history_request)

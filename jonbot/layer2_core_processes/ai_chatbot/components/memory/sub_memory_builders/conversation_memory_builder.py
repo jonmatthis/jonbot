@@ -15,6 +15,7 @@ class ChatbotConversationMemoryBuilder(ConversationSummaryBufferMemory):
         instance = cls(memory_key="chat_memory",
                        input_key="human_input",
                        llm=OpenAI(temperature=0),
+                       return_messages=True,
                        max_token_limit=CONVERSATION_HISTORY_MAX_TOKENS)
 
         if conversation_history is not None:

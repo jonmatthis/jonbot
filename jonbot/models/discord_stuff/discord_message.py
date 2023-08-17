@@ -5,7 +5,7 @@ import discord
 from pydantic import BaseModel
 
 from jonbot import get_logger
-from jonbot.models.conversation_models import ConversationContext, ContextRoute
+from jonbot.models.context_models import ContextRoute, ConversationContext
 from jonbot.models.timestamp_model import Timestamp
 
 logger = get_logger()

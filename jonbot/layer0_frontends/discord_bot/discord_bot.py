@@ -1,3 +1,5 @@
+import asyncio
+
 import discord
 
 from jonbot import get_logger
@@ -12,13 +14,12 @@ from jonbot.layer0_frontends.discord_bot.utilities.should_process_message import
     TRANSCRIBED_AUDIO_PREFIX
 from jonbot.layer1_api_interface.api_client.api_client import ApiClient
 from jonbot.layer1_api_interface.api_client.get_or_create_api_client import get_or_create_api_client
-from jonbot.layer1_api_interface.routes import DATABASE_UPSERT_ENDPOINT, CHAT_ENDPOINT, CHAT_STREAM_ENDPOINT, \
+from jonbot.layer1_api_interface.routes import CHAT_ENDPOINT, CHAT_STREAM_ENDPOINT, \
     VOICE_TO_TEXT_ENDPOINT
-from jonbot.models.conversation_models import ContextRoute, ChatRequest, ChatResponse
-from jonbot.models.database_upsert_models import DatabaseUpsertRequest
-from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
+from jonbot.models.conversation_models import ChatRequest, ChatResponse
 from jonbot.models.discord_stuff.environment_config.discord_environment import DiscordEnvironmentConfig
 from jonbot.models.voice_to_text_request import VoiceToTextRequest
+from jonbot.system.environment_variables import DISCORD_MESSAGES_COLLECTION_NAME
 
 logger = get_logger()
 
@@ -35,10 +36,9 @@ class DiscordBot(discord.Bot):
 
         self._api_client = api_client
         self._database_name = f"{environment_config.BOT_NICK_NAME}_database"
-        self._database_collection_name = "discord_messages"
         self._database_operations = DatabaseOperations(api_client=api_client,
                                                        database_name=self._database_name,
-                                                       collection_name=self._database_collection_name)
+                                                       collection_name=DISCORD_MESSAGES_COLLECTION_NAME)
         self.add_cog(ServerScraperCog(database_operations=self._database_operations))
         self._conversations = {}
 
@@ -55,9 +55,8 @@ class DiscordBot(discord.Bot):
         if not should_process_message(message):
             pass
         else:
-
             try:
-                async with message.channel.typing():
+                async with message.channel.typing() as typing_context:
                     if len(message.attachments) > 0:
                         if any(attachement.content_type.startswith("audio") for attachement in message.attachments):
                             await self.handle_voice_memo(message)
@@ -66,20 +65,22 @@ class DiscordBot(discord.Bot):
                         await self.handle_text_message(message,
                                                        streaming=True)
 
+                    typing_context.task.cancel()  # cancel the typing task (doesn't seem to notice the replies being sent in these calls? TODO: fix this maybe?)
 
             except Exception as e:
                 error_message = f"An error occurred: {str(e)}"
                 logger.exception(error_message)
                 await message.reply(f"Sorry, an error occurred while processing your request. \n >  {error_message}")
 
-        await self._database_operations.log_message_in_database(message=message)
+        asyncio.create_task(self._database_operations.log_message_in_database(message=message))
 
     async def handle_text_message(self,
                                   message: discord.Message,
                                   streaming: bool,
                                   ):
 
-        chat_request = ChatRequest.from_discord_message(message=message, )
+        chat_request = ChatRequest.from_discord_message(message=message,
+                                                        database_name=self._database_name)
 
         if streaming:
             await self.send_chat_stream_api_request(chat_request=chat_request,

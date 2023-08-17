@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from jonbot.models.context_models import ContextRoute
+
 
 class DatabaseUpsertRequest(BaseModel):
     database_name: str
@@ -10,3 +12,8 @@ class DatabaseUpsertRequest(BaseModel):
 
 class DatabaseUpsertResponse(BaseModel):
     success: bool
+
+
+class ConversationHistoryRequest(BaseModel):
+    database_name: str
+    context_route: ContextRoute
