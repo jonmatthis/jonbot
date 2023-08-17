@@ -10,8 +10,8 @@ from jonbot.layer0_frontends.discord_bot.handlers.handle_message_responses impor
 from jonbot.layer0_frontends.discord_bot.operations.database_operations import DatabaseOperations
 from jonbot.layer0_frontends.discord_bot.utilities.print_pretty_terminal_message import \
     print_pretty_startup_message_in_terminal
-from jonbot.layer0_frontends.discord_bot.utilities.should_process_message import should_process_message, \
-    TRANSCRIBED_AUDIO_PREFIX
+from jonbot.layer0_frontends.discord_bot.utilities.should_process_message import TRANSCRIBED_AUDIO_PREFIX, \
+    allowed_to_reply, want_to_reply
 from jonbot.layer1_api_interface.api_client.api_client import ApiClient
 from jonbot.layer1_api_interface.api_client.get_or_create_api_client import get_or_create_api_client
 from jonbot.layer1_api_interface.routes import CHAT_ENDPOINT, CHAT_STREAM_ENDPOINT, \
@@ -52,11 +52,17 @@ class DiscordBot(discord.Bot):
     @discord.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
 
-        if not should_process_message(message):
-            pass
+        if not allowed_to_reply(message):
+            return
+
+        asyncio.create_task(self._database_operations.log_message_in_database(message=message))
+
+        if not want_to_reply(message):
+            logger.trace(f"Message `{message.content}` was not handled by the bot")
+            return
         else:
             try:
-                async with message.channel.typing() as typing_context:
+                async with message.channel.typing():
                     if len(message.attachments) > 0:
                         if any(attachement.content_type.startswith("audio") for attachement in message.attachments):
                             await self.handle_voice_memo(message)
@@ -65,14 +71,11 @@ class DiscordBot(discord.Bot):
                         await self.handle_text_message(message,
                                                        streaming=True)
 
-                    typing_context.task.cancel()  # cancel the typing task (doesn't seem to notice the replies being sent in these calls? TODO: fix this maybe?)
 
             except Exception as e:
                 error_message = f"An error occurred: {str(e)}"
                 logger.exception(error_message)
                 await message.reply(f"Sorry, an error occurred while processing your request. \n >  {error_message}")
-
-        asyncio.create_task(self._database_operations.log_message_in_database(message=message))
 
     async def handle_text_message(self,
                                   message: discord.Message,
@@ -88,7 +91,6 @@ class DiscordBot(discord.Bot):
         else:
             await self.send_chat_api_request(chat_request=chat_request,
                                              message=message)
-
 
     async def send_chat_api_request(self,
                                     chat_request: ChatRequest,

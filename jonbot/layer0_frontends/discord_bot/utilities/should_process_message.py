@@ -8,14 +8,40 @@ logger = get_logger()
 VOICE_RECORDING_PREFIX = "Finished! Recorded audio for"
 TRANSCRIBED_AUDIO_PREFIX = "Transcribed audio for"
 
-def should_process_message(message) -> bool:
-    discord_config = get_or_create_discord_environment_config()
 
+def check_if_mentioned(message: discord.Message) -> bool:
+    if message.author in message.mentions:
+        return True
+
+
+def check_if_bot(message: discord.Message) -> bool:
     # If it's a bot message and doesn't start with the expected prefixes, return False
-    if message.author.bot:
-        if not (message.content.startswith(TRANSCRIBED_AUDIO_PREFIX) or
-                message.content.startswith(VOICE_RECORDING_PREFIX)):
-            return False
+    return message.author.bot
+
+
+def check_if_transcribed_audio_message(message: discord.Message) -> bool:
+    return (message.content.startswith(TRANSCRIBED_AUDIO_PREFIX) or
+            message.content.startswith(VOICE_RECORDING_PREFIX))
+
+
+def want_to_reply(message: discord.Message) -> bool:
+    if not allowed_to_reply(message):
+        return False
+
+    if check_if_mentioned(message):
+        return True
+
+    if check_if_transcribed_audio_message(message):
+        return True
+
+    if check_if_bot(message):
+        return False
+
+    return True
+
+
+def allowed_to_reply(message: discord.Message) -> bool:
+    discord_config = get_or_create_discord_environment_config()
 
     # Handle DMs
     if message.channel.type == discord.ChannelType.private:
