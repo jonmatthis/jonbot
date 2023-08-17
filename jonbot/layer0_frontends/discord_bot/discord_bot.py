@@ -27,51 +27,52 @@ class DiscordBot(discord.Bot):
 
     def __init__(self,
                  environment_config: DiscordEnvironmentConfig,
-                 api_client:ApiClient = get_or_create_api_client(),
-                 cogs: list = [VoiceChannelCog()],
+                 api_client: ApiClient = get_or_create_api_client(),
+
                  **kwargs
                  ):
         super().__init__(**kwargs)
-        self.debug_guilds = environment_config.DEBUG_GUILDS
-        self.add_cog(ServerScraperCog())
+
         self._api_client = api_client
         self._database_name = f"{environment_config.BOT_NICK_NAME}_database"
         self._database_collection_name = "discord_messages"
         self._database_operations = DatabaseOperations(api_client=api_client,
                                                        database_name=self._database_name,
                                                        collection_name=self._database_collection_name)
+        self.add_cog(ServerScraperCog(database_operations=self._database_operations))
         self._conversations = {}
 
-        for cog in cogs:
-            self.add_cog(cog)
+        self.add_cog(VoiceChannelCog())
 
     @discord.Cog.listener()
     async def on_ready(self):
         logger.info(f"Logged in as {self.user.name} ({self.user.id}) - checking API health...")
         print_pretty_startup_message_in_terminal(self.user.name)
 
-
     @discord.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
 
         if not should_process_message(message):
-            return
+            pass
+        else:
 
-        await self.send_database_upsert_request(message=message)
-        try:
-            async with message.channel.typing():
-                if len(message.attachments) > 0:
-                    if any(attachement.content_type.startswith("audio") for attachement in message.attachments):
-                        await self.handle_voice_memo(message)
-                else:
-                    # HANDLE TEXT MESSAGE
-                    await self.handle_text_message(message,
-                                              streaming=True)
+            try:
+                async with message.channel.typing():
+                    if len(message.attachments) > 0:
+                        if any(attachement.content_type.startswith("audio") for attachement in message.attachments):
+                            await self.handle_voice_memo(message)
+                    else:
+                        # HANDLE TEXT MESSAGE
+                        await self.handle_text_message(message,
+                                                       streaming=True)
 
-        except Exception as e:
-            error_message = f"An error occurred: {str(e)}"
-            logger.exception(error_message)
-            await message.reply(f"Sorry, an error occurred while processing your request. \n >  {error_message}")
+
+            except Exception as e:
+                error_message = f"An error occurred: {str(e)}"
+                logger.exception(error_message)
+                await message.reply(f"Sorry, an error occurred while processing your request. \n >  {error_message}")
+
+        await self._database_operations.log_message_in_database(message=message)
 
     async def handle_text_message(self,
                                   message: discord.Message,
@@ -82,38 +83,10 @@ class DiscordBot(discord.Bot):
 
         if streaming:
             await self.send_chat_stream_api_request(chat_request=chat_request,
-                                                       message=message)
+                                                    message=message)
         else:
             await self.send_chat_api_request(chat_request=chat_request,
-                                        message=message)
-
-    async def send_database_upsert_request(self,
-                                           message: discord.Message):
-        """
-        Log a message in the database.
-
-        Parameters
-        ----------
-        message : discord.Message
-            The message event data from Discord.
-        """
-
-        discord_message_document = await DiscordMessageDocument.from_message(message)
-        database_upsert_request = DatabaseUpsertRequest(database_name=self._database_name,
-                                                        collection_name=self._database_collection_name,
-                                                        data=discord_message_document.dict(),
-                                                        query={"context_route": ContextRoute.from_discord_message(
-                                                            message).dict()},
-
-                                                        )
-        logger.info(f"Logging message in database: ContextRoute {ContextRoute.from_discord_message(message).full}")
-        response = await self._api_client.send_request_to_api(endpoint_name=DATABASE_UPSERT_ENDPOINT,
-                                                        data=database_upsert_request.dict(),
-                                                        )
-        if not response["success"]:
-            logger.error(f"Failed to log message in database!! \n\n response: \n {response}")
-
-        await self._database_operations.update_conversation_history_in_database(message=message)
+                                             message=message)
 
 
     async def send_chat_api_request(self,
@@ -122,7 +95,7 @@ class DiscordBot(discord.Bot):
         logger.info(f"Sending chat request payload: {chat_request.dict()}")
         reply_message = await message.reply("`awaiting bot response...`")
         response = await self._api_client.send_request_to_api(endpoint_name=CHAT_ENDPOINT,
-                                                        data=chat_request.dict())
+                                                              data=chat_request.dict())
         chat_response = ChatResponse(**response)
         await update_discord_message(chat_response, reply_message)
         logger.info(f"ChatRequest payload sent: \n {chat_request.dict()}\n "
@@ -130,8 +103,8 @@ class DiscordBot(discord.Bot):
                     f"Successfully sent chat request payload to API!")
 
     async def send_chat_stream_api_request(self,
-                                                   chat_request: ChatRequest,
-                                                   message: discord.Message):
+                                           chat_request: ChatRequest,
+                                           message: discord.Message):
         updater = DiscordStreamUpdater()
         await updater.initialize_reply(message)
 
@@ -141,13 +114,11 @@ class DiscordBot(discord.Bot):
 
         try:
             return await self._api_client.send_request_to_api_streaming(endpoint_name=CHAT_STREAM_ENDPOINT,
-                                                                  data=chat_request.dict(),
-                                                                  callbacks=[callback])
+                                                                        data=chat_request.dict(),
+                                                                        callbacks=[callback])
         except Exception as e:
             await updater.update_discord_reply(f"Error while streaming reply: \n >  {e}")
             raise
-
-
 
     async def handle_voice_memo(self,
                                 message: discord.Message):
@@ -157,18 +128,15 @@ class DiscordBot(discord.Bot):
                 voice_to_text_request = VoiceToTextRequest(audio_file_url=attachment.url)
 
                 await self.send_voice_to_text_api_request(voice_to_text_request=voice_to_text_request,
-                                                     message=message)
-
+                                                          message=message)
 
     async def send_voice_to_text_api_request(self,
                                              voice_to_text_request: VoiceToTextRequest,
-                                             message: discord.Message)->dict:
+                                             message: discord.Message) -> dict:
         logger.info(f"Sending voice to text request payload: {voice_to_text_request.dict()}")
         response = await self._api_client.send_request_to_api(endpoint_name=VOICE_TO_TEXT_ENDPOINT,
-                                                        data=voice_to_text_request.dict())
+                                                              data=voice_to_text_request.dict())
 
         await message.reply(f"{TRANSCRIBED_AUDIO_PREFIX} from user `{message.author}`:\n > {response['text']}")
         logger.info(f"VoiceToTextResponse payload received: \n {response}\n"
                     f"Successfully sent voice to text request payload to API!")
-
-
