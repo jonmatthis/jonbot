@@ -59,6 +59,8 @@ class DiscordBot(discord.Bot):
             logger.debug(f"Message `{message.content}` was not handled by the bot")
         else:
             try:
+                asyncio.create_task(self._database_operations.log_message_in_database(message=message))
+
                 async with message.channel.typing():
                     if len(message.attachments) > 0:
                         if any(attachement.content_type.startswith("audio") for attachement in message.attachments):
@@ -67,7 +69,6 @@ class DiscordBot(discord.Bot):
                         # HANDLE TEXT MESSAGE
                         await self.handle_text_message(message,
                                                        streaming=True)
-                await self._database_operations.log_message_in_database(message=message)
 
             except Exception as e:
                 error_message = f"An error occurred: {str(e)}"

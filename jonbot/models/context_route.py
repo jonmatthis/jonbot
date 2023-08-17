@@ -2,14 +2,17 @@ from enum import Enum
 from typing import Optional, Literal
 
 import discord
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 
 
 class Frontends(Enum):
     DISCORD = 'discord'
     TELEGRAM = 'telegram'
     OTHER = 'other'
+
+
 frontend_types = tuple(value.value for value in Frontends)
+
 
 class SubContextComponentTypes(Enum):
     SERVER = 'server'
@@ -22,15 +25,22 @@ class SubContextComponentTypes(Enum):
 
 
 subcontext_types = tuple(value.value for value in SubContextComponentTypes)
+
+
 class SubContextComponent(BaseModel):
     """Represents a component with name and id"""
-    type: Literal[subcontext_types]
+    type: Optional[Literal[subcontext_types]] = None
     name: str
     id: int
     parent: Optional[str] = None
 
     def __str__(self):
         return f"{self.type}-{self.name}-{self.id}"
+
+    def as_sub_dict(self):
+        return {"name": self.name,
+                "id": self.id,
+                "parent": self.parent}
 
 
 class ContextRoute(BaseModel):
@@ -39,7 +49,6 @@ class ContextRoute(BaseModel):
     server: SubContextComponent
     channel: SubContextComponent
     thread: Optional[SubContextComponent] = None
-
 
     @classmethod
     def from_discord_message(cls, message: discord.Message):
@@ -66,7 +75,7 @@ class ContextRoute(BaseModel):
                 thread = None
                 channel = SubContextComponent(name=f"{message.channel.name}",
                                               id=message.channel.id,
-                                              parent=str(frontend),
+                                              parent=str(server),
                                               type=SubContextComponentTypes.DIRECT_MESSAGE.value,
                                               )
 
@@ -74,7 +83,8 @@ class ContextRoute(BaseModel):
         else:  # DM
             server = SubContextComponent(name='DirectMessage',
                                          id=message.channel.id,
-                                         parent=str(frontend))
+                                         parent=str(frontend),
+                                         )
             channel = SubContextComponent(name=f"channel-{message.channel.name}",
                                           id=message.channel.id)
             thread = None
@@ -84,6 +94,7 @@ class ContextRoute(BaseModel):
                    channel=channel,
                    thread=thread,
                    )
+
 
     @property
     def as_path(self):
@@ -97,7 +108,17 @@ class ContextRoute(BaseModel):
         return {"frontend": self.frontend,
                 "server_id": self.server.id,
                 "channel_id": self.channel.id,
-                "thread_id": self.thread.id if self.thread else ''
+                "thread_id": self.thread.id if self.thread else None
+                }
+
+    @property
+    def flat_dict(self):
+        return {"server_name": self.server.name,
+                "server_id": self.server.id,
+                "channel_name": self.channel.name,
+                "channel_id": self.channel.id,
+                "thread_name": self.thread.name if self.thread else None,
+                "thread_id": self.thread.id if self.thread else None
                 }
 
     @classmethod
