@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from jonbot.models.context_models import ContextRoute
+from jonbot.models.context_route import ContextRoute
 
 
 class DatabaseUpsertRequest(BaseModel):

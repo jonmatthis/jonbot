@@ -7,6 +7,7 @@ logger = get_logger()
 
 VOICE_RECORDING_PREFIX = "Finished! Recorded audio for"
 TRANSCRIBED_AUDIO_PREFIX = "Transcribed audio for"
+RESPONSE_INCOMING_TEXT = "response incoming..."
 
 
 def check_if_mentioned(message: discord.Message) -> bool:

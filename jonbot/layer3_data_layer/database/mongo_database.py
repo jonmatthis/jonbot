@@ -6,11 +6,10 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from jonbot import get_logger
 from jonbot.models.conversation_models import ConversationHistory
-from jonbot.models.context_models import ContextRoute
 from jonbot.models.discord_stuff.discord_id import DiscordUserID
 from jonbot.models.user_stuff.user_ids import TelegramUserID, UserID
 from jonbot.system.environment_variables import MONGO_URI, USERS_COLLECTION_NAME, \
-    CONVERSATION_HISTORY_COLLECTION_NAME, DISCORD_MESSAGES_COLLECTION_NAME
+    DISCORD_MESSAGES_COLLECTION_NAME
 
 logger = get_logger()
 
@@ -35,6 +34,10 @@ class MongoDatabaseManager:
         if user is None:
             logger.debug(f"User not found. Creating new user.")
             user = await self.create_user(database_name, discord_id=discord_id, telegram_id=telegram_id)
+        if user is None:
+            logger.error(f"Failed to create user.")
+            raise Exception(f"Failed to create user.")
+        logger.success(f"User found: {user}")
         return user.uuid
 
     async def get_user(self,
@@ -57,17 +60,27 @@ class MongoDatabaseManager:
                      database_name: str,
                      data: dict,
                      collection_name: str,
-                     query: dict = None) -> bool:
-        if not query:
-            query = {}
+                     query: dict) -> bool:
+        """Upsert data into the specified collection.
+
+        This method will update an existing entry if it matches the query or insert a new one if it does not.
+
+        Args:
+            database_name (str): The name of the database to interact with.
+            data (dict): The data to insert or update.
+            collection_name (str): The name of the collection to interact with.
+            query (dict, optional): The query to match the existing entry. Defaults to an empty dictionary.
+
+        Returns:
+            bool: True if the upsert operation was successful, False otherwise.
+        """
         update_data = {"$set": data}
-        collection_name = self._get_collection(database_name=database_name,
-                                               collection_name=collection_name)
+        collection = self._get_collection(database_name=database_name, collection_name=collection_name)
         try:
-            await collection_name.update_one(query, update_data, upsert=True)
+            await collection.update_one(query, update_data, upsert=True)
             return True
         except Exception as e:
-            logging.error(f'Error occurred while upserting. Error: {e}')
+            logger.error(f'Error occurred while upserting. Error: {e}')
             return False
 
     async def get_conversation_history(self,
@@ -75,12 +88,11 @@ class MongoDatabaseManager:
                                        context_route: dict) -> ConversationHistory:
         conversation_collection = self._get_collection(database_name, DISCORD_MESSAGES_COLLECTION_NAME)
         query = {"context_route": context_route}
-        result =  conversation_collection.find(query)
+        result = conversation_collection.find(query)
         conversation_history = ConversationHistory()
         async for document in result:
             conversation_history.add_message(document)
         return conversation_history
-
 
     async def create_user(self,
                           database_name: str,

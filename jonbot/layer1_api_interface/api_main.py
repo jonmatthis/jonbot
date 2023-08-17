@@ -29,7 +29,7 @@ async def run_api_async():
 
     config = Config(app=app, host=HOST_NAME, port=PORT_NUMBER)
     server = Server(config)
-    logger.info(
+    logger.success(
         f"Server: {server} - {server.config} - {server.config.app} - Started on {server.config.host}:{str(server.config.port)}")
     await server.serve()
 

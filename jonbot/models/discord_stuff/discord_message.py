@@ -5,7 +5,8 @@ import discord
 from pydantic import BaseModel
 
 from jonbot import get_logger
-from jonbot.models.context_models import ContextRoute, ConversationContext
+from jonbot.models.conversation_context import ConversationContext
+from jonbot.models.context_route import ContextRoute
 from jonbot.models.timestamp_model import Timestamp
 
 logger = get_logger()
@@ -20,12 +21,6 @@ class DiscordMessageDocument(BaseModel):
     attachment_local_paths: List[str]
     author: str
     author_id: int
-    channel: str
-    channel_id: int
-    in_thread: bool
-    thread_id: Optional[int]
-    server: str
-    SERVER_ID: int
     timestamp: Timestamp
     edited_timestamp: Union[Timestamp, str]
     received_timestamp: Timestamp
@@ -37,9 +32,11 @@ class DiscordMessageDocument(BaseModel):
     parent_message_jump_url: Optional[str]
     conversational_context: ConversationContext
     context_route: ContextRoute
+    context_route_path: str
 
     @classmethod
     async def from_message(cls, message: discord.Message):
+        context_route = ContextRoute.from_discord_message(message)
         discord_message_document = cls(
             content=message.content,
             reference_dict=message.to_message_reference_dict(),
@@ -48,10 +45,6 @@ class DiscordMessageDocument(BaseModel):
             attachment_local_paths=[],
             author=message.author.name,
             author_id=message.author.id,
-            channel=message.channel.name if message.guild else f"DM_with_{message.author.name}",
-            channel_id=message.channel.id,
-            server=message.guild.name if message.guild else f"DM_with_{message.author.name}",
-            SERVER_ID=message.guild.id if message.guild else 0,
             timestamp=Timestamp.from_datetime(message.created_at),
             edited_timestamp=Timestamp.from_datetime(message.edited_at) if message.edited_at else '',
             mentions=[mention.name for mention in message.mentions],
@@ -61,10 +54,9 @@ class DiscordMessageDocument(BaseModel):
             reactions=[str(reaction) for reaction in message.reactions],
             parent_message_id=message.reference.message_id if message.reference else 0,
             parent_message_jump_url=message.reference.jump_url if message.reference else '',
-            in_thread=True if message.thread else False,
-            thread_id=message.thread.id if message.thread else 0,
             conversational_context=ConversationContext.from_discord_message(message),
-            context_route=ContextRoute.from_discord_message(message),
+            context_route=context_route.dict(),
+            context_route_path=context_route.as_path,
         )
         await discord_message_document._add_attachments_to_message(message)
         return discord_message_document

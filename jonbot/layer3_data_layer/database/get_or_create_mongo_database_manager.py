@@ -12,5 +12,8 @@ async def get_or_create_mongo_database_manager() -> MongoDatabaseManager:
     if MONGO_DATABASE_MANAGER is None:
         logger.info("Creating new MongoDatabaseManager instance")
         MONGO_DATABASE_MANAGER = MongoDatabaseManager()
-        assert await run_mongo_test(MONGO_DATABASE_MANAGER), "MongoDatabaseManager startup test failed."
+        if not await run_mongo_test(MONGO_DATABASE_MANAGER):
+            logger.error("MongoDatabaseManager startup test failed.")
+            raise Exception("MongoDatabaseManager startup test failed.")
+        logger.success("MongoDatabaseManager created and startup tests passed!")
     return MONGO_DATABASE_MANAGER

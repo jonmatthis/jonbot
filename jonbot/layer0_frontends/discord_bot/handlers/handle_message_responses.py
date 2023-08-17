@@ -1,7 +1,9 @@
 import discord
 
 from jonbot import get_logger
+from jonbot.layer0_frontends.discord_bot.utilities.should_process_message import RESPONSE_INCOMING_TEXT
 from jonbot.models.conversation_models import ChatResponse
+
 
 logger = get_logger()
 class DiscordStreamUpdater:
@@ -13,7 +15,7 @@ class DiscordStreamUpdater:
 
     async def initialize_reply(self, message: discord.Message):
         logger.info(f"initializing reply to message: `{message.id}`")
-        self.reply_message = await message.reply("response incoming...")
+        self.reply_message = await message.reply(RESPONSE_INCOMING_TEXT)
 
     async def update_discord_reply(self, token: str):
         if not token == "":

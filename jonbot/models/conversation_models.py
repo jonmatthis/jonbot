@@ -5,7 +5,8 @@ import discord
 from pydantic import BaseModel, Field
 
 from jonbot.models.ai_chatbot_models import VectorStoreMemoryConfig
-from jonbot.models.context_models import ContextRoute, ConversationContext
+from jonbot.models.conversation_context import ConversationContext
+from jonbot.models.context_route import ContextRoute
 from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
 from jonbot.models.timestamp_model import Timestamp
 
@@ -94,7 +95,7 @@ class ChatRequest(BaseModel):
                   timestamp: Timestamp,
                   database_name: str,
                   context_description: str = "unknown",
-                  context_route: ContextRoute = ContextRoute.dummy(),
+                  context_route: ContextRoute = ContextRoute.dummy(dummy_text="dummy"),
                   **kwargs
                   ):
         return cls(chat_input=ChatInput(message=text),

@@ -46,7 +46,7 @@ class DiscordBot(discord.Bot):
 
     @discord.Cog.listener()
     async def on_ready(self):
-        logger.info(f"Logged in as {self.user.name} ({self.user.id}) - checking API health...")
+        logger.success(f"Logged in as {self.user.name} ({self.user.id})")
         print_pretty_startup_message_in_terminal(self.user.name)
 
     @discord.Cog.listener()
@@ -55,11 +55,8 @@ class DiscordBot(discord.Bot):
         if not allowed_to_reply(message):
             return
 
-        asyncio.create_task(self._database_operations.log_message_in_database(message=message))
-
         if not want_to_reply(message):
-            logger.trace(f"Message `{message.content}` was not handled by the bot")
-            return
+            logger.debug(f"Message `{message.content}` was not handled by the bot")
         else:
             try:
                 async with message.channel.typing():
@@ -70,12 +67,19 @@ class DiscordBot(discord.Bot):
                         # HANDLE TEXT MESSAGE
                         await self.handle_text_message(message,
                                                        streaming=True)
-
+                await self._database_operations.log_message_in_database(message=message)
 
             except Exception as e:
                 error_message = f"An error occurred: {str(e)}"
                 logger.exception(error_message)
                 await message.reply(f"Sorry, an error occurred while processing your request. \n >  {error_message}")
+
+
+    # @discord.Cog.listener()
+    # async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent):
+    #     logger.debug(f"Received message edit: {payload}")
+    #     discord_message = await self.get_channel(payload.channel_id).fetch_message(payload.message_id)
+    #     asyncio.create_task(self._database_operations.log_message_in_database(message=discord_message))
 
     async def handle_text_message(self,
                                   message: discord.Message,
