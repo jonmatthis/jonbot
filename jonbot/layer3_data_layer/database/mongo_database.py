@@ -1,4 +1,3 @@
-import logging
 import uuid
 from typing import Union
 
@@ -82,6 +81,7 @@ class MongoDatabaseManager:
         except Exception as e:
             logger.error(f'Error occurred while upserting. Error: {e}')
             return False
+
 
     async def get_conversation_history(self,
                                        database_name: str,

@@ -16,6 +16,7 @@ async def database_upsert(database_upsert_request: DatabaseUpsertRequest) -> Dat
     else:
         return DatabaseUpsertResponse(success=False)
 
+
 async def get_conversation_history(conversation_history_request: ConversationHistoryRequest) -> ConversationHistory:
     logger.info(f"Getting conversation history for context route: {conversation_history_request.context_route.dict()}")
     mongo_database = await get_or_create_mongo_database_manager()
