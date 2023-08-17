@@ -7,3 +7,4 @@ configure_logging(LogLevel.TRACE)
 def get_logger():
     import logging
     return logging.getLogger(__name__)
+

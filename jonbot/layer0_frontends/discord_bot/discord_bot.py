@@ -108,14 +108,14 @@ class DiscordBot(discord.Bot):
         updater = DiscordStreamUpdater()
         await updater.initialize_reply(message)
 
-        async def callback(token: str):
+        async def update_discord_message_callback(token: str):
             logger.trace(f"Frontend received token: `{repr(token)}`")
             await updater.update_discord_reply(token)
 
         try:
             return await self._api_client.send_request_to_api_streaming(endpoint_name=CHAT_STREAM_ENDPOINT,
                                                                         data=chat_request.dict(),
-                                                                        callbacks=[callback])
+                                                                        callbacks=[update_discord_message_callback])
         except Exception as e:
             await updater.update_discord_reply(f"Error while streaming reply: \n >  {e}")
             raise
