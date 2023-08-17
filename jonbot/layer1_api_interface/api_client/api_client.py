@@ -47,7 +47,7 @@ class ApiClient:
     async def send_request_to_api_streaming(self,
                                             endpoint_name: str,
                                             data: dict = dict(),
-                                            callbacks: Union[Callable, Coroutine] = None) -> list():
+                                            callbacks: Union[Callable, Coroutine] = None) -> List[str]:
         endpoint_url = ApiRoute.from_endpoint(host_name=self.api_host_name,
                                               endpoint=endpoint_name).endpoint_url
         if not callbacks:
@@ -55,13 +55,14 @@ class ApiClient:
 
         if not data:
             data = {}
-
+        response_tokens = []
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(endpoint_url, json=data) as response:
                     if response.status == 200:
                         async for line in response.content.iter_any():
                             await run_callbacks(callbacks, line)
+                            response_tokens.append(line.decode('utf-8'))
                     else:
                         error_message = await error_message_from_response(response)
                         logger.error(error_message)
@@ -72,6 +73,10 @@ class ApiClient:
             logger.exception(error_msg)
             await run_callbacks(callbacks, error_msg.encode('utf-8'))
             raise
+
+        return response_tokens
+
+
 
 
 async def run_callbacks(callbacks: List[Callable], line: bytes):

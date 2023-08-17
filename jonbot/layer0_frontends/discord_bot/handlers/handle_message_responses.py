@@ -6,18 +6,25 @@ from jonbot.models.conversation_models import ChatResponse
 
 
 logger = get_logger()
+
+STOP_STREAMING_TOKEN = "STOP_STREAMING"
 class DiscordStreamUpdater:
     def __init__(self):
         self.message_content = ""
         self.reply_message = None
         self.max_message_length = 2000
         self.comfy_message_length = int(self.max_message_length * .9)
-
+        self.done = False
     async def initialize_reply(self, message: discord.Message):
         logger.info(f"initializing reply to message: `{message.id}`")
         self.reply_message = await message.reply(RESPONSE_INCOMING_TEXT)
 
     async def update_discord_reply(self, token: str):
+        if STOP_STREAMING_TOKEN in token:
+            logger.info(f"stopping stream")
+            self.done = True
+            return
+
         if not token == "":
             logger.trace(f"updating discord reply with token: {repr(token)}")
             self.message_content += token
