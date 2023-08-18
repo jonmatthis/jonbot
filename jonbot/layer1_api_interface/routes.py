@@ -4,7 +4,6 @@ from fastapi import FastAPI
 from starlette.responses import StreamingResponse
 
 from jonbot import get_logger
-from jonbot.layer2_core_processes.entrypoint_functions.chat import chat
 from jonbot.layer2_core_processes.entrypoint_functions.chat_stream import chat_stream_function
 from jonbot.layer2_core_processes.entrypoint_functions.database_actions import database_upsert, get_conversation_history
 from jonbot.layer2_core_processes.core.audio_transcription import transcribe_audio
@@ -78,8 +77,8 @@ async def chat_stream_endpoint(chat_request: ChatRequest):
 
 @app.post(CHAT_ENDPOINT, response_model=ChatResponse)
 async def chat_endpoint(chat_request: ChatRequest) -> ChatResponse:
-    logger.info(f"Received chat request: {chat_request}")
-    return await chat(chat_request=chat_request)
+    logger.error("Not implemented yet! Use the chat_stream endpoint instead.")
+    raise NotImplementedError("Not implemented yet!")
 
 
 @app.post(DATABASE_UPSERT_ENDPOINT, response_model=DatabaseUpsertResponse)

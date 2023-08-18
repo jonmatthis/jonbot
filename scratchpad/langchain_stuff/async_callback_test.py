@@ -12,7 +12,7 @@ class MyCustomSyncHandler(BaseCallbackHandler):
 
 
 class MyCustomAsyncHandler(AsyncCallbackHandler):
-    """Async callback handler that can be used to handle callbacks from langchain_stuff."""
+    """Async callback handler that can be used to handle callbacks from chatbot_llm_chain."""
 
     async def on_llm_start(
             self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any

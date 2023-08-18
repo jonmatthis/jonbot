@@ -1,5 +1,6 @@
 import ast
 import datetime
+import logging
 import os
 import platform
 import subprocess
@@ -9,18 +10,8 @@ from typing import List, Literal
 import pyperclip
 from pydantic import BaseModel, Field
 
-try:
-    from jonbot import configure_logging
-    configure_logging()
-    from jonbot import get_logger
-logger = get_logger()
-except Exception as e:
-    print(f"Error while importing configure_logging: {str(e)}")
-    from jonbot import get_logger
-logger = get_logger()
-    logger.exception(f"Error while importing configure_logging: {str(e)}")
 
-
+logger = logging.getLogger(__name__)
 
 ## MODEL DEFINITIONS
 class ContentFetcherConfig(BaseModel):
@@ -63,7 +54,7 @@ class StructureFetcher:
         ):
             return {'functions': [], 'classes': [], 'constants': []}
 
-        logger.trace(f"Reading file: {file_path}")  # TRACE level log
+        logger.debug(f"Reading file: {file_path}")  # TRACE level log
         with open(file_path, 'r', encoding='utf-8') as file:
             node = ast.parse(file.read())
 
@@ -140,7 +131,7 @@ class ContentFetcher:
         return output
 
     def _get_file_content(self, file_path) -> str:
-        logger.trace(f"Getting content for file: {file_path}")  # TRACE level log
+        logger.debug(f"Getting content for file: {file_path}")  # TRACE level log
         try:
             with open(file_path, 'r', encoding="utf-8") as file:
                 content = file.read()

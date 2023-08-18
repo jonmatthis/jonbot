@@ -17,7 +17,7 @@ langchain.debug = True
 logger = get_logger()
 
 
-class LLMChatChain:
+class ChatbotLLMChain:
     def __init__(self,
                  conversation_history: ConversationHistory = None,
                  chat_history_placeholder_name: str = "chat_history"):
@@ -27,7 +27,7 @@ class LLMChatChain:
                                 )
         self.prompt = ChatbotPrompt.build(chat_history_placeholder_name=chat_history_placeholder_name)
 
-        self.memory = ChatbotConversationMemoryBuilder.build(conversation_history=conversation_history)
+        self.memory = ChatbotConversationMemoryBuilder.build()
         self.chain = self._build_chain()
 
     def _build_chain(self) -> RunnableSequence:
@@ -61,7 +61,7 @@ async def demo():
     from jonbot.tests.load_save_sample_data import load_sample_conversation_history
 
     conversation_history = await load_sample_conversation_history()
-    llm_chain = LLMChatChain(conversation_history=conversation_history)
+    llm_chain = ChatbotLLMChain(conversation_history=conversation_history)
     async for token in llm_chain.chain.astream({"human_input": "Hello, how are you?"}):  # Use 'async for' here
         print(token.content)
     f = 9

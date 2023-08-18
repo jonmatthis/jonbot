@@ -45,7 +45,6 @@ class DiscordBot(discord.Bot):
         self._conversations = {}
 
         self.add_cog(VoiceChannelCog())
-        # self.add_cog(ExampleCog(bot=self))
 
     @discord.Cog.listener()
     async def on_ready(self):
