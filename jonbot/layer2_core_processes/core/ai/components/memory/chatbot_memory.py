@@ -3,9 +3,9 @@ from typing import List
 from langchain.memory import CombinedMemory
 from langchain.schema import BaseMemory
 
-from jonbot.layer2_core_processes.ai_chatbot.components.memory.sub_memory_builders.conversation_memory_builder import \
+from jonbot.layer2_core_processes.core.ai.components.memory.sub_memory_components.conversation_memory import \
     ChatbotConversationMemoryBuilder
-from jonbot.layer2_core_processes.ai_chatbot.components.memory.sub_memory_builders.vectorstore_memory_builder import \
+from jonbot.layer2_core_processes.core.ai.components.memory.sub_memory_components.vectorstore_memory import \
     ChatbotVectorStoreMemoryBuilder
 from jonbot.models.conversation_models import ConversationHistory
 
@@ -27,3 +27,4 @@ class ChatbotMemory(CombinedMemory):
     async def _configure_memories(conversation_history: ConversationHistory = None) -> List[BaseMemory]:
         return [ChatbotConversationMemoryBuilder.build(conversation_history=conversation_history),
                 await ChatbotVectorStoreMemoryBuilder.build()]
+

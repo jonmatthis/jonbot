@@ -11,9 +11,9 @@ from langchain.prompts import ChatPromptTemplate
 from pydantic import BaseModel, validator
 
 from jonbot import get_logger
-from jonbot.layer2_core_processes.ai_chatbot.components.callbacks.callbacks import AsyncQueueStuffingCallbackHandler
-from jonbot.layer2_core_processes.ai_chatbot.components.memory.chatbot_memory_builder import ChatbotMemory
-from jonbot.layer2_core_processes.ai_chatbot.components.prompt.prompt_builder import ChatbotPrompt
+from jonbot.layer2_core_processes.core.ai.components.callbacks.callbacks import AsyncQueueStuffingCallbackHandler
+from jonbot.layer2_core_processes.core.ai.components.memory.chatbot_memory import ChatbotMemory
+from jonbot.layer2_core_processes.core.ai.components.prompt.prompt_builder import ChatbotPrompt
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 from jonbot.models.conversation_models import ConversationHistory, ChatRequest, ChatResponse
 from jonbot.models.conversation_context import ConversationContextDescription

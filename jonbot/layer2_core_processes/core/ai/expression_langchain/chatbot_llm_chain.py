@@ -6,9 +6,9 @@ from langchain.schema.runnable import RunnableMap, RunnableSequence
 
 from jonbot import get_logger
 from jonbot.layer0_frontends.discord_bot.handlers.handle_message_responses import STOP_STREAMING_TOKEN
-from jonbot.layer2_core_processes.ai_chatbot.components.memory.sub_memory_builders.conversation_memory_builder import \
+from jonbot.layer2_core_processes.core.ai.components.memory.sub_memory_components.conversation_memory import \
     ChatbotConversationMemoryBuilder
-from jonbot.layer2_core_processes.ai_chatbot.components.prompt.prompt_builder import ChatbotPrompt
+from jonbot.layer2_core_processes.core.ai.components.prompt.prompt_builder import ChatbotPrompt
 from jonbot.models.conversation_models import ConversationHistory
 
 langchain.debug = True

@@ -3,6 +3,7 @@ import asyncio
 import discord
 
 from jonbot import get_logger
+from jonbot.layer0_frontends.discord_bot.commands.cogs.example_cog import ExampleCog
 from jonbot.layer0_frontends.discord_bot.commands.cogs.thread_scraper_cog.server_scraper_cog import ServerScraperCog
 from jonbot.layer0_frontends.discord_bot.commands.cogs.voice_channel_cog import VoiceChannelCog
 from jonbot.layer0_frontends.discord_bot.handlers.handle_message_responses import DiscordStreamUpdater, \
@@ -45,6 +46,7 @@ class DiscordBot(discord.Bot):
         self._conversations = {}
 
         self.add_cog(VoiceChannelCog())
+        self.add_cog(ExampleCog(bot=self))
 
     @discord.Cog.listener()
     async def on_ready(self):

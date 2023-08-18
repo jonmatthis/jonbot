@@ -1,8 +1,7 @@
-import asyncio
 from typing import AsyncIterable
 
 from jonbot import get_logger
-from jonbot.layer2_core_processes.ai_chatbot.expression_langchain.get_llm_chat_chain import \
+from jonbot.layer2_core_processes.core.ai.expression_langchain.get_llm_chat_chain import \
     get_llm_chain_for_chat_request
 from jonbot.models.conversation_models import ChatRequest
 

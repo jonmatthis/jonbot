@@ -4,10 +4,10 @@ from fastapi import FastAPI
 from starlette.responses import StreamingResponse
 
 from jonbot import get_logger
-from jonbot.layer1_api_interface.endpoints.chat import chat
-from jonbot.layer1_api_interface.endpoints.chat_stream import chat_stream_function
-from jonbot.layer1_api_interface.endpoints.database_actions import database_upsert, get_conversation_history
-from jonbot.layer2_core_processes.audio_transcription.transcribe_audio import transcribe_audio
+from jonbot.layer2_core_processes.entrypoint_functions.chat import chat
+from jonbot.layer2_core_processes.entrypoint_functions import chat_stream_function
+from jonbot.layer2_core_processes.entrypoint_functions.database_actions import database_upsert, get_conversation_history
+from jonbot.layer2_core_processes.core.audio_transcription import transcribe_audio
 from jonbot.layer2_core_processes.utilities.generate_test_tokens import generate_test_tokens
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 from jonbot.models.conversation_models import ChatResponse, ChatRequest, ConversationHistory

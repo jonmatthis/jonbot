@@ -18,3 +18,4 @@ class ConversationHistoryRequest(BaseModel):
     database_name: str
     context_route: ContextRoute
     limit_messages: int = None
+
