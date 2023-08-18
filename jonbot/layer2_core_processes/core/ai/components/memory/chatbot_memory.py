@@ -4,7 +4,7 @@ from langchain.memory import CombinedMemory
 from langchain.schema import BaseMemory
 
 from jonbot.layer2_core_processes.core.ai.components.memory.sub_memory_components.conversation_memory import \
-    ChatbotConversationMemoryBuilder
+    ChatbotConversationMemory
 from jonbot.layer2_core_processes.core.ai.components.memory.sub_memory_components.vectorstore_memory import \
     ChatbotVectorStoreMemoryBuilder
 from jonbot.models.conversation_models import ConversationHistory
@@ -25,6 +25,6 @@ class ChatbotMemory(CombinedMemory):
 
     @staticmethod
     async def _configure_memories(conversation_history: ConversationHistory = None) -> List[BaseMemory]:
-        return [ChatbotConversationMemoryBuilder.build(conversation_history=conversation_history),
+        return [ChatbotConversationMemory(),
                 await ChatbotVectorStoreMemoryBuilder.build()]
 

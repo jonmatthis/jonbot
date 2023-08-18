@@ -8,7 +8,7 @@ from langchain.schema.runnable import RunnableMap, RunnableSequence
 from jonbot import get_logger
 from jonbot.layer0_frontends.discord_bot.handlers.handle_message_responses import STOP_STREAMING_TOKEN
 from jonbot.layer2_core_processes.core.ai.components.memory.sub_memory_components.conversation_memory import \
-    ChatbotConversationMemoryBuilder
+    ChatbotConversationMemory
 from jonbot.layer2_core_processes.core.ai.components.prompt.prompt_builder import ChatbotPrompt
 from jonbot.models.conversation_models import ConversationHistory
 
@@ -27,7 +27,7 @@ class ChatbotLLMChain:
                                 )
         self.prompt = ChatbotPrompt.build(chat_history_placeholder_name=chat_history_placeholder_name)
 
-        self.memory = ChatbotConversationMemoryBuilder.build()
+        self.memory = ChatbotConversationMemory()
         self.chain = self._build_chain()
 
     def _build_chain(self) -> RunnableSequence:
