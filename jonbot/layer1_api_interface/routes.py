@@ -45,7 +45,7 @@ app = get_or_create_fastapi_app()
 async def startup_event():
     logger.info("Starting up...")
     logger.info("Creating MongoDatabaseManager instance")
-    asyncio.create_task(get_or_create_mongo_database_manager())
+    await get_or_create_mongo_database_manager()
     logger.info("Startup complete!")
 
 

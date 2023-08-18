@@ -1,3 +1,4 @@
+import asyncio
 from typing import AsyncIterable
 
 import langchain
@@ -54,3 +55,18 @@ class LLMChatChain:
         except Exception as e:
             logger.exception(e)
             raise
+
+
+async def demo():
+    from jonbot.tests.load_save_sample_data import load_sample_conversation_history
+
+    conversation_history = await load_sample_conversation_history()
+    llm_chain = LLMChatChain(conversation_history=conversation_history)
+    async for token in llm_chain.chain.astream({"human_input": "Hello, how are you?"}):  # Use 'async for' here
+        print(token.content)
+    f = 9
+
+
+
+if __name__ == "__main__":
+    asyncio.run(demo())

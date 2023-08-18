@@ -83,11 +83,10 @@ class MongoDatabaseManager:
             logger.error(f'Error occurred while upserting. Error: {e}')
             return False
 
-
     async def get_conversation_history(self,
                                        database_name: str,
                                        context_route_query: dict,
-                                       limit_messages:int=None) -> ConversationHistory:
+                                       limit_messages: int = None) -> ConversationHistory:
         messages_collection = self._get_collection(database_name, DISCORD_MESSAGES_COLLECTION_NAME)
         query = {"context_route_query": context_route_query}
         result = messages_collection.find(query)
@@ -111,3 +110,8 @@ class MongoDatabaseManager:
         user_id = UserID(uuid=str(uuid.uuid4()), discord_id=discord_id, telegram_id=telegram_id)
         await users_collection.insert_one(user_id.dict())
         return user_id
+
+    async def close(self):
+        logger.info("Closing MongoDatabaseManager connection")
+        self._client.close()
+

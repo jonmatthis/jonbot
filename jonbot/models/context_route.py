@@ -76,7 +76,7 @@ class ContextRoute(BaseModel):
                 channel = SubContextComponent(name=f"{message.channel.name}",
                                               id=message.channel.id,
                                               parent=str(server),
-                                              type=SubContextComponentTypes.DIRECT_MESSAGE.value,
+                                              type=SubContextComponentTypes.CHANNEL.value,
                                               )
 
 
@@ -84,9 +84,13 @@ class ContextRoute(BaseModel):
             server = SubContextComponent(name='DirectMessage',
                                          id=message.channel.id,
                                          parent=str(frontend),
+                                         type=SubContextComponentTypes.DIRECT_MESSAGE.value,
                                          )
             channel = SubContextComponent(name=f"channel-{message.channel.name}",
-                                          id=message.channel.id)
+                                          id=message.channel.id,
+                                          parent=str(server),
+                                          type=SubContextComponentTypes.CHANNEL.value,
+                                          )
             thread = None
 
         return cls(frontend=frontend,
@@ -94,7 +98,6 @@ class ContextRoute(BaseModel):
                    channel=channel,
                    thread=thread,
                    )
-
 
     @property
     def as_path(self):

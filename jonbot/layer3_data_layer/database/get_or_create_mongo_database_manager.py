@@ -17,3 +17,9 @@ async def get_or_create_mongo_database_manager() -> MongoDatabaseManager:
             raise Exception("MongoDatabaseManager startup test failed.")
         logger.success("MongoDatabaseManager created and startup tests passed!")
     return MONGO_DATABASE_MANAGER
+
+async def close_mongo_database_manager():
+    global MONGO_DATABASE_MANAGER
+    if MONGO_DATABASE_MANAGER is not None:
+        await MONGO_DATABASE_MANAGER.close()
+        MONGO_DATABASE_MANAGER = None

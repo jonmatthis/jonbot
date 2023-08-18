@@ -19,7 +19,7 @@ class DatabaseOperations:
 
     async def log_message_in_database(self,
                                       message: discord.Message):
-        discord_message_document = await DiscordMessageDocument.from_message(message)
+        discord_message_document = await DiscordMessageDocument.from_discord_message(message)
 
         database_upsert_request = DatabaseUpsertRequest(database_name=self._database_name,
                                                         collection_name=self._collection_name,

@@ -44,7 +44,8 @@ class DiscordMessageDocument(BaseModel):
 
 
     @classmethod
-    async def from_message(cls, message: discord.Message):
+    async def from_discord_message(cls,
+                                   message: discord.Message):
         context_route = ContextRoute.from_discord_message(message)
         discord_message_document = cls(
             content=message.content,

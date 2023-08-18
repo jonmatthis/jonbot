@@ -3,7 +3,6 @@ import asyncio
 import discord
 
 from jonbot import get_logger
-from jonbot.layer0_frontends.discord_bot.commands.cogs.example_cog import ExampleCog
 from jonbot.layer0_frontends.discord_bot.commands.cogs.thread_scraper_cog.server_scraper_cog import ServerScraperCog
 from jonbot.layer0_frontends.discord_bot.commands.cogs.voice_channel_cog import VoiceChannelCog
 from jonbot.layer0_frontends.discord_bot.handlers.handle_message_responses import DiscordStreamUpdater, \
@@ -11,7 +10,7 @@ from jonbot.layer0_frontends.discord_bot.handlers.handle_message_responses impor
 from jonbot.layer0_frontends.discord_bot.operations.database_operations import DatabaseOperations
 from jonbot.layer0_frontends.discord_bot.utilities.print_pretty_terminal_message import \
     print_pretty_startup_message_in_terminal
-from jonbot.layer0_frontends.discord_bot.utilities.should_process_message import TRANSCRIBED_AUDIO_PREFIX, \
+from jonbot.layer0_frontends.discord_bot.handlers.should_process_message import TRANSCRIBED_AUDIO_PREFIX, \
     allowed_to_reply, want_to_reply
 from jonbot.layer1_api_interface.api_client.api_client import ApiClient
 from jonbot.layer1_api_interface.api_client.get_or_create_api_client import get_or_create_api_client
@@ -55,7 +54,7 @@ class DiscordBot(discord.Bot):
 
     @discord.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
-
+        # await save_sample_discord_message(message)
         if not allowed_to_reply(message):
             return
 
@@ -79,15 +78,15 @@ class DiscordBot(discord.Bot):
                 logger.exception(error_message)
                 await message.reply(f"Sorry, an error occurred while processing your request. \n >  {error_message}")
 
-    @discord.Cog.listener()
-    async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent, cooldown: float = 1.0):
-        logger.debug(f"Received message edit: {payload.data['content']}")
-        discord_message = await self.get_channel(payload.channel_id).fetch_message(payload.message_id)
-        if not allowed_to_reply(discord_message):
-            return
-
-        await self._database_operations.log_message_in_database(message=discord_message)
-        await asyncio.sleep(cooldown)
+    # @discord.Cog.listener()
+    # async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent, cooldown: float = 1.0):
+    #     logger.debug(f"Received message edit: {payload.data['content']}")
+    #     discord_message = await self.get_channel(payload.channel_id).fetch_message(payload.message_id)
+    #     if not allowed_to_reply(discord_message):
+    #         return
+    #
+    #     await self._database_operations.log_message_in_database(message=discord_message)
+    #     await asyncio.sleep(cooldown)
 
     async def handle_text_message(self,
                                   message: discord.Message,

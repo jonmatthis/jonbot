@@ -86,6 +86,7 @@ class ChatRequestConfig(BaseModel):
     vector_store_memory_config: VectorStoreMemoryConfig = VectorStoreMemoryConfig()
     limit_messages: Optional[int] = 20
 
+
 class ChatRequest(BaseModel):
     chat_input: ChatInput
     database_name: str
@@ -122,4 +123,16 @@ class ChatRequest(BaseModel):
                              database_name=database_name,
                              context_route=ContextRoute.from_discord_message(message),
                              context_description=ConversationContextDescription.get_context_description(message),
+                             **kwargs)
+
+    @classmethod
+    def from_discord_message_document(cls,
+                                      message_document: DiscordMessageDocument,
+                                      database_name: str,
+                                      **kwargs):
+        return cls.from_text(text=message_document.content,
+                             timestamp=message_document.timestamp,
+                             database_name=database_name,
+                             context_route=message_document.context_route_object,
+                             context_description=message_document.context_description,
                              **kwargs)

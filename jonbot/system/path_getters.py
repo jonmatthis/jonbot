@@ -8,6 +8,7 @@ from jonbot.system.environment_variables import BASE_DATA_FOLDER_NAME, LOG_FILE_
 def os_independent_home_dir():
     return str(Path.home())
 
+
 def get_log_file_path():
     log_folder_path = Path(get_base_data_folder_path()) / LOG_FILE_FOLDER_NAME
     log_folder_path.mkdir(exist_ok=True, parents=True)
@@ -22,6 +23,8 @@ def get_base_data_folder_path(parent_folder: Union[str, Path] = os_independent_h
 
     return str(base_folder_path)
 
+SAMPLE_DISCORD_MESSAGE_FILE_NAME = "sample_discord_message.json"
+get_sample_discord_message_json_path = lambda: str(Path(get_base_data_folder_path()) / SAMPLE_DISCORD_MESSAGE_FILE_NAME)
 
 def get_new_attachments_folder_path():
     return str(Path(get_base_data_folder_path()) / "attachments" / f"{get_current_date_time_string()}")
