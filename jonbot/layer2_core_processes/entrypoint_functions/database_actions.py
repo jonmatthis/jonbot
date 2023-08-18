@@ -31,6 +31,6 @@ async def get_conversation_history(conversation_history_request: ConversationHis
 async def get_conversation_history_from_chat_request(chat_request):
     conversation_history_request = ConversationHistoryRequest(database_name=chat_request.database_name,
                                                               context_route=chat_request.context_route,
-                                                              limit_messages=chat_request.config.limit_messages)
+                                                              limit_messages=chat_request.conversation_memory_config.limit_messages)
     conversation_history = await get_conversation_history(conversation_history_request=conversation_history_request)
     return conversation_history

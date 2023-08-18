@@ -1,9 +1,8 @@
 from typing import Any
-from pydantic import BaseModel, validator
 
 from langchain import OpenAI, PromptTemplate
-from langchain.llms.base import LLM, BaseLLM
 from langchain.memory import ConversationSummaryBufferMemory
+from pydantic import BaseModel
 
 from jonbot import get_logger
 from jonbot.layer2_core_processes.core.ai.components.memory.sub_memory_components.conversation_summary_prompt_templates import \
@@ -23,9 +22,11 @@ class ChatbotConversationMemoryConfig(BaseModel):
     summary_prompt: PromptTemplate = CONVERSATION_SUMMARY_PROMPT
 
 
-
 class ChatbotConversationMemory(ConversationSummaryBufferMemory):
-    def __init__(self, config: ChatbotConversationMemoryConfig = ChatbotConversationMemoryConfig()):
+    def __init__(self, config: ChatbotConversationMemoryConfig = None):
+        if config is None:
+            config = ChatbotConversationMemoryConfig()
+
         super().__init__(
             memory_key=config.memory_key,
             input_key=config.input_key,
@@ -33,5 +34,5 @@ class ChatbotConversationMemory(ConversationSummaryBufferMemory):
             return_messages=config.return_messages,
             max_token_limit=config.max_token_limit,
         )
-        self.config = config
+
         self.prompt = config.summary_prompt

@@ -21,8 +21,7 @@ class MemoryCalculator(BaseModel):
     conversation_history: ConversationHistory
     limit_messages: int = None
     memory: ChatbotConversationMemory = ChatbotConversationMemory()
-    calculate: bool = False
-    upsert: bool = False
+
     @classmethod
     async def from_conversation_history_request(cls, conversation_history_request: ConversationHistoryRequest,
                                                 **kwargs):
@@ -41,28 +40,29 @@ class MemoryCalculator(BaseModel):
             conversation_history_request=conversation_history_request,
             **kwargs)
 
-    async def calculate(self):
+    async def calculate(self, upsert: bool = True):
         self.load_memory_from_history(conversation_history=self.conversation_history)
-        conversation_memory_document = ConversationMemoryDocument(context_route=self.conversation_history_request.context_route,
-                                                                  buffer=self.memory.buffer,
-                                                                  summary=self.memory.moving_summary_buffer,
-                                                                  config=self.memory.config,)
+        conversation_memory_document = ConversationMemoryDocument(
+            context_route=self.conversation_history_request.context_route,
+            buffer=self.memory.buffer,
+            summary=self.memory.moving_summary_buffer,
+            summary_prompt=self.memory.prompt,
+            )
 
         await conversation_memory_document.save(database_name=self.conversation_history_request.database_name,
-                                          collection_name=self.conversation_history_request.collection_name)
-
-
+                                                collection_name=self.conversation_history_request.memories_collection_name)
 
 
     def load_memory_from_history(self,
                                  conversation_history=ConversationHistory,
                                  max_tokens=CONVERSATION_HISTORY_MAX_TOKENS,
                                  limit_messages=None):
-        logger.info(f"Loading {len(conversation_history.get_all_messages())} messages into memory (class: {self.memory.__class__}).")
+        logger.info(
+            f"Loading {len(conversation_history.get_all_messages())} messages into memory (class: {self.memory.__class__}).")
 
         message_count = -1
         for chat_message in conversation_history.get_all_messages():
-            message_count +=1
+            message_count += 1
             if limit_messages is not None:
                 if message_count > limit_messages:
                     break
@@ -74,7 +74,8 @@ class MemoryCalculator(BaseModel):
                 ai_message = f"On {str(chat_message.timestamp)}, the AI (you) `{chat_message.speaker.name}` said: {chat_message.message}"
                 logger.trace(f"Adding AI message: {ai_message}")
                 self.memory.chat_memory.add_ai_message(ai_message)
-            memory_token_length = self.memory.llm.get_num_tokens_from_messages(messages=self.memory.chat_memory.messages)
+            memory_token_length = self.memory.llm.get_num_tokens_from_messages(
+                messages=self.memory.chat_memory.messages)
             if memory_token_length > max_tokens:
                 logger.info(f"Memory token length {memory_token_length} exceeds max tokens {max_tokens}. Pruning...")
                 logger.info(f"Memory summary before pruning: {self.memory.moving_summary_buffer}\n---\n")
@@ -84,19 +85,15 @@ class MemoryCalculator(BaseModel):
 
 async def calculate_memory(chat_request: ChatRequest):
     memory_calculator = await MemoryCalculator.from_chat_request(chat_request=chat_request)
-    memory = await memory_calculator.calculate()
-    await database_upsert(DatabaseUpsertRequest(query=chat_request.context_route.as_query,
-                                                database_name=chat_request.database_name,
-                                                collection_name="context_memories",
-                                                data=memory.dict()))
+    memory = await memory_calculator.calculate(upsert=True)
     return memory
+
 
 class ConversationMemoryDocument(BaseModel):
     context_route: ContextRoute
     buffer: List[BaseMessage] = []
     summary: str = ""
     summary_prompt: PromptTemplate
-    config: ChatbotConversationMemoryConfig
 
     async def save(self,
                    database_name: str,
@@ -107,10 +104,10 @@ class ConversationMemoryDocument(BaseModel):
                                                     data=self.dict()))
 
 
-
 if __name__ == "__main__":
     from jonbot.tests.load_save_sample_data import load_sample_chat_request
 
     chat_request = load_sample_chat_request()
     chat_request.config.limit_messages = None
     asyncio.run(calculate_memory(chat_request=chat_request))
+

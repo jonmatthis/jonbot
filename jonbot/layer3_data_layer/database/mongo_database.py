@@ -9,7 +9,7 @@ from jonbot.models.discord_stuff.discord_id import DiscordUserID
 from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
 from jonbot.models.user_stuff.user_ids import TelegramUserID, UserID
 from jonbot.system.environment_variables import MONGO_URI, USERS_COLLECTION_NAME, \
-    DISCORD_MESSAGES_COLLECTION_NAME
+    RAW_MESSAGES_COLLECTION_NAME
 
 logger = get_logger()
 
@@ -87,7 +87,7 @@ class MongoDatabaseManager:
                                        database_name: str,
                                        context_route_query: dict,
                                        limit_messages: int = None) -> ConversationHistory:
-        messages_collection = self._get_collection(database_name, DISCORD_MESSAGES_COLLECTION_NAME)
+        messages_collection = self._get_collection(database_name, RAW_MESSAGES_COLLECTION_NAME)
         query = {"context_route_query": context_route_query}
         result = messages_collection.find(query)
         conversation_history = ConversationHistory()

@@ -18,9 +18,9 @@ DATABASE_BACKUP = "database_backup"
 
 #Database stuff
 MONGO_URI = os.getenv('MONGO_URI')
-DISCORD_MESSAGES_COLLECTION_NAME = "discord_messages"
+RAW_MESSAGES_COLLECTION_NAME = "raw_messages"
 USERS_COLLECTION_NAME = f"users"
-CONVERSATION_CONTEXT_MEMORIES_COLLECTION_NAME = "conversation_context_memories"
+MEMORIES_COLLECTION_NAME = "memories"
 
 #URL stuff
 URL_PREFIX = os.getenv('PREFIX')

@@ -19,7 +19,7 @@ from jonbot.layer1_api_interface.routes import CHAT_ENDPOINT, CHAT_STREAM_ENDPOI
 from jonbot.models.conversation_models import ChatRequest, ChatResponse
 from jonbot.models.discord_stuff.environment_config.discord_environment import DiscordEnvironmentConfig
 from jonbot.models.voice_to_text_request import VoiceToTextRequest
-from jonbot.system.environment_variables import DISCORD_MESSAGES_COLLECTION_NAME
+from jonbot.system.environment_variables import RAW_MESSAGES_COLLECTION_NAME
 
 logger = get_logger()
 
@@ -40,7 +40,7 @@ class DiscordBot(discord.Bot):
         self._database_name = f"{environment_config.BOT_NICK_NAME}_database"
         self._database_operations = DatabaseOperations(api_client=api_client,
                                                        database_name=self._database_name,
-                                                       collection_name=DISCORD_MESSAGES_COLLECTION_NAME)
+                                                       collection_name=RAW_MESSAGES_COLLECTION_NAME)
         self.add_cog(ServerScraperCog(database_operations=self._database_operations))
         self._conversations = {}
 

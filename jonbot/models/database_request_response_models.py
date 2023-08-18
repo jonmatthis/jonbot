@@ -2,8 +2,7 @@ from pydantic import BaseModel
 
 from jonbot.models.context_route import ContextRoute
 from jonbot.models.conversation_models import ChatRequest
-
-CONVERSATION_CONTEXT_MEMORIES_COLLECTION_NAME = "conversation_context_memories"
+from jonbot.system.environment_variables import MEMORIES_COLLECTION_NAME, RAW_MESSAGES_COLLECTION_NAME
 
 
 class DatabaseUpsertRequest(BaseModel):
@@ -19,7 +18,8 @@ class DatabaseUpsertResponse(BaseModel):
 
 class ConversationHistoryRequest(BaseModel):
     database_name: str
-    collection_name: str = CONVERSATION_CONTEXT_MEMORIES_COLLECTION_NAME
+    memories_collection_name: str = MEMORIES_COLLECTION_NAME
+    raw_messages_collection_name: str = RAW_MESSAGES_COLLECTION_NAME
     context_route: ContextRoute
     limit_messages: int = None
     @classmethod
