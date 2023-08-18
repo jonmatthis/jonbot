@@ -17,10 +17,14 @@ class DiscordMessageDocument(BaseModel):
     content: str
     reference_dict: dict
     message_id: int
-    attachment_urls: List[str]
-    attachment_local_paths: List[str]
     author: str
     author_id: int
+    server_name: str
+    server_id: int
+    channel_name: str
+    channel_id: int
+    thread_name: Optional[str]
+    thread_id: Optional[int]
     is_bot: bool
     timestamp: Timestamp
     edited_timestamp: Union[Timestamp, str]
@@ -29,13 +33,15 @@ class DiscordMessageDocument(BaseModel):
     jump_url: str
     dump: str
     reactions: List[str]
+    attachment_urls: List[str]
+    attachment_local_paths: List[str]
     parent_message_id: Optional[int]
     parent_message_jump_url: Optional[str]
     context_description: str
     context_route_object: ContextRoute
     context_route_path: str
     context_route_query: dict
-    context_route_flat_dict: dict
+
 
     @classmethod
     async def from_message(cls, message: discord.Message):
@@ -62,7 +68,7 @@ class DiscordMessageDocument(BaseModel):
             context_route_object=context_route.dict(),
             context_route_path=context_route.as_path,
             context_route_query=context_route.as_query,
-            context_route_flat_dict = context_route.flat_dict,
+            **context_route.as_flat_dict,
         )
         await discord_message_document._add_attachments_to_message(message)
         return discord_message_document

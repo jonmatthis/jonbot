@@ -112,7 +112,7 @@ class ContextRoute(BaseModel):
                 }
 
     @property
-    def flat_dict(self):
+    def as_flat_dict(self):
         return {"server_name": self.server.name,
                 "server_id": self.server.id,
                 "channel_name": self.channel.name,

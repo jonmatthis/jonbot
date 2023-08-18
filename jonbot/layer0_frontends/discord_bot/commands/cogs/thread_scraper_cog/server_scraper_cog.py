@@ -41,7 +41,7 @@ class ServerScraperCog(commands.Cog):
             messages_to_upsert.extend(channel_messages)
 
         asyncio.create_task(self._send_messages_to_database(messages_to_upsert=messages_to_upsert))
-        response_embed.edit(
+        await response_embed.edit(
             embed=discord.Embed(
                 title=f"Scraping complete! Scraped and sent {len(messages_to_upsert)} messages to the database."
             )
