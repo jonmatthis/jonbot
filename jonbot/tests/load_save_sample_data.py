@@ -4,9 +4,9 @@ from typing import Union
 import discord
 
 from jonbot import get_logger
-from jonbot.layer2_core_processes.entrypoint_functions.database_actions import get_conversation_history
-from jonbot.models.conversation_models import ChatRequest, ConversationHistory
-from jonbot.models.database_request_response_models import ConversationHistoryRequest
+from jonbot.layer2_core_processes.entrypoint_functions.database_actions import get_message_history_document
+from jonbot.models.conversation_models import ChatRequest, MessageHistory
+from jonbot.models.database_request_response_models import MessageHistoryRequest
 from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
 from jonbot.system.path_getters import get_sample_discord_message_json_path
 
@@ -37,10 +37,10 @@ def load_sample_discord_message_document(
     return DiscordMessageDocument.parse_raw(json_content)
 
 
-async def load_sample_conversation_history() -> ConversationHistory:
+async def load_sample_message_history() -> MessageHistory:
     sample_chat_request = load_sample_chat_request()
-    conversation_history_request = ConversationHistoryRequest.from_chat_request(chat_request=sample_chat_request)
-    conversation_history = await get_conversation_history(conversation_history_request=conversation_history_request)
+    conversation_history_request = MessageHistoryRequest.from_chat_request(chat_request=sample_chat_request)
+    conversation_history = await get_message_history_document(message_history_request=conversation_history_request)
     return conversation_history
 
 

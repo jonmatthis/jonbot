@@ -16,4 +16,3 @@ class DiscordUserID(BaseModel):
                    name=message.author.name,
                    discriminator=message.author.discriminator,
                    display_name=message.author.display_name)
-

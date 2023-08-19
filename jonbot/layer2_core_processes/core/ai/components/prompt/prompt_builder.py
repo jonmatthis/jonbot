@@ -40,12 +40,11 @@ class ChatbotPrompt(ChatPromptTemplate):
 
         return cls.from_messages(
             [system_message_prompt,
-             MessagesPlaceholder(variable_name=chat_history_placeholder_name,),
+             MessagesPlaceholder(variable_name=chat_history_placeholder_name, ),
              human_message_prompt]
         )
 
+
 if __name__ == "__main__":
     print(ChatbotPrompt.build())
-    f=9
-
-
+    f = 9

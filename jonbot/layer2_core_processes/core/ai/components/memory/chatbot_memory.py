@@ -7,13 +7,13 @@ from jonbot.layer2_core_processes.core.ai.components.memory.sub_memory_component
     ChatbotConversationMemory
 from jonbot.layer2_core_processes.core.ai.components.memory.sub_memory_components.vectorstore_memory import \
     ChatbotVectorStoreMemoryBuilder
-from jonbot.models.conversation_models import ConversationHistory
+from jonbot.models.conversation_models import MessageHistory
 
 
 class ChatbotMemory(CombinedMemory):
     @classmethod
     async def build(cls,
-                    conversation_history: ConversationHistory = None):
+                    conversation_history: MessageHistory = None):
         memories = await cls._configure_memories()
 
         instance = cls(memories=memories)
@@ -24,7 +24,6 @@ class ChatbotMemory(CombinedMemory):
         return instance
 
     @staticmethod
-    async def _configure_memories(conversation_history: ConversationHistory = None) -> List[BaseMemory]:
+    async def _configure_memories(conversation_history: MessageHistory = None) -> List[BaseMemory]:
         return [ChatbotConversationMemory(),
                 await ChatbotVectorStoreMemoryBuilder.build()]
-

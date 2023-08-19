@@ -1,17 +1,19 @@
-import asyncio
-
 from fastapi import FastAPI
 from starlette.responses import StreamingResponse
 
 from jonbot import get_logger
-from jonbot.layer2_core_processes.entrypoint_functions.chat_stream import chat_stream_function
-from jonbot.layer2_core_processes.entrypoint_functions.database_actions import database_upsert, get_conversation_history
+from jonbot.layer2_core_processes.core.ai.components.memory.construct_memory_data import \
+    calculate_memory_from_context_route
 from jonbot.layer2_core_processes.core.audio_transcription import transcribe_audio
+from jonbot.layer2_core_processes.entrypoint_functions.chat_stream import chat_stream_function
+from jonbot.layer2_core_processes.entrypoint_functions.database_actions import database_upsert, \
+    get_message_history_document
 from jonbot.layer2_core_processes.utilities.generate_test_tokens import generate_test_tokens
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
-from jonbot.models.conversation_models import ChatResponse, ChatRequest, ConversationHistory
+from jonbot.models.calculate_memory_request import CalculateMemoryRequest
+from jonbot.models.conversation_models import ChatResponse, ChatRequest, MessageHistory
 from jonbot.models.database_request_response_models import DatabaseUpsertResponse, DatabaseUpsertRequest, \
-    ConversationHistoryRequest
+    MessageHistoryRequest
 from jonbot.models.health_check_status import HealthCheckResponse
 from jonbot.models.voice_to_text_request import VoiceToTextResponse, VoiceToTextRequest
 
@@ -24,8 +26,8 @@ STREAMING_RESPONSE_TEST_ENDPOINT = "/test_streaming_response"
 VOICE_TO_TEXT_ENDPOINT = "/voice_to_text"
 
 DATABASE_UPSERT_ENDPOINT = "/database_upsert"
-CONVERSATION_HISTORY_ENDPOINT = "/conversation_history"
-
+MESSAGE_HISTORY_ENDPOINT = "/message_history"
+CALCULATE_MEMORY_ENDPOINT = "/calculate_memory"
 
 APP = None
 
@@ -73,8 +75,6 @@ async def chat_stream_endpoint(chat_request: ChatRequest):
     return StreamingResponse(chat_stream_function(chat_request), media_type="text/event-stream")
 
 
-
-
 @app.post(CHAT_ENDPOINT, response_model=ChatResponse)
 async def chat_endpoint(chat_request: ChatRequest) -> ChatResponse:
     logger.error("Not implemented yet! Use the chat_stream endpoint instead.")
@@ -86,6 +86,11 @@ async def database_upsert_endpoint(database_upsert_request: DatabaseUpsertReques
     return await database_upsert(database_upsert_request=database_upsert_request)
 
 
-@app.post(CONVERSATION_HISTORY_ENDPOINT, response_model=ConversationHistory)
-async def conversation_history_endpoint(conversation_history_request: ConversationHistoryRequest) -> ConversationHistory:
-    return await get_conversation_history(conversation_history_request=conversation_history_request)
+@app.post(MESSAGE_HISTORY_ENDPOINT, response_model=MessageHistory)
+async def message_history_endpoint(message_history_request: MessageHistoryRequest) -> MessageHistory:
+    return await get_message_history_document(message_history_request=message_history_request)
+
+
+@app.post(CALCULATE_MEMORY_ENDPOINT)
+async def calculate_memory_endpoint(calculate_memory_request: CalculateMemoryRequest) -> bool:
+    return await calculate_memory_from_context_route(**calculate_memory_request.dict())

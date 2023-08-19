@@ -13,7 +13,6 @@ class ApiRoute(BaseModel):
     port_number: int = int(os.getenv('PORT_NUMBER', '8080'))
     endpoint: Optional[str]
 
-
     @property
     def url(self) -> str:
         return f"{self.url_prefix}://{self.host_name}"
@@ -58,6 +57,7 @@ class ApiRoute(BaseModel):
         parsed = urlparse(self.endpoint_url)
         if not all([parsed.scheme, parsed.netloc, parsed.path]):
             raise ValueError(f"Invalid full route URL: {self.endpoint_url}")
+
 
 if __name__ == "__main__":
     try:

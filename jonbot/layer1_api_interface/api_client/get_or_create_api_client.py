@@ -13,6 +13,3 @@ def get_or_create_api_client() -> ApiClient:
         logger.info("Creating new ApiClient instance")
         API_CLIENT = ApiClient()
     return API_CLIENT
-
-
-

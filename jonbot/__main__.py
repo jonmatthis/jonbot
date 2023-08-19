@@ -8,11 +8,11 @@ from jonbot.system.environment_variables import BOT_NICK_NAMES
 
 logger = get_logger()
 
-
 # Note: At the end, the final SERVICES list will be built dynamically
 BASE_SERVICES = [
     {"func": run_api_sync},
 ]
+
 
 def run_services():
     """
@@ -41,11 +41,13 @@ def run_services():
                         other_future.cancel()
                 raise
 
+
 def main():
     # Initializing logging for the main process.
     # If each process needs a separate log, initialize inside the service function.
     logger.info("Starting services...")
     run_services()
+
 
 if __name__ == "__main__":
     main()

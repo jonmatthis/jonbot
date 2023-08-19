@@ -10,8 +10,8 @@ from typing import List, Literal
 import pyperclip
 from pydantic import BaseModel, Field
 
-
 logger = logging.getLogger(__name__)
+
 
 ## MODEL DEFINITIONS
 class ContentFetcherConfig(BaseModel):
@@ -156,12 +156,9 @@ class Quine:
         with open(self.config.output_file_path(), 'w') as file:
             file.write(output)
 
-
-
         if self.config.print_mode in ["clipboard", "all"]:
             logger.debug("Copying output to clipboard")
             pyperclip.copy(output)
-
 
         if self.config.print_mode in ["file", "all"]:
             self.open_file()

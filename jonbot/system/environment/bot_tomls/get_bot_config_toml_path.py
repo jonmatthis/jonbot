@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import List
 
 
-def get_bot_config_toml_path(bot_nick_name:str) -> List[str]:
+def get_bot_config_toml_path(bot_nick_name: str) -> List[str]:
     target_toml = f"{bot_nick_name}_config.toml"
 
     current_directory = Path(__file__).parent

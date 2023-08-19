@@ -15,9 +15,11 @@ logger = logging.getLogger('telegram')
 logger.setLevel(logging.INFO)
 
 from jonbot import get_logger
+
 logger = get_logger()
 
 api_client = get_or_create_api_client()
+
 
 async def telegram_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_input = ChatInput(message=update.message.text,

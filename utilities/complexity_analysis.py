@@ -26,7 +26,6 @@ def get_complexity_results(directory):
     return cc_results, mi_results, halstead_results
 
 
-
 def main(directory):
     cc_results, mi_results, halstead_results = get_complexity_results(directory)
 
@@ -36,7 +35,7 @@ def main(directory):
     for result in cc_results:
         if result.complexity > CC_THRESHOLD:
             print(f"{result.nick_name} in {result.filename}, Line {result.lineno}, CC: {result.complexity}")
-    print("\n" + "-"*50)  # Add separator for readability
+    print("\n" + "-" * 50)  # Add separator for readability
 
     print("\nAreas to consider based on Raw Metrics:")
     for filename, result in mi_results.items():
@@ -44,7 +43,7 @@ def main(directory):
         print(f"  LOC: {result.loc}, LLOC: {result.lloc}, SLOC: {result.sloc}")
         print(f"  Comments: {result.comments}, Multi-line comments: {result.multi}")
         print(f"  Blank lines: {result.blank}, Single-line comments: {result.single_comments}")
-    print("\n" + "-"*50)  # Add separator for readability
+    print("\n" + "-" * 50)  # Add separator for readability
 
     print("\nHalstead Metrics:")
     for filename, result in halstead_results.items():

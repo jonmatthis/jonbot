@@ -1,8 +1,6 @@
 from typing import Dict
 
 from jonbot import get_logger
-from jonbot.layer2_core_processes.entrypoint_functions.database_actions import \
-    get_conversation_history_from_chat_request
 from jonbot.layer2_core_processes.core.ai.chatbot_llm_chain.chatbot_llm_chain import ChatbotLLMChain
 from jonbot.models.conversation_models import ChatRequest
 
@@ -18,8 +16,8 @@ async def get_chatbot_llm_chain_for_chat_request(chat_request: ChatRequest) -> C
     if context_path in chatbot_llm_chains:
         return chatbot_llm_chains[context_path]
     else:
-        conversation_history = await get_conversation_history_from_chat_request(chat_request=chat_request)
-        chatbot_llm_chains[context_path] = ChatbotLLMChain(conversation_history=conversation_history)
+        chatbot_llm_chains[context_path] = await ChatbotLLMChain.from_context_route(
+            context_route=chat_request.context_route,
+            database_name=chat_request.database_name
+            )
         return chatbot_llm_chains[context_path]
-
-

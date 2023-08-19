@@ -5,7 +5,9 @@ import aiohttp
 
 from jonbot import get_logger
 from jonbot.layer1_api_interface.helpers.error_message_from_response import error_message_from_response
+from jonbot.layer1_api_interface.routes import CALCULATE_MEMORY_ENDPOINT
 from jonbot.models.api_endpoint_url import ApiRoute
+from jonbot.models.calculate_memory_request import CalculateMemoryRequest
 from jonbot.system.environment_variables import API_HOST_NAME
 
 logger = get_logger()
@@ -76,7 +78,9 @@ class ApiClient:
 
         return response_tokens
 
-
+    async def calculate_memory(self, calculate_memory_request: CalculateMemoryRequest):
+        asyncio.create_task(self.send_request_to_api(endpoint_name=CALCULATE_MEMORY_ENDPOINT,
+                                                     data=calculate_memory_request.dict()))
 
 
 async def run_callbacks(callbacks: List[Callable], line: bytes):

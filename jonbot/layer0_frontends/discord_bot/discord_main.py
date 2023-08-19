@@ -10,6 +10,7 @@ from jonbot.models.discord_stuff.environment_config.load_discord_config import g
 logging.getLogger("discord").setLevel(logging.INFO)
 
 from jonbot import get_logger
+
 logger = get_logger()
 
 
@@ -17,7 +18,7 @@ async def run_discord_bot_async(bot_name_or_index: Union[str, int] = 0):
     discord_environment_config = get_or_create_discord_environment_config(bot_name_or_index=bot_name_or_index)
 
     try:
-        discord_bot = DiscordBot(environment_config= discord_environment_config,
+        discord_bot = DiscordBot(environment_config=discord_environment_config,
                                  command_prefix="!",
                                  intents=discord.Intents.all())
 

@@ -4,12 +4,13 @@ from typing import Union
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from jonbot import get_logger
-from jonbot.models.conversation_models import ConversationHistory, ChatMessage
+from jonbot.models.context_memory_document import ContextMemoryDocument
+from jonbot.models.conversation_models import MessageHistory, ChatMessage
 from jonbot.models.discord_stuff.discord_id import DiscordUserID
 from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
 from jonbot.models.user_stuff.user_ids import TelegramUserID, UserID
 from jonbot.system.environment_variables import MONGO_URI, USERS_COLLECTION_NAME, \
-    RAW_MESSAGES_COLLECTION_NAME
+    RAW_MESSAGES_COLLECTION_NAME, CONTEXT_MEMORIES_COLLECTION_NAME
 
 logger = get_logger()
 
@@ -83,14 +84,14 @@ class MongoDatabaseManager:
             logger.error(f'Error occurred while upserting. Error: {e}')
             return False
 
-    async def get_conversation_history(self,
-                                       database_name: str,
-                                       context_route_query: dict,
-                                       limit_messages: int = None) -> ConversationHistory:
+    async def get_message_history(self,
+                                  database_name: str,
+                                  context_route_query: dict,
+                                  limit_messages: int = None) -> MessageHistory:
         messages_collection = self._get_collection(database_name, RAW_MESSAGES_COLLECTION_NAME)
         query = {"context_route_query": context_route_query}
         result = messages_collection.find(query)
-        conversation_history = ConversationHistory()
+        messge_history = MessageHistory()
         message_count = 0
         async for document in result:
             if limit_messages is not None and message_count >= limit_messages:
@@ -98,8 +99,19 @@ class MongoDatabaseManager:
             message_count += 1
             discord_message_document = DiscordMessageDocument(**document)
             chat_message = ChatMessage.from_discord_message_document(discord_message_document)
-            conversation_history.add_message(chat_message)
-        return conversation_history
+            messge_history.add_message(chat_message)
+        return messge_history
+
+    async def get_context_memory(self,
+                                 database_name: str,
+                                 context_route_query: dict,
+                                 ) -> ContextMemoryDocument:
+        messages_collection = self._get_collection(database_name, CONTEXT_MEMORIES_COLLECTION_NAME)
+        query = {"context_route_query": context_route_query}
+        result = await messages_collection.find_one(query)
+
+        if result is not None:
+            return ContextMemoryDocument(**result)
 
     async def create_user(self,
                           database_name: str,
@@ -114,4 +126,3 @@ class MongoDatabaseManager:
     async def close(self):
         logger.info("Closing MongoDatabaseManager connection")
         self._client.close()
-

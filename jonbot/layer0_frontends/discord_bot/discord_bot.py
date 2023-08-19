@@ -3,15 +3,16 @@ import asyncio
 import discord
 
 from jonbot import get_logger
-from jonbot.layer0_frontends.discord_bot.commands.cogs.thread_scraper_cog.server_scraper_cog import ServerScraperCog
+from jonbot.layer0_frontends.discord_bot.commands.cogs.memory_scraper_cog import MemoryScraperCog
+from jonbot.layer0_frontends.discord_bot.commands.cogs.server_scraper_cog import ServerScraperCog
 from jonbot.layer0_frontends.discord_bot.commands.cogs.voice_channel_cog import VoiceChannelCog
 from jonbot.layer0_frontends.discord_bot.handlers.handle_message_responses import DiscordStreamUpdater, \
     update_discord_message
+from jonbot.layer0_frontends.discord_bot.handlers.should_process_message import TRANSCRIBED_AUDIO_PREFIX, \
+    allowed_to_reply, want_to_reply
 from jonbot.layer0_frontends.discord_bot.operations.database_operations import DatabaseOperations
 from jonbot.layer0_frontends.discord_bot.utilities.print_pretty_terminal_message import \
     print_pretty_startup_message_in_terminal
-from jonbot.layer0_frontends.discord_bot.handlers.should_process_message import TRANSCRIBED_AUDIO_PREFIX, \
-    allowed_to_reply, want_to_reply
 from jonbot.layer1_api_interface.api_client.api_client import ApiClient
 from jonbot.layer1_api_interface.api_client.get_or_create_api_client import get_or_create_api_client
 from jonbot.layer1_api_interface.routes import CHAT_ENDPOINT, CHAT_STREAM_ENDPOINT, \
@@ -23,8 +24,10 @@ from jonbot.system.environment_variables import RAW_MESSAGES_COLLECTION_NAME
 
 logger = get_logger()
 
-async def wait_a_bit(duration:float=1):
+
+async def wait_a_bit(duration: float = 1):
     await asyncio.sleep(duration)
+
 
 class DiscordBot(discord.Bot):
 
@@ -45,6 +48,8 @@ class DiscordBot(discord.Bot):
         self._conversations = {}
 
         self.add_cog(VoiceChannelCog())
+        self.add_cog(MemoryScraperCog(database_name=self._database_name,
+                                       api_client=api_client))
 
     @discord.Cog.listener()
     async def on_ready(self):
@@ -161,5 +166,3 @@ class DiscordBot(discord.Bot):
         await message.reply(f"{TRANSCRIBED_AUDIO_PREFIX} from user `{message.author}`:\n > {response['text']}")
         logger.info(f"VoiceToTextResponse payload received: \n {response}\n"
                     f"Successfully sent voice to text request payload to API!")
-
-

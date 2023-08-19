@@ -6,6 +6,7 @@ from jonbot.layer1_api_interface.routes import HEALTH_ENDPOINT
 
 logger = get_logger()
 
+
 @retry(
     stop=stop_after_attempt(60),
     wait=wait_exponential(multiplier=1, max=60)  # start waiting for 1s, then double with each retry to a maximum of 60s

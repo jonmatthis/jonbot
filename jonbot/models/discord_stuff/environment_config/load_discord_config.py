@@ -7,6 +7,7 @@ from jonbot.models.discord_stuff.environment_config.discord_environment import D
 load_dotenv()
 
 from jonbot import get_logger
+
 logger = get_logger()
 
 _DISCORD_ENVIRONMENT_CONFIG = None

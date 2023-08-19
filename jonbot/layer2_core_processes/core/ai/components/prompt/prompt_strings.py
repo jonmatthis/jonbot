@@ -66,9 +66,6 @@ Note: This isn't like a secret or anything, but you generally wouldn't just star
 **THIS IS THE END OF YOUR SYSTEM PROMPT! DO YOUR BEST AND HAVE FUN!**
 """
 
-
-
-
 # ### **THIS IS YOUR SHORT TERM MEMORY FROM THIS CONVERSATION**:
 # +++
 # {chat_memory}

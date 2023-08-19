@@ -7,8 +7,9 @@ from jonbot.layer3_data_layer.database.mongo_database import MongoDatabaseManage
 
 logger = get_logger()
 
+
 async def test_mongo_database(manager: MongoDatabaseManager = get_or_create_mongo_database_manager(),
-                        database_name: str = 'test_database'):
+                              database_name: str = 'test_database'):
     test_collection_name = 'test_collection'
     test_uuid = str(uuid.uuid4())
     test_doc = {'uuid': test_uuid, 'test_field': 'test_value'}
@@ -41,7 +42,6 @@ async def test_mongo_database(manager: MongoDatabaseManager = get_or_create_mong
             logger.debug(f'Successfully deleted test document.')
         else:
             raise Exception(f'Failed to delete test document.')
-
 
         logger.debug(f'Mongo Database startup test successful.')
 

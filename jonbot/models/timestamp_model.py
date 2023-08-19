@@ -44,7 +44,7 @@ class Timestamp(BaseModel):
         return cls.from_datetime(datetime.now())
 
     @property
-    def utc(self)->float:
+    def utc(self) -> float:
         return self.unix_timestamp_utc
 
     def __str__(self):

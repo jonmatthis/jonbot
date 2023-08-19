@@ -5,8 +5,8 @@ import discord
 from pydantic import BaseModel
 
 from jonbot import get_logger
-from jonbot.models.conversation_context import ConversationContextDescription
 from jonbot.models.context_route import ContextRoute
+from jonbot.models.conversation_context import ConversationContextDescription
 from jonbot.models.timestamp_model import Timestamp
 
 logger = get_logger()
@@ -41,7 +41,6 @@ class DiscordMessageDocument(BaseModel):
     context_route_object: ContextRoute
     context_route_path: str
     context_route_query: dict
-
 
     @classmethod
     async def from_discord_message(cls,

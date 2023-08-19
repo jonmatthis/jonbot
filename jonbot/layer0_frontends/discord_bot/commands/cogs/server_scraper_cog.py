@@ -52,7 +52,7 @@ class ServerScraperCog(commands.Cog):
                             )
     @commands.has_permissions(administrator=True)
     async def scrape_messages_from_channel(self,
-                                             ctx: discord.ApplicationContext,
+                                           ctx: discord.ApplicationContext,
                                            ):
         logger.info(f"Received scrape_local command from channel:  {ctx.channel.name}")
         channel_messages = await self._get_message_list_from_channel(channel=ctx.channel)

@@ -4,13 +4,13 @@ services:
       context: .
       dockerfile: Dockerfile.api
     ports:
-    - 8091:8091
+      - 8091:8091
   golembot:
     build:
       context: .
       dockerfile: Dockerfile.discord
     depends_on:
-    - api
+      - api
     environment:
       BOT_NICK_NAME: golembot
   jonbot:
@@ -18,7 +18,7 @@ services:
       context: .
       dockerfile: Dockerfile.discord
     depends_on:
-    - api
+      - api
     environment:
       BOT_NICK_NAME: jonbot
 version: '3.7'

@@ -1,6 +1,5 @@
 import logging
 import sys
-import time
 from datetime import datetime
 from enum import Enum
 from logging.config import dictConfig
@@ -22,6 +21,8 @@ logging.addLevelName(LogLevel.TRACE.value, "TRACE")
 logging.addLevelName(LogLevel.SUCCESS.value, "SUCCESS")
 
 previous_timestamp = datetime.now().timestamp()
+
+
 class CustomFormatter(logging.Formatter):
     """A custom Formatter class to include microseconds in log timestamps."""
 
@@ -34,7 +35,6 @@ class CustomFormatter(logging.Formatter):
 
         date_format_with_microseconds = "%Y-%m-%dT%H:%M:%S.%f"  # Including microseconds with %f
         return datetime.strftime(datetime.fromtimestamp(timestamp), date_format_with_microseconds)
-
 
 
 class LoggerBuilder:
@@ -87,6 +87,7 @@ class LoggerBuilder:
             timestamp_w_delta_time = og_timestamp + delta_time
             formatted_record = formatted_record.replace(og_timestamp, timestamp_w_delta_time)
             return formatted_record
+
         def emit(self, record):
             color_code = self.COLORS.get(record.levelname, "\033[0m")
             formatted_record = color_code + self.format(record) + "\033[0m"
@@ -140,7 +141,6 @@ def log_test_messages(logger):
 
     print("----------This is a print message.------------------")
 
-
     import time
     for iter in range(5):
         print(f"Testing timestamps (round: {iter}:")
@@ -152,9 +152,9 @@ def log_test_messages(logger):
         logger.info(f"Done 1 sec timer - elapsed time:{elapsed_time} (Δt should be ~1.0s)")
 
 
-
 if __name__ == "__main__":
     from jonbot import get_logger
+
     logger = get_logger()
     configure_logging(LogLevel.TRACE)  # Setting the root logger level to TRACE
     log_test_messages(logger)

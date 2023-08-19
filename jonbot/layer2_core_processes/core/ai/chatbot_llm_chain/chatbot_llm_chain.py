@@ -10,7 +10,9 @@ from jonbot.layer0_frontends.discord_bot.handlers.handle_message_responses impor
 from jonbot.layer2_core_processes.core.ai.components.memory.sub_memory_components.conversation_memory import \
     ChatbotConversationMemory
 from jonbot.layer2_core_processes.core.ai.components.prompt.prompt_builder import ChatbotPrompt
-from jonbot.models.conversation_models import ConversationHistory
+from jonbot.layer2_core_processes.entrypoint_functions.database_actions import get_context_memory_document
+from jonbot.models.context_route import ContextRoute
+from jonbot.models.conversation_models import MessageHistory
 
 langchain.debug = True
 
@@ -19,7 +21,7 @@ logger = get_logger()
 
 class ChatbotLLMChain:
     def __init__(self,
-                 conversation_history: ConversationHistory = None,
+                 conversation_history: MessageHistory = None,
                  chat_history_placeholder_name: str = "chat_history"):
         self.model = ChatOpenAI(temperature=0.8,
                                 model_name="gpt-4",
@@ -56,16 +58,34 @@ class ChatbotLLMChain:
             logger.exception(e)
             raise
 
+    @classmethod
+    async def from_context_route(cls,
+                                 context_route: ContextRoute,
+                                 database_name: str):
+        instance = cls()
+        await instance.load_context_memory(context_route=context_route,
+                                           database_name=database_name)
+        return instance
+
+    async def load_context_memory(self,
+                                  context_route: ContextRoute,
+                                  database_name:str):
+        context_memory_document = await get_context_memory_document(context_route=context_route,
+                                                                    database_name=database_name)
+        if context_memory_document is None:
+            logger.warning(f"Could not load context memory from database for context route: {context_route.dict()}")
+        else:
+            self.memory.load_context_memory(context_memory_document=context_memory_document)
+
 
 async def demo():
-    from jonbot.tests.load_save_sample_data import load_sample_conversation_history
+    from jonbot.tests.load_save_sample_data import load_sample_message_history
 
-    conversation_history = await load_sample_conversation_history()
+    conversation_history = await load_sample_message_history()
     llm_chain = ChatbotLLMChain(conversation_history=conversation_history)
     async for token in llm_chain.chain.astream({"human_input": "Hello, how are you?"}):  # Use 'async for' here
         print(token.content)
     f = 9
-
 
 
 if __name__ == "__main__":

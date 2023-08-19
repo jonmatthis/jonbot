@@ -67,7 +67,7 @@ class ChatMessage(BaseModel):
                    )
 
 
-class ConversationHistory(BaseModel):
+class MessageHistory(BaseModel):
     history: List[ChatMessage] = Field(default_factory=list)
 
     def add_message(self, chat_message: ChatMessage):
