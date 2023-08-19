@@ -42,7 +42,7 @@ async def get_context_memory_document(context_route: ContextRoute,
     return context_memory_document
 
 
-async def upsert_context_memory(update_context_memory_request: UpsertContextMemoryRequest):
-    logger.info(f"Updating context memory for context route: {update_context_memory_request.context_route.dict()}")
+async def upsert_context_memory(upsert_context_memory_request: UpsertContextMemoryRequest):
+    logger.info(f"Updating context memory for context route: {upsert_context_memory_request.data.context_route.dict()}")
     mongo_database = await get_or_create_mongo_database_manager()
-    await mongo_database.upsert_context_memory(update_context_memory_request = update_context_memory_request)
+    await mongo_database.upsert_context_memory(upsert_context_memory_request)

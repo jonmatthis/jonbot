@@ -28,13 +28,12 @@ class MemoryDataCalculator(BaseModel):
     async def from_message_history_request(cls, message_history_request: MessageHistoryRequest,
                                            **kwargs):
         current_context_memory = await get_context_memory_document(context_route=message_history_request.context_route,
-                                                                     database_name=message_history_request.database_name)
+                                                                   database_name=message_history_request.database_name)
         message_history = await get_message_history_document(message_history_request=message_history_request)
 
         if message_history is None:
             logger.warning(f"Message history not found for request: {message_history_request.dict()}")
             return
-
 
         return cls(message_history_request=message_history_request,
                    current_context_memory=current_context_memory,
@@ -66,9 +65,9 @@ class MemoryDataCalculator(BaseModel):
 
     async def calculate(self,
                         upsert: bool = True,
-                        overwrite:bool = False) -> ContextMemoryDocument:
+                        overwrite: bool = False) -> ContextMemoryDocument:
 
-        self.calculate_memory_from_history(message_history=self.message_history, overwrite = overwrite)
+        self.calculate_memory_from_history(message_history=self.message_history, overwrite=overwrite)
 
         context_memory_document = ContextMemoryDocument(
             context_route=self.message_history_request.context_route,
@@ -87,15 +86,16 @@ class MemoryDataCalculator(BaseModel):
                             context_memory_document: ContextMemoryDocument,
                             database_name: str):
 
-        await upsert_context_memory(UpsertContextMemoryRequest(data=context_memory_document,
-                                                               database_name=database_name,
-                                                               query=context_memory_document.context_route.as_query))
+        await upsert_context_memory(
+            upsert_context_memory_request=UpsertContextMemoryRequest(data=context_memory_document,
+                                                                     database_name=database_name,
+                                                                     query=context_memory_document.context_route.as_query))
 
     def calculate_memory_from_history(self,
                                       message_history=MessageHistory,
                                       max_tokens=CONVERSATION_HISTORY_MAX_TOKENS,
                                       limit_messages=None,
-                                      overwrite:bool = False):
+                                      overwrite: bool = False):
         logger.info(
             f"Loading {len(message_history.get_all_messages())} messages into memory (class: {self.memory.__class__}).")
 

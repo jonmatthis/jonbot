@@ -26,7 +26,7 @@ CHAT_STREAM_ENDPOINT = "/chat_stream"
 STREAMING_RESPONSE_TEST_ENDPOINT = "/test_streaming_response"
 VOICE_TO_TEXT_ENDPOINT = "/voice_to_text"
 
-LOG_MESSAGE_ENDPOINT = "/log_message"
+UPSERT_MESSAGE_ENDPOINT = "/upsert_message"
 MESSAGE_HISTORY_ENDPOINT = "/message_history"
 CALCULATE_MEMORY_ENDPOINT = "/calculate_memory"
 
@@ -82,8 +82,8 @@ async def chat_endpoint(chat_request: ChatRequest) -> ChatResponse:
     raise NotImplementedError("Not implemented yet!")
 
 
-@app.post(LOG_MESSAGE_ENDPOINT)
-async def log_message_endpoint(log_discord_message_request: UpsertDiscordMessageRequest) -> LogDiscordMessageResponse:
+@app.post(UPSERT_MESSAGE_ENDPOINT)
+async def upsert_message_endpoint(log_discord_message_request: UpsertDiscordMessageRequest) -> LogDiscordMessageResponse:
     return await upsert_discord_message(upsert_discord_message_request=log_discord_message_request)
 
 
