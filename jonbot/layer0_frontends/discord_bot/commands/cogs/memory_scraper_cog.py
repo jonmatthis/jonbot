@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 
 import discord
 from discord.ext import commands
@@ -64,7 +63,7 @@ class MemoryScraperCog(commands.Cog):
                                 limit_messages: int = None,
                                 ):
         logger.info(f"Received calculate_memory_local command from channel:  {ctx.channel.name}")
-        reply_message = await self._initialize_reply_embed(ctx=ctx)
+        await ctx.respond(embed=discord.Embed(title=f"Calculating memory..."))
 
         response = await self._send_memory_calculation_request_from_channel(channel=ctx.channel,
                                                                             limit_messages=limit_messages)
@@ -72,14 +71,11 @@ class MemoryScraperCog(commands.Cog):
         # attachments = discord.File(fp=response, filename=f"memory_{datetime.now().isoformat()}.json".replace(":", "_"))
         # with open('my_file.png', 'rb') as fp:
         #     await channel.send(file=discord.File(fp, 'new_filename.png'))
-        await reply_message.edit(
-            embed=discord.Embed(
-                title=f"Memory calculation process complete for context: {response}\n "
-                      f"Context summary:\n {response['summmary']}"),
-        )
 
-    async def _initialize_reply_embed(self, ctx: discord.ApplicationContext) -> discord.Message:
-        return await ctx.respond(embed=discord.Embed(title=f"Calculating memory..."))
+        await ctx.respond(embed=discord.Embed(
+            title=f"Memory calculation process complete for context: {response}\n "
+                  f"Context summary:\n {response['summmary']}"),
+        )
 
     async def _send_memory_calculation_request_from_channel(self,
                                                             channel: discord.TextChannel,

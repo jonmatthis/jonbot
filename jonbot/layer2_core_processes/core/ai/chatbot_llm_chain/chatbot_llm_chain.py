@@ -32,6 +32,15 @@ class ChatbotLLMChain:
         self.memory = ChatbotConversationMemory()
         self.chain = self._build_chain()
 
+    @classmethod
+    async def from_context_route(cls,
+                                 context_route: ContextRoute,
+                                 database_name: str):
+        instance = cls()
+        await instance.load_context_memory(context_route=context_route,
+                                           database_name=database_name)
+        return instance
+
     def _build_chain(self) -> RunnableSequence:
         return RunnableMap({
             "human_input": lambda x: x["human_input"],
@@ -41,7 +50,7 @@ class ChatbotLLMChain:
             "chat_history": lambda x: x["memory"]["chat_memory"]
         } | self.prompt | self.model
 
-    async def execute(self, message_string: str) -> AsyncIterable[str]:
+    async def execute(self, message_string: str, pause_at_end:float=1.0 ) -> AsyncIterable[str]:
         inputs = {"human_input": message_string}
         response_message = ""
         try:
@@ -51,21 +60,16 @@ class ChatbotLLMChain:
                 yield token.content
             yield STOP_STREAMING_TOKEN
 
-            logger.debug(f"Succesfully executed chain! - Saving context to memory...")
+            await asyncio.sleep(pause_at_end) # give it a sec to clear the buffer
+
+            logger.debug(f"Successfully executed chain! - Saving context to memory...")
             self.memory.save_context(inputs, {"output": response_message})
             logger.trace(f"Response message: {response_message}")
         except Exception as e:
             logger.exception(e)
             raise
 
-    @classmethod
-    async def from_context_route(cls,
-                                 context_route: ContextRoute,
-                                 database_name: str):
-        instance = cls()
-        await instance.load_context_memory(context_route=context_route,
-                                           database_name=database_name)
-        return instance
+
 
     async def load_context_memory(self,
                                   context_route: ContextRoute,

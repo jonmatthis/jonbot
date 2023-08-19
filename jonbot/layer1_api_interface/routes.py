@@ -2,19 +2,19 @@ from fastapi import FastAPI
 from starlette.responses import StreamingResponse
 
 from jonbot import get_logger
-from jonbot.layer2_core_processes.core.ai.components.memory.construct_memory_data import \
+from jonbot.layer2_core_processes.core.ai.components.memory.memory_data_calculator import \
     calculate_memory_from_context_route
 from jonbot.layer2_core_processes.core.audio_transcription import transcribe_audio
 from jonbot.layer2_core_processes.entrypoint_functions.chat_stream import chat_stream_function
-from jonbot.layer2_core_processes.entrypoint_functions.backend_database_actions import database_upsert, \
+from jonbot.layer2_core_processes.entrypoint_functions.backend_database_actions import upsert_discord_message, \
     get_message_history_document
 from jonbot.layer2_core_processes.utilities.generate_test_tokens import generate_test_tokens
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 from jonbot.models.calculate_memory_request import CalculateMemoryRequest
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.conversation_models import ChatResponse, ChatRequest, MessageHistory
-from jonbot.models.database_request_response_models import DatabaseUpsertResponse, DatabaseUpsertRequest, \
-    MessageHistoryRequest
+from jonbot.models.database_request_response_models import LogDiscordMessageResponse, LogMessageRequest, \
+    MessageHistoryRequest, UpsertDiscordMessageRequest
 from jonbot.models.health_check_status import HealthCheckResponse
 from jonbot.models.voice_to_text_request import VoiceToTextResponse, VoiceToTextRequest
 
@@ -26,7 +26,7 @@ CHAT_STREAM_ENDPOINT = "/chat_stream"
 STREAMING_RESPONSE_TEST_ENDPOINT = "/test_streaming_response"
 VOICE_TO_TEXT_ENDPOINT = "/voice_to_text"
 
-DATABASE_UPSERT_ENDPOINT = "/database_upsert"
+LOG_MESSAGE_ENDPOINT = "/log_message"
 MESSAGE_HISTORY_ENDPOINT = "/message_history"
 CALCULATE_MEMORY_ENDPOINT = "/calculate_memory"
 
@@ -82,9 +82,9 @@ async def chat_endpoint(chat_request: ChatRequest) -> ChatResponse:
     raise NotImplementedError("Not implemented yet!")
 
 
-@app.post(DATABASE_UPSERT_ENDPOINT, response_model=DatabaseUpsertResponse)
-async def database_upsert_endpoint(database_upsert_request: DatabaseUpsertRequest) -> DatabaseUpsertResponse:
-    return await database_upsert(database_upsert_request=database_upsert_request)
+@app.post(LOG_MESSAGE_ENDPOINT)
+async def log_message_endpoint(log_discord_message_request: UpsertDiscordMessageRequest) -> LogDiscordMessageResponse:
+    return await upsert_discord_message(upsert_discord_message_request=log_discord_message_request)
 
 
 @app.post(MESSAGE_HISTORY_ENDPOINT, response_model=MessageHistory)

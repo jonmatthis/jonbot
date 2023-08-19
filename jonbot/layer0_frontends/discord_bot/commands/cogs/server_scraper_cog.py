@@ -7,7 +7,7 @@ from discord import Forbidden
 from discord.ext import commands
 
 from jonbot import get_logger
-from jonbot.layer0_frontends.discord_bot.operations.database_operations import DatabaseOperations
+from jonbot.layer0_frontends.discord_bot.operations.discord_database_operations import DiscordDatabaseOperations
 
 logger = get_logger()
 
@@ -18,7 +18,7 @@ class ServerScraperCog(commands.Cog):
     """A cog for scraping server data and storing it in a MongoDB database."""
 
     def __init__(self,
-                 database_operations: DatabaseOperations):
+                 database_operations: DiscordDatabaseOperations):
         self._database_operations = database_operations
 
     @commands.slash_command(name="scrape_server",
@@ -61,7 +61,7 @@ class ServerScraperCog(commands.Cog):
     async def _send_messages_to_database(self,
                                          messages_to_upsert: List[discord.Message]):
         for message in messages_to_upsert:
-            await self._database_operations.log_message_in_database(message=message)
+            await self._database_operations.upsert_message(message=message)
 
     async def _get_message_list_from_channel(self,
                                              channel: discord.abc.Messageable

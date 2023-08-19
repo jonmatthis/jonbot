@@ -7,17 +7,17 @@ from jonbot import get_logger
 from jonbot.layer2_core_processes.core.ai.components.memory.conversation_memory.conversation_memory import \
     ChatbotConversationMemory
 from jonbot.layer2_core_processes.entrypoint_functions.backend_database_actions import get_message_history_document, \
-    update_context_memory, get_context_memory_document
+    upsert_context_memory, get_context_memory_document
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.context_route import ContextRoute
 from jonbot.models.conversation_models import ChatRequest, MessageHistory
-from jonbot.models.database_request_response_models import MessageHistoryRequest, UpdateContextMemoryRequest
+from jonbot.models.database_request_response_models import MessageHistoryRequest, UpsertContextMemoryRequest
 from jonbot.models.memory_config import CONVERSATION_HISTORY_MAX_TOKENS
 
 logger = get_logger()
 
 
-class ConversationMemoryCalculator(BaseModel):
+class MemoryDataCalculator(BaseModel):
     message_history_request: MessageHistoryRequest
     current_context_memory: ContextMemoryDocument = None
     message_history: MessageHistory
@@ -30,12 +30,10 @@ class ConversationMemoryCalculator(BaseModel):
         current_context_memory = await get_context_memory_document(context_route=message_history_request.context_route,
                                                                      database_name=message_history_request.database_name)
         message_history = await get_message_history_document(message_history_request=message_history_request)
+
         if message_history is None:
             logger.warning(f"Message history not found for request: {message_history_request.dict()}")
             return
-
-        for message in message_history.get_all_messages():
-            logger.trace(f"Message: {message}")
 
 
         return cls(message_history_request=message_history_request,
@@ -66,9 +64,11 @@ class ConversationMemoryCalculator(BaseModel):
             message_history_request=message_history_request,
             **kwargs)
 
-    async def calculate(self, upsert: bool = True) -> ContextMemoryDocument:
+    async def calculate(self,
+                        upsert: bool = True,
+                        overwrite:bool = False) -> ContextMemoryDocument:
 
-        self.construct_memory_from_history(message_history=self.message_history)
+        self.calculate_memory_from_history(message_history=self.message_history, overwrite = overwrite)
 
         context_memory_document = ContextMemoryDocument(
             context_route=self.message_history_request.context_route,
@@ -87,19 +87,26 @@ class ConversationMemoryCalculator(BaseModel):
                             context_memory_document: ContextMemoryDocument,
                             database_name: str):
 
-        await update_context_memory(UpdateContextMemoryRequest(context_memory_document=context_memory_document,
+        await upsert_context_memory(UpsertContextMemoryRequest(data=context_memory_document,
                                                                database_name=database_name,
-                                                               context_route=context_memory_document.context_route))
+                                                               query=context_memory_document.context_route.as_query))
 
-    def construct_memory_from_history(self,
+    def calculate_memory_from_history(self,
                                       message_history=MessageHistory,
                                       max_tokens=CONVERSATION_HISTORY_MAX_TOKENS,
-                                      limit_messages=None):
+                                      limit_messages=None,
+                                      overwrite:bool = False):
         logger.info(
             f"Loading {len(message_history.get_all_messages())} messages into memory (class: {self.memory.__class__}).")
 
+        previously_calculated_uuids = []
+        if self.current_context_memory is not None:
+            previously_calculated_uuids = self.current_context_memory.message_uuids
+
         message_count = -1
         for chat_message in message_history.get_all_messages():
+            if chat_message.uuid in previously_calculated_uuids and not overwrite:
+                continue
 
             message_count += 1
             if limit_messages is not None:
@@ -107,7 +114,7 @@ class ConversationMemoryCalculator(BaseModel):
                     break
             if chat_message.speaker.type == "human":
                 human_message = HumanMessage(
-                    content=f"{chat_message.message} [metadata - 'username':{chat_message.speaker.name},'local_time': {chat_message.timestamp.human_readable_local}]",
+                    content=f"{chat_message.content} [metadata - 'username':{chat_message.speaker.name},'local_time': {chat_message.timestamp.human_readable_local}]",
                     additional_kwargs={**chat_message.dict(),
                                        "type": "human"})
 
@@ -115,7 +122,7 @@ class ConversationMemoryCalculator(BaseModel):
                 self.memory.chat_memory.add_message(human_message)
             elif chat_message.speaker.type == "bot":
                 ai_message = AIMessage(
-                    content=f"{chat_message.message} - [metadata - 'username':{chat_message.speaker.name},'local_time': {chat_message.timestamp.human_readable_local}, 'notes': (this is you)]",
+                    content=f"{chat_message.content} - [metadata - 'username':{chat_message.speaker.name},'local_time': {chat_message.timestamp.human_readable_local}, 'notes': (this is you)]",
                     additional_kwargs={**chat_message.dict(),
                                        "type": "ai"})
                 logger.trace(f"Adding AI message: {ai_message}")
@@ -133,7 +140,7 @@ class ConversationMemoryCalculator(BaseModel):
 
 
 async def calculate_memory_from_chat_request(chat_request: ChatRequest):
-    memory_calculator = await ConversationMemoryCalculator.from_chat_request(chat_request=chat_request)
+    memory_calculator = await MemoryDataCalculator.from_chat_request(chat_request=chat_request)
     memory = await memory_calculator.calculate(upsert=True)
     return memory
 
@@ -142,9 +149,9 @@ async def calculate_memory_from_context_route(context_route: ContextRoute,
                                               database_name: str,
                                               limit_messages: int = None) -> ContextMemoryDocument:
     try:
-        memory_calculator = await ConversationMemoryCalculator.from_context_route(context_route=context_route,
-                                                                                  database_name=database_name,
-                                                                                  limit_messages=limit_messages)
+        memory_calculator = await MemoryDataCalculator.from_context_route(context_route=context_route,
+                                                                          database_name=database_name,
+                                                                          limit_messages=limit_messages)
         if memory_calculator is None:
             logger.exception(f"`MemoryCalculator` returned  `None` for context route: {context_route}")
             return

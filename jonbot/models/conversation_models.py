@@ -41,7 +41,7 @@ class Speaker(BaseModel):
 
 
 class ChatMessage(BaseModel):
-    message: str
+    content: str
     speaker: Speaker
     timestamp: Timestamp
     context_route: ContextRoute
@@ -50,12 +50,12 @@ class ChatMessage(BaseModel):
     metadata: dict = {}
 
     @classmethod
-    def from_discord_message(cls, message: discord.Message):
+    async def from_discord_message(cls, message: discord.Message):
         return cls.from_discord_message_document(await DiscordMessageDocument.from_discord_message(message))
 
     @classmethod
     def from_discord_message_document(cls, message_document: DiscordMessageDocument):
-        return cls(message=message_document.content,
+        return cls(content=message_document.content,
                    speaker=Speaker(name=message_document.author,
                                    id=message_document.author_id,
                                    type='bot' if message_document.is_bot else 'human'),

@@ -11,7 +11,7 @@ chatbot_llm_chains: Dict[str, ChatbotLLMChain] = {}
 
 async def get_chatbot_llm_chain_for_chat_request(chat_request: ChatRequest) -> ChatbotLLMChain:
     global chatbot_llm_chains
-    context_path = chat_request.context_route.as_path
+    context_path = str(chat_request.context_route.as_query)
 
     if context_path in chatbot_llm_chains:
         return chatbot_llm_chains[context_path]

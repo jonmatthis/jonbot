@@ -1,3 +1,5 @@
+import asyncio
+
 import discord
 
 from jonbot import get_logger
@@ -21,7 +23,7 @@ class DiscordStreamUpdater:
         logger.info(f"initializing reply to message: `{message.id}`")
         self.reply_message = await message.reply(RESPONSE_INCOMING_TEXT)
 
-    async def update_discord_reply(self, token: str):
+    async def update_discord_reply(self, token: str, pause_duration: float = 0.1):
         stop_now = False
         if STOP_STREAMING_TOKEN in token:
             logger.info(f"stopping stream")
@@ -31,7 +33,9 @@ class DiscordStreamUpdater:
         if not token == "":
             logger.trace(f"updating discord reply with token: {repr(token)}")
             self.message_content += token
+            await asyncio.sleep(pause_duration)  # sleep to give discord time to update the message
             await self.reply_message.edit(content=self.message_content)
+
 
             if len(self.message_content) > self.comfy_message_length:
                 logger.trace(

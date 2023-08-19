@@ -3,20 +3,21 @@ from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager impo
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.context_route import ContextRoute
 from jonbot.models.conversation_models import MessageHistory
-from jonbot.models.database_request_response_models import DatabaseUpsertRequest, DatabaseUpsertResponse, \
-    MessageHistoryRequest, UpdateContextMemoryRequest
+from jonbot.models.database_request_response_models import LogMessageRequest, LogDiscordMessageResponse, \
+    MessageHistoryRequest, UpsertContextMemoryRequest, UpsertDiscordMessageRequest
 
 logger = get_logger()
 
 
-async def database_upsert(database_upsert_request: DatabaseUpsertRequest) -> DatabaseUpsertResponse:
-    logger.info(f"Upserting data into database query - {database_upsert_request.query}")
+async def upsert_discord_message(upsert_discord_message_request: UpsertDiscordMessageRequest) -> LogDiscordMessageResponse:
+    logger.info(f"Logging message in database: Message id: {upsert_discord_message_request.data.message_id},"
+                f" content: {upsert_discord_message_request.data.content}")
     mongo_database = await get_or_create_mongo_database_manager()
-    success = await mongo_database.upsert(**database_upsert_request.dict())
+    success = await mongo_database.upsert_discord_message(upsert_discord_message_request=upsert_discord_message_request)
     if success:
-        return DatabaseUpsertResponse(success=True)
+        return LogDiscordMessageResponse(success=True)
     else:
-        return DatabaseUpsertResponse(success=False)
+        return LogDiscordMessageResponse(success=False)
 
 
 async def get_message_history_document(message_history_request: MessageHistoryRequest) -> MessageHistory:
@@ -41,10 +42,7 @@ async def get_context_memory_document(context_route: ContextRoute,
     return context_memory_document
 
 
-async def update_context_memory(update_context_memory_request: UpdateContextMemoryRequest):
+async def upsert_context_memory(update_context_memory_request: UpsertContextMemoryRequest):
     logger.info(f"Updating context memory for context route: {update_context_memory_request.context_route.dict()}")
     mongo_database = await get_or_create_mongo_database_manager()
-    await mongo_database.update_context_memory(database_name=update_context_memory_request.database_name,
-                                               context_route=update_context_memory_request.context_route,
-                                               context_memory_document=update_context_memory_request.context_memory_document,
-                                               )
+    await mongo_database.upsert_context_memory(update_context_memory_request = update_context_memory_request)
