@@ -6,20 +6,19 @@ from jonbot import get_logger
 from jonbot.layer0_frontends.discord_bot.commands.cogs.memory_scraper_cog import MemoryScraperCog
 from jonbot.layer0_frontends.discord_bot.commands.cogs.server_scraper_cog import ServerScraperCog
 from jonbot.layer0_frontends.discord_bot.commands.cogs.voice_channel_cog import VoiceChannelCog
-from jonbot.layer0_frontends.discord_bot.handlers.handle_message_responses import DiscordStreamUpdater
-from jonbot.layer0_frontends.discord_bot.handlers.should_process_message import TRANSCRIBED_AUDIO_PREFIX, \
-    allowed_to_reply, want_to_reply
+from jonbot.layer0_frontends.discord_bot.handlers.handle_message_responses import DiscordMessageResponder
+from jonbot.layer0_frontends.discord_bot.handlers.should_process_message import allowed_to_reply, should_reply, \
+    ERROR_MESSAGE_REPLY_PREFIX_TEXT
 from jonbot.layer0_frontends.discord_bot.operations.discord_database_operations import DiscordDatabaseOperations
 from jonbot.layer0_frontends.discord_bot.utilities.print_pretty_terminal_message import \
     print_pretty_startup_message_in_terminal
 from jonbot.layer1_api_interface.api_client.api_client import ApiClient
 from jonbot.layer1_api_interface.api_client.get_or_create_api_client import get_or_create_api_client
-from jonbot.layer1_api_interface.routes import CHAT_STREAM_ENDPOINT, \
+from jonbot.layer1_api_interface.routes import CHAT_ENDPOINT, \
     VOICE_TO_TEXT_ENDPOINT
 from jonbot.models.conversation_models import ChatRequest
 from jonbot.models.discord_stuff.environment_config.discord_environment import DiscordEnvironmentConfig
 from jonbot.models.voice_to_text_request import VoiceToTextRequest
-from jonbot.system.environment_variables import RAW_MESSAGES_COLLECTION_NAME
 
 logger = get_logger()
 
@@ -37,15 +36,12 @@ class DiscordBot(discord.Bot):
                  **kwargs
                  ):
         super().__init__(**kwargs)
-        self._handling_message = False
         self._api_client = api_client
         self._database_name = f"{environment_config.BOT_NICK_NAME}_database"
         self._database_operations = DiscordDatabaseOperations(api_client=api_client,
-                                                              database_name=self._database_name,
-                                                              collection_name=RAW_MESSAGES_COLLECTION_NAME)
+                                                              database_name=self._database_name
+                                                              )
         self.add_cog(ServerScraperCog(database_operations=self._database_operations))
-        self._conversations = {}
-
         self.add_cog(VoiceChannelCog())
         self.add_cog(MemoryScraperCog(database_name=self._database_name,
                                       api_client=api_client))
@@ -56,87 +52,92 @@ class DiscordBot(discord.Bot):
         print_pretty_startup_message_in_terminal(self.user.name)
 
     @discord.Cog.listener()
+    async def on_disconnect(self):
+        logger.info("Bot has disconnected from Discord!")
+        await self._database_operations.stop()
+
+    @discord.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
-        while self._handling_message:
-            await asyncio.sleep(1)
-        self._handling_message = True
 
         if not allowed_to_reply(message):
             return
 
-        if not want_to_reply(message):
+        messages_to_upsert = [message]
+
+        if not should_reply(message):
             logger.debug(f"Message `{message.content}` was not handled by the bot")
         else:
-            try:
-
-                async with message.channel.typing():
+            message_responder = DiscordMessageResponder()
+            with message.channel.typing():
+                try:
                     if len(message.attachments) > 0:
-                        if any(attachement.content_type.startswith("audio") for attachement in message.attachments):
-                            await self.handle_voice_memo(message)
+                        if any(attachment.content_type.startswith("audio") for attachment in message.attachments):
+                            transcription_response_message = await self.handle_voice_recording(message=message,
+                                                                                               responder=message_responder)
+                            messages_to_upsert.append(transcription_response_message)
+
+                            response_message = await self.handle_text_message(message=transcription_response_message)
                     else:
                         # HANDLE TEXT MESSAGE
-                        await self.handle_text_message(message=message)
+                        response_message = await self.handle_text_message(message=message)
 
-            except Exception as e:
-                error_message = f"An error occurred: {str(e)}"
-                logger.exception(error_message)
-                await message.reply(f"Sorry, an error occurred while processing your request. \n >  {error_message}")
+                    messages_to_upsert.append(response_message)
 
-        asyncio.create_task(self._database_operations.upsert_message(message=message))
-        self._handling_message = False
+                except Exception as e:
+                    error_message = f"An error occurred: {str(e)}"
+                    logger.exception(error_message)
+                    await message.reply(f"{ERROR_MESSAGE_REPLY_PREFIX_TEXT} \n >  {error_message}")
+
+        await self._database_operations.upsert_messages(messages=messages_to_upsert)
 
     async def handle_text_message(self,
                                   message: discord.Message,
                                   ):
 
-        self._handling_message = True
         chat_request = ChatRequest.from_discord_message(message=message,
                                                         database_name=self._database_name)
-        with message.channel.typing():
-            response_tokens = await self.send_chat_api_request(chat_request=chat_request,
-                                                               message=message)
 
-    async def send_chat_api_request(self,
-                                    chat_request: ChatRequest,
-                                    message: discord.Message):
-        updater = DiscordStreamUpdater()
+        updater = DiscordMessageResponder()
         await updater.initialize_reply(message)
 
-        async def update_discord_message_callback(token: str, updater: DiscordStreamUpdater = updater):
+        async def update_discord_message_callback(token: str, updater: DiscordMessageRe = updater):
             logger.trace(f"Frontend received token: `{repr(token)}`")
-            await updater.update_discord_reply(token)
+            await updater.update_reply(token)
 
         try:
-            response_tokens = await self._api_client.send_request_to_api_streaming(endpoint_name=CHAT_STREAM_ENDPOINT,
-                                                                                   data=chat_request.dict(),
-                                                                                   callbacks=[
-                                                                                       update_discord_message_callback])
-
+            await self._api_client.send_request_to_api_streaming(endpoint_name=CHAT_ENDPOINT,
+                                                                 data=chat_request.dict(),
+                                                                 callbacks=[
+                                                                     update_discord_message_callback])
             while not updater.done:
                 await asyncio.sleep(1)
 
-            return response_tokens
-        except Exception as e:
-            await updater.update_discord_reply(f"Error while streaming reply: \n >  {e}")
-            raise
+            return updater.reply_message
 
-    async def handle_voice_memo(self,
-                                message: discord.Message):
+        except Exception as e:
+            await updater.update_reply(f"Error while streaming reply: \n >  {e}")
+            raise
+        return response_message
+
+    async def handle_voice_recording(self,
+                                     message: discord.Message,
+                                     responder: DiscordMessageResponder):
         logger.info(f"Received voice memo from user: {message.author}")
+        reply_message_content = f"Transcribing audio from user `{message.author}`..."
+        await responder.initialize_reply(message=message,
+                                         initial_message_content=reply_message_content)
         for attachment in message.attachments:
             if attachment.content_type.startswith('audio'):
                 voice_to_text_request = VoiceToTextRequest(audio_file_url=attachment.url)
 
-                await self.send_voice_to_text_api_request(voice_to_text_request=voice_to_text_request,
-                                                          message=message)
+                response = await self._api_client.send_request_to_api(endpoint_name=VOICE_TO_TEXT_ENDPOINT,
+                                                                      data=voice_to_text_request.dict())
+                reply_message_content += f"\n > File URL: {attachment.url}\n" \
+                                         f"Transcribed Text:\n" \
+                                         f"> {response['text']}"
+                await responder.update_reply(token=reply_message_content)
 
-    async def send_voice_to_text_api_request(self,
-                                             voice_to_text_request: VoiceToTextRequest,
-                                             message: discord.Message) -> dict:
-        logger.info(f"Sending voice to text request payload: {voice_to_text_request.dict()}")
-        response = await self._api_client.send_request_to_api(endpoint_name=VOICE_TO_TEXT_ENDPOINT,
-                                                              data=voice_to_text_request.dict())
+                logger.info(f"VoiceToTextResponse payload received: \n {response}\n"
+                            f"Successfully sent voice to text request payload to API!")
 
-        await message.reply(f"{TRANSCRIBED_AUDIO_PREFIX} from user `{message.author}`:\n > {response['text']}")
-        logger.info(f"VoiceToTextResponse payload received: \n {response}\n"
-                    f"Successfully sent voice to text request payload to API!")
+        return responder.reply_message

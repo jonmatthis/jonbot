@@ -73,7 +73,7 @@ class MemoryScraperCog(commands.Cog):
         #     await channel.send(file=discord.File(fp, 'new_filename.png'))
 
         await ctx.respond(embed=discord.Embed(
-            title=f"Memory calculation process complete for context: {self._get_context_route(channel=ctx.channel).as_flat_dict}"))
+            title=f"Memory calculation process complete for context: {ContextRoute.from_discord_channel(channel=ctx.channel).as_flat_dict}"))
 
 
 

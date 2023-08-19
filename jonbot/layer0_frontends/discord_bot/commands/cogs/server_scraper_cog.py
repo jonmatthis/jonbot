@@ -61,7 +61,7 @@ class ServerScraperCog(commands.Cog):
     async def _send_messages_to_database(self,
                                          messages_to_upsert: List[discord.Message]):
         for message in messages_to_upsert:
-            await self._database_operations.upsert_message(message=message)
+            await self._database_operations.upsert_messages(message=message)
 
     async def _get_message_list_from_channel(self,
                                              channel: discord.abc.Messageable

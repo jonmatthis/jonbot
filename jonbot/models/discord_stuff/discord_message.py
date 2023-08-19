@@ -26,6 +26,7 @@ class DiscordMessageDocument(BaseModel):
     thread_name: Optional[str]
     thread_id: Optional[int]
     is_bot: bool
+    in_thread: bool
     timestamp: Timestamp
     edited_timestamp: Union[Timestamp, str]
     received_timestamp: Timestamp
@@ -55,6 +56,7 @@ class DiscordMessageDocument(BaseModel):
             author=message.author.name,
             author_id=message.author.id,
             is_bot=message.author.bot,
+            in_thread= "thread" in message.channel.type.name,
             timestamp=Timestamp.from_datetime(message.created_at),
             edited_timestamp=Timestamp.from_datetime(message.edited_at) if message.edited_at else '',
             mentions=[mention.name for mention in message.mentions],

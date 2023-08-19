@@ -1,5 +1,5 @@
 import asyncio
-from typing import AsyncIterable
+from typing import AsyncIterable, Any, Dict
 
 import langchain
 from langchain.chat_models import ChatOpenAI
@@ -7,12 +7,13 @@ from langchain.schema.runnable import RunnableMap, RunnableSequence
 
 from jonbot import get_logger
 from jonbot.layer0_frontends.discord_bot.handlers.handle_message_responses import STOP_STREAMING_TOKEN
+from jonbot.layer2_core_processes.backend_database_actions import get_context_memory_document, upsert_context_memory
 from jonbot.layer2_core_processes.core.ai.components.memory.conversation_memory.conversation_memory import \
     ChatbotConversationMemory
 from jonbot.layer2_core_processes.core.ai.components.prompt.prompt_builder import ChatbotPrompt
-from jonbot.layer2_core_processes.entrypoint_functions.backend_database_actions import get_context_memory_document
+from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.context_route import ContextRoute
-from jonbot.models.conversation_models import MessageHistory
+from jonbot.models.database_request_response_models import UpsertContextMemoryRequest
 
 langchain.debug = True
 
@@ -20,9 +21,14 @@ logger = get_logger()
 
 
 class ChatbotLLMChain:
+    context_memory_document: ContextMemoryDocument = None
+
     def __init__(self,
-                 conversation_history: MessageHistory = None,
+                 context_route: ContextRoute,
+                 database_name: str,
                  chat_history_placeholder_name: str = "chat_history"):
+        self.context_route = context_route
+        self.database_name = database_name
         self.model = ChatOpenAI(temperature=0.8,
                                 model_name="gpt-4",
                                 verbose=True,
@@ -36,9 +42,10 @@ class ChatbotLLMChain:
     async def from_context_route(cls,
                                  context_route: ContextRoute,
                                  database_name: str):
-        instance = cls()
-        await instance.load_context_memory(context_route=context_route,
-                                           database_name=database_name)
+        instance = cls(context_route=context_route,
+                       database_name=database_name)
+
+        await instance.load_context_memory()
         return instance
 
     def _build_chain(self) -> RunnableSequence:
@@ -50,7 +57,7 @@ class ChatbotLLMChain:
             "chat_history": lambda x: x["memory"]["chat_memory"]
         } | self.prompt | self.model
 
-    async def execute(self, message_string: str, pause_at_end:float=1.0 ) -> AsyncIterable[str]:
+    async def execute(self, message_string: str, pause_at_end: float = 1.0) -> AsyncIterable[str]:
         inputs = {"human_input": message_string}
         response_message = ""
         try:
@@ -60,26 +67,46 @@ class ChatbotLLMChain:
                 yield token.content
             yield STOP_STREAMING_TOKEN
 
-            await asyncio.sleep(pause_at_end) # give it a sec to clear the buffer
+            await asyncio.sleep(pause_at_end)  # give it a sec to clear the buffer
 
             logger.debug(f"Successfully executed chain! - Saving context to memory...")
-            self.memory.save_context(inputs, {"output": response_message})
+            self._update_memory(inputs=inputs,
+                                outputs={"output": response_message})
+            await self.upsert_context_memory()
             logger.trace(f"Response message: {response_message}")
         except Exception as e:
             logger.exception(e)
             raise
 
-
-
-    async def load_context_memory(self,
-                                  context_route: ContextRoute,
-                                  database_name:str):
-        context_memory_document = await get_context_memory_document(context_route=context_route,
-                                                                    database_name=database_name)
-        if context_memory_document is None:
-            logger.warning(f"Could not load context memory from database for context route: {context_route.dict()}")
+    async def load_context_memory(self):
+        self.context_memory_document = await get_context_memory_document(context_route=self.context_route,
+                                                                         database_name=self.database_name)
+        if self.context_memory_document is None:
+            logger.warning(
+                f"Could not load context memory from database for context route: {self.context_route.dict()}")
         else:
-            self.memory.load_context_memory(context_memory_document=context_memory_document)
+            self.memory.load_context_memory(context_memory_document=self.context_memory_document)
+
+    async def upsert_context_memory(self):
+        logger.debug(f"Upserting context memory for context route: {self.context_route.dict()}")
+        if self.context_memory_document is not None:
+            try:
+                await upsert_context_memory(UpsertContextMemoryRequest(database_name=self.database_name,
+                                                                       data=self.context_memory_document,
+                                                                       query=self.context_route.as_query, ))
+            except Exception as e:
+                logger.exception(e)
+                raise
+
+    def _update_memory(self, inputs: Dict[str, Any], outputs: Dict[str, Any]):
+        self.memory.save_context(inputs, outputs)
+
+        self.context_memory_document = ContextMemoryDocument(context_route=self.context_route,
+                                                             message_buffer=[message.dict() for message in
+                                                                             self.memory.buffer],
+                                                             summary=self.memory.moving_summary_buffer,
+                                                             summary_prompt=self.memory.prompt,
+                                                             )
 
 
 async def demo():

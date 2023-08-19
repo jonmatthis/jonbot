@@ -5,24 +5,23 @@ from jonbot import get_logger
 from jonbot.layer2_core_processes.core.ai.components.memory.memory_data_calculator import \
     calculate_memory_from_context_route
 from jonbot.layer2_core_processes.core.audio_transcription import transcribe_audio
-from jonbot.layer2_core_processes.entrypoint_functions.chat_stream import chat_stream_function
-from jonbot.layer2_core_processes.entrypoint_functions.backend_database_actions import upsert_discord_message, \
+from jonbot.layer2_core_processes.chatbot_function import chatbot_function
+from jonbot.layer2_core_processes.backend_database_actions import upsert_discord_message, \
     get_message_history_document
 from jonbot.layer2_core_processes.utilities.generate_test_tokens import generate_test_tokens
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 from jonbot.models.calculate_memory_request import CalculateMemoryRequest
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.conversation_models import ChatResponse, ChatRequest, MessageHistory
-from jonbot.models.database_request_response_models import LogDiscordMessageResponse, LogMessageRequest, \
-    MessageHistoryRequest, UpsertDiscordMessageRequest
+from jonbot.models.database_request_response_models import LogDiscordMessageResponse, MessageHistoryRequest, UpsertDiscordMessageRequest
 from jonbot.models.health_check_status import HealthCheckResponse
 from jonbot.models.voice_to_text_request import VoiceToTextResponse, VoiceToTextRequest
 
 logger = get_logger()
 
 HEALTH_ENDPOINT = "/health"
+
 CHAT_ENDPOINT = "/chat"
-CHAT_STREAM_ENDPOINT = "/chat_stream"
 STREAMING_RESPONSE_TEST_ENDPOINT = "/test_streaming_response"
 VOICE_TO_TEXT_ENDPOINT = "/voice_to_text"
 
@@ -46,8 +45,7 @@ app = get_or_create_fastapi_app()
 @app.on_event("startup")
 async def startup_event():
     logger.info("Starting up...")
-    logger.info("Creating MongoDatabaseManager instance")
-    await get_or_create_mongo_database_manager()
+
     logger.info("Startup complete!")
 
 
@@ -67,19 +65,11 @@ async def voice_to_text_endpoint(voice_to_text_request: VoiceToTextRequest) -> V
     return VoiceToTextResponse(text=transcript_text)
 
 
-# @app.post(CHAT_STREAM_ENDPOINT)
-# async def chat_stream_endpoint(chat_request: ChatRequest, response_model=None) -> StreamingResponse:
-#     return await chat_stream(chat_request=chat_request)
-@app.post(CHAT_STREAM_ENDPOINT)
-async def chat_stream_endpoint(chat_request: ChatRequest):
-    logger.info(f"Received chat stream request: {chat_request}")
-    return StreamingResponse(chat_stream_function(chat_request), media_type="text/event-stream")
 
-
-@app.post(CHAT_ENDPOINT, response_model=ChatResponse)
-async def chat_endpoint(chat_request: ChatRequest) -> ChatResponse:
-    logger.error("Not implemented yet! Use the chat_stream endpoint instead.")
-    raise NotImplementedError("Not implemented yet!")
+@app.post(CHAT_ENDPOINT)
+async def chat_endpoint(chat_request: ChatRequest):
+    logger.info(f"Received chat request: {chat_request}")
+    return StreamingResponse(chatbot_function(chat_request), media_type="text/event-stream")
 
 
 @app.post(UPSERT_MESSAGE_ENDPOINT)

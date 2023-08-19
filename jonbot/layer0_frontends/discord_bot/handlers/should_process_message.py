@@ -8,7 +8,7 @@ logger = get_logger()
 VOICE_RECORDING_PREFIX = "Finished! Recorded audio for"
 TRANSCRIBED_AUDIO_PREFIX = "Transcribed audio for"
 RESPONSE_INCOMING_TEXT = "response incoming..."
-
+ERROR_MESSAGE_REPLY_PREFIX_TEXT =  f"Sorry, an error occurred while processing your request"
 
 def check_if_mentioned(message: discord.Message) -> bool:
     if message.author in message.mentions:
@@ -25,7 +25,7 @@ def check_if_transcribed_audio_message(message: discord.Message) -> bool:
             message.content.startswith(VOICE_RECORDING_PREFIX))
 
 
-def want_to_reply(message: discord.Message) -> bool:
+def should_reply(message: discord.Message) -> bool:
     if not allowed_to_reply(message):
         return False
 

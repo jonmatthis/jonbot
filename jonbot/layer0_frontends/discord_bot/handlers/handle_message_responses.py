@@ -11,7 +11,7 @@ logger = get_logger()
 STOP_STREAMING_TOKEN = "STOP_STREAMING"
 
 
-class DiscordStreamUpdater:
+class DiscordMessageResponder:
     def __init__(self):
         self.message_content = ""
         self.reply_message = None
@@ -19,11 +19,13 @@ class DiscordStreamUpdater:
         self.comfy_message_length = int(self.max_message_length * .9)
         self.done = False
 
-    async def initialize_reply(self, message: discord.Message):
+    async def initialize_reply(self,
+                               message: discord.Message,
+                               initial_message_content: str = RESPONSE_INCOMING_TEXT):
         logger.info(f"initializing reply to message: `{message.id}`")
-        self.reply_message = await message.reply(RESPONSE_INCOMING_TEXT)
+        self.reply_message = await message.reply(initial_message_content)
 
-    async def update_discord_reply(self, token: str, pause_duration: float = 0.1):
+    async def update_reply(self, token: str, pause_duration: float = 0.1):
         stop_now = False
         if STOP_STREAMING_TOKEN in token:
             logger.info(f"stopping stream")

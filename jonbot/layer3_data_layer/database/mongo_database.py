@@ -1,8 +1,8 @@
-import asyncio
 import uuid
-from typing import Union
+from typing import Union, List, Dict
 
 from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import UpdateOne, DESCENDING
 
 from jonbot import get_logger
 from jonbot.models.context_memory_document import ContextMemoryDocument
@@ -28,6 +28,108 @@ class MongoDatabaseManager:
     def _get_collection(self, database_name: str, collection_name: str):
         database = self._get_database(database_name)
         return database[collection_name]
+
+    async def _upsert_many(self,
+                           database_name: str,
+                           entries: List[Dict[str, dict]],
+                           collection_name: str) -> bool:
+        operations = [
+            UpdateOne(entry['query'], {"$set": entry['data']}, upsert=True)
+            for entry in entries
+        ]
+        collection = self._get_collection(
+            database_name=database_name, collection_name=collection_name
+        )
+        try:
+            await collection.bulk_write(operations)
+            return True
+        except Exception as e:
+            logger.error(f'Error occurred while upserting. Error: {e}')
+            return False
+
+    async def _get_sorted_documents(self,
+                                    database_name: str,
+                                    collection_name: str,
+                                    query: dict,
+                                    sort_field: str,
+                                    limit: int = None,
+                                    sort_order: int = DESCENDING) -> list:
+        try:
+            collection = self._get_collection(
+                database_name=database_name, collection_name=collection_name
+            )
+            cursor = collection.find(query).sort(sort_field, sort_order)
+
+            # Apply the limit if specified
+            if limit is not None:
+                cursor = cursor.limit(limit)
+
+            documents = await cursor.to_list(length=None)
+            return documents
+        except Exception as e:
+            logger.error(f'Error occurred while fetching and sorting documents. Error: {e}')
+            return []
+
+
+
+    async def upsert_discord_messages(self,
+                                      upsert_discord_message_requests: List[UpsertDiscordMessageRequest]) -> bool:
+        entries = [
+            {"data": upsert_discord_message_request.data.dict(),
+             "query": upsert_discord_message_request.query}
+            for upsert_discord_message_request in upsert_discord_message_requests
+        ]
+
+        database_name = upsert_discord_message_requests[0].database_name
+        if not all(upsert_discord_message_request.database_name == database_name for upsert_discord_message_request in
+                   upsert_discord_message_requests):
+            raise Exception("All upsert_discord_message_requests must have the same database_name")
+
+        return await self._upsert_many(database_name=upsert_discord_message_requests[0].database_name,
+                                       entries=entries,
+                                       collection_name=RAW_MESSAGES_COLLECTION_NAME,
+                                       )
+
+    async def upsert_context_memory(self,
+                                    upsert_context_memory_request: UpsertContextMemoryRequest) -> bool:
+
+        entry = [{"data": upsert_context_memory_request.data.dict(),
+                  "query": upsert_context_memory_request.query}]
+
+        return await self._upsert_many(database_name=upsert_context_memory_request.database_name,
+                                       entries=entry,
+                                       collection_name=CONTEXT_MEMORIES_COLLECTION_NAME)
+
+    async def get_message_history(self,
+                                  database_name: str,
+                                  context_route_query: dict,
+                                  limit_messages: int = None) -> MessageHistory:
+
+        documents = await self._get_sorted_documents(database_name=database_name,
+                                   collection_name=RAW_MESSAGES_COLLECTION_NAME,
+                                   query=context_route_query,
+                                   sort_field="timestamp.unix_timestamp_utc",
+                                   limit=limit_messages,
+                                   sort_order=DESCENDING)
+
+        message_history = MessageHistory()
+        message_count = 0
+        for document in documents:
+            discord_message_document = DiscordMessageDocument(**document)
+            chat_message = ChatMessage.from_discord_message_document(discord_message_document)
+            message_history.add_message(chat_message)
+        return message_history
+
+    async def get_context_memory(self,
+                                 database_name: str,
+                                 context_route_query: dict,
+                                 ) -> ContextMemoryDocument:
+        messages_collection = self._get_collection(database_name, CONTEXT_MEMORIES_COLLECTION_NAME)
+        query = {"context_route_query": context_route_query}
+        result = await messages_collection.find_one(query)
+
+        if result is not None:
+            return ContextMemoryDocument(**result)
 
     async def get_or_create_user(self,
                                  database_name: str,
@@ -58,64 +160,6 @@ class MongoDatabaseManager:
 
         if user is not None:
             return UserID(**user)
-
-    async def _upsert(self,
-                      database_name: str,
-                      data: dict,
-                      collection_name: str,
-                      query: dict) -> bool:
-
-        update_data = {"$set": data}
-        collection = self._get_collection(database_name=database_name, collection_name=collection_name)
-        try:
-            await collection.update_one(query, update_data, upsert=True)
-            return True
-        except Exception as e:
-            logger.error(f'Error occurred while upserting. Error: {e}')
-            return False
-
-    async def upsert_discord_message(self,
-                               upsert_discord_message_request: UpsertDiscordMessageRequest)->bool:
-        return await self._upsert(**upsert_discord_message_request.dict(),
-                           collection_name=RAW_MESSAGES_COLLECTION_NAME,
-                           )
-
-    async def upsert_context_memory(self,
-                                    upsert_context_memory_request: UpsertContextMemoryRequest)->bool:
-
-        return await self._upsert(**upsert_context_memory_request.dict(),
-                                         collection_name=CONTEXT_MEMORIES_COLLECTION_NAME, )
-
-
-    async def get_message_history(self,
-                                  database_name: str,
-                                  context_route_query: dict,
-                                  limit_messages: int = None) -> MessageHistory:
-        messages_collection = self._get_collection(database_name, RAW_MESSAGES_COLLECTION_NAME)
-        query = {"context_route_query": context_route_query}
-        result = messages_collection.find(query)
-        message_history = MessageHistory()
-        message_count = 0
-        async for document in result:
-            if limit_messages is not None and message_count >= limit_messages:
-                break
-            message_count += 1
-            discord_message_document = DiscordMessageDocument(**document)
-            chat_message = ChatMessage.from_discord_message_document(discord_message_document)
-            message_history.add_message(chat_message)
-        return message_history
-
-    async def get_context_memory(self,
-                                 database_name: str,
-                                 context_route_query: dict,
-                                 ) -> ContextMemoryDocument:
-        messages_collection = self._get_collection(database_name, CONTEXT_MEMORIES_COLLECTION_NAME)
-        query = {"context_route_query": context_route_query}
-        result = await messages_collection.find_one(query)
-
-        if result is not None:
-            return ContextMemoryDocument(**result)
-
     async def create_user(self,
                           database_name: str,
                           discord_id: DiscordUserID = None,
