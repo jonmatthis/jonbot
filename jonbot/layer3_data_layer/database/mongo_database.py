@@ -5,9 +5,11 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from jonbot import get_logger
 from jonbot.models.context_memory_document import ContextMemoryDocument
+from jonbot.models.context_route import ContextRoute
 from jonbot.models.conversation_models import MessageHistory, ChatMessage
 from jonbot.models.discord_stuff.discord_id import DiscordUserID
 from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
+from jonbot.models.timestamp_model import Timestamp
 from jonbot.models.user_stuff.user_ids import TelegramUserID, UserID
 from jonbot.system.environment_variables import MONGO_URI, USERS_COLLECTION_NAME, \
     RAW_MESSAGES_COLLECTION_NAME, CONTEXT_MEMORIES_COLLECTION_NAME
@@ -91,7 +93,7 @@ class MongoDatabaseManager:
         messages_collection = self._get_collection(database_name, RAW_MESSAGES_COLLECTION_NAME)
         query = {"context_route_query": context_route_query}
         result = messages_collection.find(query)
-        messge_history = MessageHistory()
+        message_history = MessageHistory()
         message_count = 0
         async for document in result:
             if limit_messages is not None and message_count >= limit_messages:
@@ -99,8 +101,19 @@ class MongoDatabaseManager:
             message_count += 1
             discord_message_document = DiscordMessageDocument(**document)
             chat_message = ChatMessage.from_discord_message_document(discord_message_document)
-            messge_history.add_message(chat_message)
-        return messge_history
+            message_history.add_message(chat_message)
+        return message_history
+
+    async def update_context_memory(self,
+                                    database_name: str,
+                                    context_route: ContextRoute,
+                                    context_memory_document: ContextMemoryDocument):
+        context_memories_collection = self._get_collection(database_name, CONTEXT_MEMORIES_COLLECTION_NAME)
+        query = {"context_route_query": context_route.as_query}
+        update_data = {"$set": {**context_memory_document.dict(),
+                                **context_route.as_flat_dict,
+                                "last_updated": Timestamp.now().dict()}}
+        await context_memories_collection.update_one(query, update_data, upsert=True)
 
     async def get_context_memory(self,
                                  database_name: str,

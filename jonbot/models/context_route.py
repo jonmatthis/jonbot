@@ -51,6 +51,11 @@ class ContextRoute(BaseModel):
     thread: Optional[SubContextComponent] = None
 
     @classmethod
+    def from_discord_channel(cls, channel: discord.TextChannel):
+        return cls.from_discord_message(message=channel.last_message)
+
+
+    @classmethod
     def from_discord_message(cls, message: discord.Message):
         frontend = Frontends.DISCORD.value
         if message.guild:
@@ -99,6 +104,7 @@ class ContextRoute(BaseModel):
                    thread=thread,
                    )
 
+
     @property
     def as_path(self):
         if self.thread:
@@ -144,3 +150,4 @@ class ContextRoute(BaseModel):
                    channel=channel,
                    thread=thread,
                    )
+

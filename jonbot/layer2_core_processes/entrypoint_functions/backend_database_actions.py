@@ -4,7 +4,7 @@ from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.context_route import ContextRoute
 from jonbot.models.conversation_models import MessageHistory
 from jonbot.models.database_request_response_models import DatabaseUpsertRequest, DatabaseUpsertResponse, \
-    MessageHistoryRequest
+    MessageHistoryRequest, UpdateContextMemoryRequest
 
 logger = get_logger()
 
@@ -39,3 +39,12 @@ async def get_context_memory_document(context_route: ContextRoute,
         context_route_query=context_route.as_query,
     )
     return context_memory_document
+
+
+async def update_context_memory(update_context_memory_request: UpdateContextMemoryRequest):
+    logger.info(f"Updating context memory for context route: {update_context_memory_request.context_route.dict()}")
+    mongo_database = await get_or_create_mongo_database_manager()
+    await mongo_database.update_context_memory(database_name=update_context_memory_request.database_name,
+                                               context_route=update_context_memory_request.context_route,
+                                               context_memory_document=update_context_memory_request.context_memory_document,
+                                               )

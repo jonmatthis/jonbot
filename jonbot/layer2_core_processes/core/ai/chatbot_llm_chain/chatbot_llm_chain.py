@@ -7,10 +7,10 @@ from langchain.schema.runnable import RunnableMap, RunnableSequence
 
 from jonbot import get_logger
 from jonbot.layer0_frontends.discord_bot.handlers.handle_message_responses import STOP_STREAMING_TOKEN
-from jonbot.layer2_core_processes.core.ai.components.memory.sub_memory_components.conversation_memory import \
+from jonbot.layer2_core_processes.core.ai.components.memory.conversation_memory.conversation_memory import \
     ChatbotConversationMemory
 from jonbot.layer2_core_processes.core.ai.components.prompt.prompt_builder import ChatbotPrompt
-from jonbot.layer2_core_processes.entrypoint_functions.database_actions import get_context_memory_document
+from jonbot.layer2_core_processes.entrypoint_functions.backend_database_actions import get_context_memory_document
 from jonbot.models.context_route import ContextRoute
 from jonbot.models.conversation_models import MessageHistory
 

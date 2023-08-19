@@ -1,7 +1,8 @@
 import asyncio
-from typing import Union, Callable, List, Coroutine
+from typing import Union, Callable, List, Coroutine, Any
 
 import aiohttp
+from pydantic import BaseModel
 
 from jonbot import get_logger
 from jonbot.layer1_api_interface.helpers.error_message_from_response import error_message_from_response
@@ -77,10 +78,6 @@ class ApiClient:
             raise
 
         return response_tokens
-
-    async def calculate_memory(self, calculate_memory_request: CalculateMemoryRequest):
-        asyncio.create_task(self.send_request_to_api(endpoint_name=CALCULATE_MEMORY_ENDPOINT,
-                                                     data=calculate_memory_request.dict()))
 
 
 async def run_callbacks(callbacks: List[Callable], line: bytes):

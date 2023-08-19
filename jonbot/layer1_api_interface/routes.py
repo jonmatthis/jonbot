@@ -6,11 +6,12 @@ from jonbot.layer2_core_processes.core.ai.components.memory.construct_memory_dat
     calculate_memory_from_context_route
 from jonbot.layer2_core_processes.core.audio_transcription import transcribe_audio
 from jonbot.layer2_core_processes.entrypoint_functions.chat_stream import chat_stream_function
-from jonbot.layer2_core_processes.entrypoint_functions.database_actions import database_upsert, \
+from jonbot.layer2_core_processes.entrypoint_functions.backend_database_actions import database_upsert, \
     get_message_history_document
 from jonbot.layer2_core_processes.utilities.generate_test_tokens import generate_test_tokens
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 from jonbot.models.calculate_memory_request import CalculateMemoryRequest
+from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.conversation_models import ChatResponse, ChatRequest, MessageHistory
 from jonbot.models.database_request_response_models import DatabaseUpsertResponse, DatabaseUpsertRequest, \
     MessageHistoryRequest
@@ -91,6 +92,7 @@ async def message_history_endpoint(message_history_request: MessageHistoryReques
     return await get_message_history_document(message_history_request=message_history_request)
 
 
-@app.post(CALCULATE_MEMORY_ENDPOINT)
-async def calculate_memory_endpoint(calculate_memory_request: CalculateMemoryRequest) -> bool:
-    return await calculate_memory_from_context_route(**calculate_memory_request.dict())
+@app.post(CALCULATE_MEMORY_ENDPOINT, response_model=ContextMemoryDocument)
+async def calculate_memory_endpoint(calculate_memory_request: CalculateMemoryRequest) -> ContextMemoryDocument:
+    response =  await calculate_memory_from_context_route(**calculate_memory_request.dict())
+    return response

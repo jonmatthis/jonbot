@@ -45,16 +45,13 @@ class ChatMessage(BaseModel):
     speaker: Speaker
     timestamp: Timestamp
     context_route: ContextRoute
+    original_message_document: Optional[DiscordMessageDocument] = None
     uuid: str = Field(default_factory=lambda: str(uuid.uuid4()))
     metadata: dict = {}
 
     @classmethod
     def from_discord_message(cls, message: discord.Message):
-        return cls(message=message.content,
-                   speaker=Speaker.from_discord_message(message=message),
-                   timestamp=Timestamp.from_datetime(message.created_at),
-                   context_route=ContextRoute.from_discord_message(message=message),
-                   )
+        return cls.from_discord_message_document(await DiscordMessageDocument.from_discord_message(message))
 
     @classmethod
     def from_discord_message_document(cls, message_document: DiscordMessageDocument):
@@ -64,6 +61,7 @@ class ChatMessage(BaseModel):
                                    type='bot' if message_document.is_bot else 'human'),
                    timestamp=message_document.timestamp,
                    context_route=message_document.context_route_object,
+                     original_message_document=message_document,
                    )
 
 
