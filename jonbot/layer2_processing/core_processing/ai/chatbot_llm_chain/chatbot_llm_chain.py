@@ -85,7 +85,7 @@ class ChatbotLLMChain:
 
     async def load_context_memory(self):
         self.context_memory_document = await self.database_operations.get_context_memory_document(
-
+            database_name=self.database_name,
             context_route=self.context_route)
         if self.context_memory_document is None:
             logger.warning(
