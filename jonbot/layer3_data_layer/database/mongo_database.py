@@ -1,5 +1,5 @@
 import uuid
-from typing import Union, List, Dict
+from typing import Union, List, Dict, Optional
 
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import UpdateOne, DESCENDING
@@ -123,13 +123,17 @@ class MongoDatabaseManager:
     async def get_context_memory(self,
                                  database_name: str,
                                  context_route_query: dict,
-                                 ) -> ContextMemoryDocument:
+                                 ) -> Optional[ContextMemoryDocument]:
         messages_collection = self._get_collection(database_name, CONTEXT_MEMORIES_COLLECTION_NAME)
         query = {"context_route_query": context_route_query}
         result = await messages_collection.find_one(query)
 
-        if result is not None:
-            return ContextMemoryDocument(**result)
+        if result is None:
+            logger.warning(f"Context memory not found for context route: {context_route_query}")
+            return None
+
+        return ContextMemoryDocument(**result)
+
 
     async def get_or_create_user(self,
                                  database_name: str,

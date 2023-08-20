@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 from jonbot import get_logger
@@ -46,13 +48,17 @@ class BackendDatabaseOperations(BaseModel):
 
     async def get_context_memory_document(self,
                                           context_route: ContextRoute,
-                                          database_name: str) -> ContextMemoryDocument:
+                                          database_name: str) -> Optional[ContextMemoryDocument]:
         logger.info(
-            f"Retrieving context memory for context route: {context_route.dict()}")
+            f"Retrieving context memory for context route: {context_route.as_flat_dict}")
         context_memory_document = await self.mongo_database.get_context_memory(
             database_name=database_name,
             context_route_query=context_route.as_query,
         )
+        if context_memory_document is None:
+            logger.warning(f"Context memory not found for context route: {context_route.as_flat_dict}")
+            return None
+
         return context_memory_document
 
     async def upsert_context_memory(self, upsert_context_memory_request: UpsertContextMemoryRequest):

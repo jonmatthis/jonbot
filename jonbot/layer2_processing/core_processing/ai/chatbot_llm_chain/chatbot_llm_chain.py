@@ -26,7 +26,7 @@ class ChatbotLLMChain:
 
     def __init__(self,
                  context_route: ContextRoute,
-                    database_name: str,
+                 database_name: str,
                  database_operations: BackendDatabaseOperations,
                  chat_history_placeholder_name: str = "chat_history"):
         self.context_route = context_route
@@ -106,7 +106,8 @@ class ChatbotLLMChain:
                 raise
 
     def _update_memory(self, inputs: Dict[str, Any], outputs: Dict[str, Any]):
-        self.memory.save_context(inputs, outputs)
+        self.memory.save_context(inputs=inputs,
+                                 outputs=outputs)
 
         self.context_memory_document = ContextMemoryDocument(context_route=self.context_route,
                                                              message_buffer=[message.dict() for message in
