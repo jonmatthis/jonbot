@@ -52,41 +52,40 @@ class DiscordBot(discord.Bot):
         print_pretty_startup_message_in_terminal(self.user.name)
 
     @discord.Cog.listener()
-    async def on_disconnect(self):
-        logger.info("Bot has disconnected from Discord!")
-        await self._database_operations.stop()
-
-    @discord.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
 
         if not allowed_to_reply(message):
             return
 
+        if not should_reply(message=message,
+                            bot_user_name=self.user.name):
+            logger.debug(f"Message `{message.content}` was not handled by the bot: {self.user.name}")
+            return
+
+        return await self.handle_message(message=message)
+
+    async def handle_message(self, message: discord.Message):
         messages_to_upsert = [message]
+        message_responder = DiscordMessageResponder()
+        with message.channel.typing():
+            try:
+                if len(message.attachments) > 0:
+                    if any(attachment.content_type.startswith("audio") for attachment in message.attachments):
+                        transcription_response_message = await self.handle_voice_recording(message=message,
+                                                                                           responder=message_responder)
+                        messages_to_upsert.append(transcription_response_message)
 
-        if not should_reply(message):
-            logger.debug(f"Message `{message.content}` was not handled by the bot")
-        else:
-            message_responder = DiscordMessageResponder()
-            with message.channel.typing():
-                try:
-                    if len(message.attachments) > 0:
-                        if any(attachment.content_type.startswith("audio") for attachment in message.attachments):
-                            transcription_response_message = await self.handle_voice_recording(message=message,
-                                                                                               responder=message_responder)
-                            messages_to_upsert.append(transcription_response_message)
+                        response_message = await self.handle_text_message(message=transcription_response_message)
+                else:
+                    # HANDLE TEXT MESSAGE
+                    response_message = await self.handle_text_message(message=message)
 
-                            response_message = await self.handle_text_message(message=transcription_response_message)
-                    else:
-                        # HANDLE TEXT MESSAGE
-                        response_message = await self.handle_text_message(message=message)
+                messages_to_upsert.append(response_message)
 
-                    messages_to_upsert.append(response_message)
-
-                except Exception as e:
-                    error_message = f"An error occurred: {str(e)}"
-                    logger.exception(error_message)
-                    await message.reply(f"{ERROR_MESSAGE_REPLY_PREFIX_TEXT} \n >  {error_message}")
+            except Exception as e:
+                error_message = f"An error occurred: {str(e)}"
+                logger.exception(error_message)
+                await message.reply(f"{ERROR_MESSAGE_REPLY_PREFIX_TEXT} \n >  {error_message}")
 
         await self._database_operations.upsert_messages(messages=messages_to_upsert)
 
