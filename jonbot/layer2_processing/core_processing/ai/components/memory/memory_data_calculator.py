@@ -61,6 +61,7 @@ class MemoryDataCalculator(BaseModel):
             message_buffer=[message.dict() for message in self.memory.buffer],
             summary=self.memory.moving_summary_buffer,
             summary_prompt=self.memory.prompt,
+            tokens_in_summary=self.memory.tokens_in_summary,
         )
 
         if upsert:

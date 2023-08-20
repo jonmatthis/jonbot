@@ -3,7 +3,7 @@ from typing import AsyncIterable, Dict
 from jonbot import get_logger
 from jonbot.layer2_processing.controller.entrypoint_functions.backend_database_operations import \
     BackendDatabaseOperations
-from jonbot.layer2_processing.controller.entrypoint_functions.chatbot_function import \
+from jonbot.layer2_processing.controller.entrypoint_functions.get_chatbot_llm_for_chat_request import \
     get_chatbot_llm_chain_for_chat_request
 from jonbot.layer2_processing.core_processing.ai.chatbot_llm_chain.chatbot_llm_chain import ChatbotLLMChain
 from jonbot.layer2_processing.core_processing.ai.components.memory.memory_data_calculator import MemoryDataCalculator

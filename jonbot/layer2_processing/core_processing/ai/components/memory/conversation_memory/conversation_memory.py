@@ -26,6 +26,9 @@ class ChatbotConversationMemory(ConversationSummaryBufferMemory):
 
         self.prompt = config.summary_prompt
 
+    @property
+    def tokens_in_summary(self):
+        return self.llm.get_num_tokens_from_messages(self.buffer)
     def load_context_memory(self, context_memory_document: ContextMemoryDocument):
 
         self.chat_memory.messages = self.load_messages_from_context_memory(context_memory_document)

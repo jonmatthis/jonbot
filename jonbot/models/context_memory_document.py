@@ -13,6 +13,7 @@ class ContextMemoryDocument(BaseModel):
     message_uuids: List[str] = []
     summary: str = ""
     summary_prompt: PromptTemplate
+    tokens_in_summary: int = 0
 
     @property
     def message_uuids(self):
