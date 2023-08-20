@@ -3,14 +3,14 @@ from typing import List
 from langchain.memory import CombinedMemory
 from langchain.schema import BaseMemory
 
-from jonbot.layer2_processing.core_processing.ai.components.memory.conversation_memory.conversation_memory import \
+from jonbot.layer2_processing.core_processing.ai.chatbot_llm_chain.components.memory.conversation_memory.conversation_memory import \
     ChatbotConversationMemory
-from jonbot.layer2_processing.core_processing.ai.components.memory.vectorstore_memory.vectorstore_memory import \
+from jonbot.layer2_processing.core_processing.ai.chatbot_llm_chain.components.memory.vectorstore_memory.vectorstore_memory import \
     ChatbotVectorStoreMemoryBuilder
 from jonbot.models.conversation_models import MessageHistory
 
 
-class ChatbotMemory(CombinedMemory):
+class ChatbotCombinedMemory(CombinedMemory):
     @classmethod
     async def build(cls,
                     conversation_history: MessageHistory = None):

@@ -8,7 +8,7 @@ from jonbot.layer2_processing.controller.entrypoint_functions.backend_database_o
 from jonbot.models.calculate_memory_request import CalculateMemoryRequest
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.conversation_models import ChatRequest
-from jonbot.models.database_request_response_models import DiscordMessageResponse, UpsertDiscordMessageRequest
+from jonbot.models.database_request_response_models import UpsertDiscordMessagesResponse, UpsertDiscordMessagesRequest
 from jonbot.models.health_check_status import HealthCheckResponse
 from jonbot.models.voice_to_text_request import VoiceToTextResponse, VoiceToTextRequest
 
@@ -19,7 +19,7 @@ HEALTH_ENDPOINT = "/health"
 CHAT_ENDPOINT = "/chat"
 VOICE_TO_TEXT_ENDPOINT = "/voice_to_text"
 
-UPSERT_MESSAGE_ENDPOINT = "/upsert_message"
+UPSERT_MESSAGES_ENDPOINT = "/upsert_message"
 CALCULATE_MEMORY_ENDPOINT = "/calculate_memory"
 
 
@@ -38,7 +38,7 @@ def register_api_routes(app: FastAPI,
 
     @app.post(CALCULATE_MEMORY_ENDPOINT, response_model=ContextMemoryDocument)
     async def calculate_memory_endpoint(calculate_memory_request: CalculateMemoryRequest) -> ContextMemoryDocument:
-        response = await controller.calculate_memory_function(calculate_memory_request)
+        response = await controller.calculate_memory(calculate_memory_request)
         return response
 
     @app.post(CHAT_ENDPOINT)
@@ -47,7 +47,7 @@ def register_api_routes(app: FastAPI,
         return StreamingResponse(controller.get_response_from_chatbot(chat_request=chat_request),
                                  media_type="text/event-stream")
 
-    @app.post(UPSERT_MESSAGE_ENDPOINT)
-    async def upsert_message_endpoint(upsert_discord_message_request: UpsertDiscordMessageRequest) -> DiscordMessageResponse:
-        return await database_operations.upsert_discord_message(
-            request=upsert_discord_message_request)
+    @app.post(UPSERT_MESSAGES_ENDPOINT)
+    async def upsert_messages_endpoint(request: UpsertDiscordMessagesRequest) -> UpsertDiscordMessagesResponse:
+        return await database_operations.upsert_discord_messages(
+            request=request)

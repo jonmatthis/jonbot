@@ -7,7 +7,7 @@ from pymongo import UpdateOne, DESCENDING
 from jonbot import get_logger
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.conversation_models import MessageHistory, ChatMessage
-from jonbot.models.database_request_response_models import ContextMemoryRequest, UpsertDiscordMessageRequest, \
+from jonbot.models.database_request_response_models import ContextMemoryRequest, UpsertDiscordMessagesRequest, \
     MessageHistoryRequest
 from jonbot.models.discord_stuff.discord_id import DiscordUserID
 from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
@@ -71,22 +71,13 @@ class MongoDatabaseManager:
             logger.error(f'Error occurred while fetching and sorting documents. Error: {e}')
             return []
 
-
-
     async def upsert_discord_messages(self,
-                                      requests: List[UpsertDiscordMessageRequest]) -> bool:
-        entries = [
-            {"data": request.data.dict(),
-             "query": request.query}
-            for request in requests
-        ]
+                                      request: UpsertDiscordMessagesRequest) -> bool:
 
-        database_name = requests[0].database_name
-        if not all(upsert_discord_message_request.database_name == database_name for upsert_discord_message_request in
-                   requests):
-            raise Exception("All upsert_discord_message_requests must have the same database_name")
+        entries = [{"data": document.dict(), "query": query}
+                   for document, query in zip(request.data, request.query)]
 
-        return await self._upsert_many(database_name=requests[0].database_name,
+        return await self._upsert_many(database_name=request.database_name,
                                        entries=entries,
                                        collection_name=RAW_MESSAGES_COLLECTION_NAME,
                                        )
@@ -94,22 +85,22 @@ class MongoDatabaseManager:
     async def upsert_context_memory(self,
                                     request: ContextMemoryRequest) -> bool:
 
-        entry = [{"data": request.data.dict(),
-                  "query": request.query}]
+        entries = [{"data": request.data.dict(),
+                    "query": request.query}]
 
         return await self._upsert_many(database_name=request.database_name,
-                                       entries=entry,
+                                       entries=entries,
                                        collection_name=CONTEXT_MEMORIES_COLLECTION_NAME)
 
     async def get_message_history(self,
-                                  request:MessageHistoryRequest) -> MessageHistory:
+                                  request: MessageHistoryRequest) -> MessageHistory:
 
         documents = await self._get_sorted_documents(database_name=request.database_name,
-                                   collection_name=RAW_MESSAGES_COLLECTION_NAME,
-                                   query=request.query,
-                                   sort_field="timestamp.unix_timestamp_utc",
-                                   limit=request.limit_messages,
-                                   sort_order=DESCENDING)
+                                                     collection_name=RAW_MESSAGES_COLLECTION_NAME,
+                                                     query=request.query,
+                                                     sort_field="timestamp.unix_timestamp_utc",
+                                                     limit=request.limit_messages,
+                                                     sort_order=DESCENDING)
 
         message_history = MessageHistory()
         for document in documents:
@@ -130,7 +121,6 @@ class MongoDatabaseManager:
             return None
 
         return ContextMemoryDocument(**result)
-
 
     async def get_or_create_user(self,
                                  database_name: str,
@@ -161,6 +151,7 @@ class MongoDatabaseManager:
 
         if user is not None:
             return UserID(**user)
+
     async def create_user(self,
                           database_name: str,
                           discord_id: DiscordUserID = None,

@@ -7,8 +7,8 @@ from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager impo
 from jonbot.layer3_data_layer.database.mongo_database import MongoDatabaseManager
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.conversation_models import MessageHistory
-from jonbot.models.database_request_response_models import DiscordMessageResponse, \
-    MessageHistoryRequest, ContextMemoryRequest, UpsertDiscordMessageRequest
+from jonbot.models.database_request_response_models import UpsertDiscordMessagesResponse, \
+    MessageHistoryRequest, ContextMemoryRequest, UpsertDiscordMessagesRequest
 
 logger = get_logger()
 
@@ -24,28 +24,28 @@ class BackendDatabaseOperations(BaseModel):
         mongo_database = await get_or_create_mongo_database_manager()
         return cls(mongo_database=mongo_database)
 
-    async def upsert_discord_message(self,
-                                     request: UpsertDiscordMessageRequest) -> DiscordMessageResponse:
-        logger.info(f"Logging message in database: Message id: {request.data.message_id},"
-                    f" content: {request.data.content}")
+    async def upsert_discord_messages(self,
+                                      request: UpsertDiscordMessagesRequest) -> UpsertDiscordMessagesResponse:
+        logger.info(f"Upserting {len(request.data)} messages to database: {request.database_name} with query: {request.query}")
+
         success = await self.mongo_database.upsert_discord_messages(
-            requests=[request])
+            request=request)
         if success:
-            return DiscordMessageResponse(success=True)
+            return UpsertDiscordMessagesResponse(success=True)
         else:
-            return DiscordMessageResponse(success=False)
+            return UpsertDiscordMessagesResponse(success=False)
 
     async def get_message_history_document(self,
                                            request: MessageHistoryRequest) -> MessageHistory:
         logger.info(
             f"Getting conversation history for context route: {request.context_route.dict()}")
-        message_history = await self.mongo_database.get_message_history(message_history_request=request)
+        message_history = await self.mongo_database.get_message_history(request=request)
 
         return message_history
 
     async def get_context_memory_document(self,
                                           request: ContextMemoryRequest) -> Optional[ContextMemoryDocument]:
-        if request.type == "upsert":
+        if request.request_type == "upsert":
             raise Exception("get_context_memory_document should not be called with request type: upsert")
 
         logger.info(
@@ -60,7 +60,13 @@ class BackendDatabaseOperations(BaseModel):
     async def upsert_context_memory(self, request: ContextMemoryRequest):
         logger.info(
             f"Updating context memory for context route: {request.data.context_route.dict()}")
-        await self.mongo_database.upsert_context_memory(request=request, )
+        success = await self.mongo_database.upsert_context_memory(request=request, )
+        if success:
+            logger.success(
+                f"Successfully updated context memory for context route: {request.data.context_route.dict()}")
+        else:
+            logger.error(
+                f"Error occurred while updating context memory for context route: {request.data.context_route.dict()}")
 
     async def close(self):
         logger.info("Closing database connection...")

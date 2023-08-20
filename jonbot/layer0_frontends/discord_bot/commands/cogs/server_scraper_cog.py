@@ -25,25 +25,31 @@ class ServerScraperCog(commands.Cog):
                             description="Scrape all messages from all channels and threads in the server.",
                             )
     @commands.has_permissions(administrator=True)
-    async def scrape_server(self, ctx: discord.ApplicationContext, full_server_backup: bool = True):
+    async def scrape_server(self, ctx: discord.ApplicationContext):
         logger.info(f"Received scrape_server command in server: {ctx.guild.name}")
 
         messages_to_upsert = []
-        response_embed = await ctx.send(embed=discord.Embed(title="Scraping server..."))
+        response_embed_message = await ctx.send(embed=discord.Embed(title="Scraping server..."))
 
-        if full_server_backup:
-            channels = await ctx.guild.fetch_channels()
-        else:
-            channels = [ctx.channel]
+
+        channels = await ctx.guild.fetch_channels()
 
         for channel in filter(lambda ch: isinstance(ch, discord.TextChannel), channels):
             channel_messages = await self._get_message_list_from_channel(channel=channel)
             messages_to_upsert.extend(channel_messages)
 
-        asyncio.create_task(self._send_messages_to_database(messages_to_upsert=messages_to_upsert))
-        await response_embed.edit(
+        embed_string = f"Scraping complete! Scraped and sent {len(messages_to_upsert)} messages to the database."
+        await response_embed_message.edit(
             embed=discord.Embed(
-                title=f"Scraping complete! Scraped and sent {len(messages_to_upsert)} messages to the database."
+                title=embed_string
+            )
+        )
+
+        success = await self._database_operations.upsert_messages(messages=messages_to_upsert)
+
+        await  response_embed_message.edit(
+            embed=discord.Embed(
+                title=embed_string + "\n\nDatabase upsert complete!"
             )
         )
 
@@ -56,12 +62,17 @@ class ServerScraperCog(commands.Cog):
                                            ):
         logger.info(f"Received scrape_local command from channel:  {ctx.channel.name}")
         channel_messages = await self._get_message_list_from_channel(channel=ctx.channel)
-        asyncio.create_task(self._send_messages_to_database(messages_to_upsert=channel_messages))
+        success =  await self._send_messages_to_database(messages_to_upsert=channel_messages)
+        if success:
+            await ctx.send(embed=discord.Embed(title=f"Scraped {len(channel_messages)} messages from channel: {ctx.channel.name}"))
+        else:
+            await ctx.send(embed=discord.Embed(title=f"Error occurred while scraping channel: {ctx.channel.name}"))
 
     async def _send_messages_to_database(self,
-                                         messages_to_upsert: List[discord.Message]):
-        for message in messages_to_upsert:
-            await self._database_operations.upsert_messages(message=message)
+                                            messages_to_upsert: List[discord.Message])-> bool:
+        logger.info(f"Sending {len(messages_to_upsert)} messages to database...")
+        return await self._database_operations.upsert_messages(messages=messages_to_upsert)
+
 
     async def _get_message_list_from_channel(self,
                                              channel: discord.abc.Messageable

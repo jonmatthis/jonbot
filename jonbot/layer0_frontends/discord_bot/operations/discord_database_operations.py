@@ -1,12 +1,11 @@
-import asyncio
 from typing import List
 
 import discord
 
 from jonbot import get_logger
 from jonbot.layer1_api_interface.api_client.api_client import ApiClient
-from jonbot.layer1_api_interface.api_routes import UPSERT_MESSAGE_ENDPOINT
-from jonbot.models.database_request_response_models import UpsertDiscordMessageRequest
+from jonbot.layer1_api_interface.api_routes import UPSERT_MESSAGES_ENDPOINT
+from jonbot.models.database_request_response_models import UpsertDiscordMessagesRequest
 from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
 
 logger = get_logger()
@@ -19,18 +18,28 @@ class DiscordDatabaseOperations:
         self._database_name = database_name
 
     async def upsert_messages(self,
-                              messages: List[discord.Message]):
-        for message in messages:
-            document = await DiscordMessageDocument.from_discord_message(message)
+                              messages: List[discord.Message]) -> bool:
+        try:
 
-            request = UpsertDiscordMessageRequest(database_name=self._database_name,
-                                                  data=document,
-                                                  query={"message_id": message.id}
-                                                  )
+            documents = [await DiscordMessageDocument.from_discord_message(message) for message in messages]
+
+            request = UpsertDiscordMessagesRequest.from_discord_message_documents(documents=documents,
+                                                                                  database_name=self._database_name)
+
             logger.info(
-                f"Sending database upsert request for message content: `{request.data.content}` "
-                f"with query: `{request.query}`")
-            await self._api_client.send_request_to_api(endpoint_name=UPSERT_MESSAGE_ENDPOINT,
-                                                       data=request.dict(),
-                                                       )
+                f"Sending database upsert request for {len(request.data)} messages to database: {request.database_name}")
 
+            response = await self._api_client.send_request_to_api(endpoint_name=UPSERT_MESSAGES_ENDPOINT,
+                                                                 data=request.dict()
+                                                                 )
+            if not response["success"]:
+                raise Exception(
+                    f"Error occurred while sending `upsert_messages` request for"
+                    f" database: {self._database_name}  at endpoint: {UPSERT_MESSAGES_ENDPOINT}")
+
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+        logger.success(f"Successfully sent {len(request.data)} messages to database: {request.database_name}")
+        return response["success"]

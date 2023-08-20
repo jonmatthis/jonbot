@@ -2,7 +2,7 @@ from langchain import PromptTemplate
 from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate, \
     MessagesPlaceholder
 
-from jonbot.layer2_processing.core_processing.ai.components.prompt.prompt_strings import DEFAULT_RULES_FOR_LIVING, \
+from jonbot.layer2_processing.core_processing.ai.chatbot_llm_chain.components.prompt.prompt_strings import DEFAULT_RULES_FOR_LIVING, \
     DEFAULT_CHATBOT_SYSTEM_PROMPT_TEMPLATE
 from jonbot.models.conversation_context import ConversationContextDescription
 from jonbot.models.timestamp_model import Timestamp

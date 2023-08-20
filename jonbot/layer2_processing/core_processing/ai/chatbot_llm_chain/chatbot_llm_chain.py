@@ -9,9 +9,9 @@ from jonbot import get_logger
 from jonbot.layer0_frontends.discord_bot.handlers.handle_message_responses import STOP_STREAMING_TOKEN
 from jonbot.layer2_processing.controller.entrypoint_functions.backend_database_operations import \
     BackendDatabaseOperations
-from jonbot.layer2_processing.core_processing.ai.components.memory.conversation_memory.conversation_memory import \
+from jonbot.layer2_processing.core_processing.ai.chatbot_llm_chain.components.memory.conversation_memory.conversation_memory import \
     ChatbotConversationMemory
-from jonbot.layer2_processing.core_processing.ai.components.prompt.prompt_builder import ChatbotPrompt
+from jonbot.layer2_processing.core_processing.ai.chatbot_llm_chain.components.prompt.prompt_builder import ChatbotPrompt
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.context_route import ContextRoute
 from jonbot.models.database_request_response_models import ContextMemoryRequest
@@ -55,13 +55,13 @@ class ChatbotLLMChain:
 
     @property
     def _context_memory_get_request(self) -> ContextMemoryRequest:
-        return ContextMemoryRequest.from_context_route(context_route=self.context_route,
-                                                       database_name=self.database_name)
+        return ContextMemoryRequest.build_upsert_request_from_context_memory_document(document=self._context_memory_document,
+                                                                                      database_name=self.database_name)
+
     @property
     def _context_memory_upsert_request(self) -> ContextMemoryRequest:
-        return ContextMemoryRequest(data=self._context_memory_document,
-                                    database_name=self.database_name)
-
+        return ContextMemoryRequest.build_upsert_request_from_context_memory_document(document=self._context_memory_document,
+                                                                                      database_name=self.database_name)
 
     @property
     def _context_memory_document(self) -> ContextMemoryDocument:
@@ -90,9 +90,11 @@ class ChatbotLLMChain:
             await asyncio.sleep(pause_at_end)  # give it a sec to clear the buffer
 
             logger.debug(f"Successfully executed chain! - Saving context to memory...")
+
             self._update_memory(inputs=inputs,
                                 outputs={"output": response_message})
             await self.upsert_context_memory()
+
             logger.trace(f"Response message: {response_message}")
         except Exception as e:
             logger.exception(e)
@@ -109,7 +111,7 @@ class ChatbotLLMChain:
         else:
             await self._configure_memory(document)
 
-    async def _configure_memory(self, document:ContextMemoryDocument):
+    async def _configure_memory(self, document: ContextMemoryDocument):
         self.memory.load_messages_from_message_buffer(buffer=document.message_buffer)
         self.memory.moving_summary_buffer = document.summary
         self.memory.prompt = document.summary_prompt
@@ -123,7 +125,7 @@ class ChatbotLLMChain:
             raise
 
     def _update_memory(self, inputs: Dict[str, Any], outputs: Dict[str, Any]):
-        #TODO - sauce up the memory like we do int he memory calculator
+        # TODO - sauce up the memory like we do int he memory calculator
         self.memory.save_context(inputs=inputs,
                                  outputs=outputs)
 

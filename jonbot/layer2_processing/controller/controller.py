@@ -6,7 +6,7 @@ from jonbot.layer2_processing.controller.entrypoint_functions.backend_database_o
 from jonbot.layer2_processing.controller.entrypoint_functions.get_chatbot_llm_for_chat_request import \
     get_chatbot_llm_chain_for_chat_request
 from jonbot.layer2_processing.core_processing.ai.chatbot_llm_chain.chatbot_llm_chain import ChatbotLLMChain
-from jonbot.layer2_processing.core_processing.ai.components.memory.memory_data_calculator import MemoryDataCalculator
+from jonbot.layer2_processing.core_processing.ai.chatbot_llm_chain.components.memory.memory_data_calculator import MemoryDataCalculator
 from jonbot.layer2_processing.core_processing.audio_transcription.transcribe_audio import transcribe_audio_function
 from jonbot.models.calculate_memory_request import CalculateMemoryRequest
 from jonbot.models.context_memory_document import ContextMemoryDocument
@@ -38,8 +38,9 @@ class Controller:
 
         logger.info(f"Chat stream request complete: {chat_request}")
 
-    async def calculate_memory_function(self,
-                                        calculate_memory_request: CalculateMemoryRequest) -> Optional[ContextMemoryDocument]:
+    async def calculate_memory(self,
+                               calculate_memory_request: CalculateMemoryRequest) -> Optional[
+        ContextMemoryDocument]:
         try:
             memory_calculator = await MemoryDataCalculator.from_calculate_memory_request(
                 calculate_memory_request=calculate_memory_request,

@@ -40,6 +40,9 @@ class DiscordMessageDocument(BaseModel):
     parent_message_jump_url: Optional[str]
     context_description: str
     context_route: ContextRoute
+    context_route_full_path: str
+    context_route_as_friendly_dict: str
+    query: dict
 
     @classmethod
     async def from_discord_message(cls,
@@ -54,7 +57,7 @@ class DiscordMessageDocument(BaseModel):
             author=message.author.name,
             author_id=message.author.id,
             is_bot=message.author.bot,
-            in_thread= "thread" in message.channel.type.name,
+            in_thread="thread" in message.channel.type.name,
             timestamp=Timestamp.from_datetime(message.created_at),
             edited_timestamp=Timestamp.from_datetime(message.edited_at) if message.edited_at else '',
             mentions=[mention.name for mention in message.mentions],
@@ -66,14 +69,13 @@ class DiscordMessageDocument(BaseModel):
             parent_message_jump_url=message.reference.jump_url if message.reference else '',
             context_description=ConversationContextDescription.from_discord_message(message).description,
             context_route=context_route,
+            context_route_full_path=context_route.full_path,
+            context_route_as_friendly_dict=context_route.friendly_path,
+            query={"message_id": message.id},
             **context_route.as_flat_dict,
         )
         await discord_message_document._add_attachments_to_message(message)
         return discord_message_document
-
-    @property
-    def query(self):
-        return {"message_id": self.message_id}
 
     async def _add_attachments_to_message(self,
                                           message: discord.Message,

@@ -92,6 +92,7 @@ class ContextRoute(BaseModel):
                                           )
             thread = None
 
+
         return cls(frontend=frontend,
                    server=server,
                    channel=channel,
@@ -99,9 +100,16 @@ class ContextRoute(BaseModel):
                    )
 
     @property
-    def as_path(self):
+    def friendly_path(self):
         if self.thread:
-            return f"frontend-{self.frontend}/{str(self.server)}/{str(self.channel)}/{str(self.thread)}/"
+            return f"{self.frontend}/{self.server.name}/{self.channel.name}/threads/{self.thread.name}/messages/"
+        else:
+            return f"{self.frontend}/{self.server.name}/{self.channel.name}/messages/"
+
+    @property
+    def full_path(self):
+        if self.thread:
+            return f"frontend-{self.frontend}/{str(self.server)}/{str(self.channel)}/threads/{str(self.thread)}/messages/"
         else:
             return f"frontend-{self.frontend}/{str(self.server)}/{str(self.channel)}/messages/"
 

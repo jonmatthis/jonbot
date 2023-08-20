@@ -1,14 +1,11 @@
 import asyncio
-from typing import Union, Callable, List, Coroutine, Any
+from typing import Union, Callable, List, Coroutine
 
 import aiohttp
-from pydantic import BaseModel
 
 from jonbot import get_logger
 from jonbot.layer1_api_interface.helpers.error_message_from_response import error_message_from_response
-from jonbot.layer1_api_interface.api_routes import CALCULATE_MEMORY_ENDPOINT
 from jonbot.models.api_endpoint_url import ApiRoute
-from jonbot.models.calculate_memory_request import CalculateMemoryRequest
 from jonbot.system.environment_variables import API_HOST_NAME
 
 logger = get_logger()
@@ -20,21 +17,21 @@ class ApiClient:
     async def send_request_to_api(self,
                                   endpoint_name: str,
                                   data: dict = None,
-                                  type: str = "POST") -> dict:
+                                  method: str = "POST") -> dict:
         try:
             endpoint_url = ApiRoute.from_endpoint(host_name=self.api_host_name,
                                                   endpoint=endpoint_name).endpoint_url
 
             if not data:
                 data = {}
-            logger.debug(f"Sending request to API endpoint: {endpoint_url} with data (keys){list(data.keys())}")
+            logger.debug(f"Sending request to API endpoint: {endpoint_url}")
             async with aiohttp.ClientSession() as session:
-                if type == "POST":
+                if method == "POST":
                     response = await session.post(endpoint_url, json=data)
-                elif type == "GET":
+                elif method == "GET":
                     response = await session.get(endpoint_url, json=data)
                 else:
-                    raise Exception(f"Invalid type: {type}")
+                    raise Exception(f"Invalid type: {method}")
 
                 if response.status == 200:
                     return await response.json()
