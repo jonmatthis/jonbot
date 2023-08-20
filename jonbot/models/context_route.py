@@ -1,35 +1,24 @@
 from enum import Enum
-from typing import Optional, Literal
+from typing import Optional
 
 import discord
 from pydantic import BaseModel
 
 
-class Frontends(Enum):
-    DISCORD = 'discord'
-    TELEGRAM = 'telegram'
-    OTHER = 'other'
-
-
-frontend_types = tuple(value.value for value in Frontends)
-
-
-class SubContextComponentTypes(Enum):
+class SubContextComponentTypes(str, Enum):
     SERVER = 'server'
     DIRECT_MESSAGE = 'direct_message'
     CHANNEL = 'channel'
     THREAD = 'thread'
+    FORUM = 'forum'
     UNKNOWN = 'unknown'
     DUMMY = 'dummy'
     OTHER = 'other'
 
 
-subcontext_types = tuple(value.value for value in SubContextComponentTypes)
-
-
 class SubContextComponent(BaseModel):
     """Represents a component with name and id"""
-    type: Optional[Literal[subcontext_types]] = None
+    type: SubContextComponentTypes
     name: str
     id: int
     parent: Optional[str] = None
@@ -43,9 +32,15 @@ class SubContextComponent(BaseModel):
                 "parent": self.parent}
 
 
+class Frontends(str, Enum):
+    DISCORD = 'discord'
+    TELEGRAM = 'telegram'
+    OTHER = 'other'
+
+
 class ContextRoute(BaseModel):
     """How to grab this context route from the database"""
-    frontend: Literal[frontend_types]
+    frontend: Frontends
     server: SubContextComponent
     channel: SubContextComponent
     thread: Optional[SubContextComponent] = None
@@ -53,7 +48,6 @@ class ContextRoute(BaseModel):
     @classmethod
     def from_discord_channel(cls, channel: discord.TextChannel):
         return cls.from_discord_message(message=channel.last_message)
-
 
     @classmethod
     def from_discord_message(cls, message: discord.Message):
@@ -104,7 +98,6 @@ class ContextRoute(BaseModel):
                    thread=thread,
                    )
 
-
     @property
     def as_path(self):
         if self.thread:
@@ -113,12 +106,16 @@ class ContextRoute(BaseModel):
             return f"frontend-{self.frontend}/{str(self.server)}/{str(self.channel)}/messages/"
 
     @property
-    def as_query(self):
-        return {"frontend": self.frontend,
-                "server_id": self.server.id,
-                "channel_id": self.channel.id,
-                "thread_id": self.thread.id if self.thread else None
-                }
+    def as_query(self) -> dict:
+
+        query = {"frontend": self.frontend.value,
+                 "server_id": self.server.id,
+                 "channel_id": self.channel.id,
+                 }
+        if self.thread:
+            query.update({"thread_id": self.thread.id})
+
+        return query
 
     @property
     def as_flat_dict(self):
@@ -150,4 +147,3 @@ class ContextRoute(BaseModel):
                    channel=channel,
                    thread=thread,
                    )
-

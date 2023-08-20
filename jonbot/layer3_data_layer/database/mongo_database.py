@@ -7,7 +7,8 @@ from pymongo import UpdateOne, DESCENDING
 from jonbot import get_logger
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.conversation_models import MessageHistory, ChatMessage
-from jonbot.models.database_request_response_models import UpsertContextMemoryRequest, UpsertDiscordMessageRequest
+from jonbot.models.database_request_response_models import ContextMemoryRequest, UpsertDiscordMessageRequest, \
+    MessageHistoryRequest
 from jonbot.models.discord_stuff.discord_id import DiscordUserID
 from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
 from jonbot.models.user_stuff.user_ids import TelegramUserID, UserID
@@ -73,47 +74,44 @@ class MongoDatabaseManager:
 
 
     async def upsert_discord_messages(self,
-                                      upsert_discord_message_requests: List[UpsertDiscordMessageRequest]) -> bool:
+                                      requests: List[UpsertDiscordMessageRequest]) -> bool:
         entries = [
-            {"data": upsert_discord_message_request.data.dict(),
-             "query": upsert_discord_message_request.query}
-            for upsert_discord_message_request in upsert_discord_message_requests
+            {"data": request.data.dict(),
+             "query": request.query}
+            for request in requests
         ]
 
-        database_name = upsert_discord_message_requests[0].database_name
+        database_name = requests[0].database_name
         if not all(upsert_discord_message_request.database_name == database_name for upsert_discord_message_request in
-                   upsert_discord_message_requests):
+                   requests):
             raise Exception("All upsert_discord_message_requests must have the same database_name")
 
-        return await self._upsert_many(database_name=upsert_discord_message_requests[0].database_name,
+        return await self._upsert_many(database_name=requests[0].database_name,
                                        entries=entries,
                                        collection_name=RAW_MESSAGES_COLLECTION_NAME,
                                        )
 
     async def upsert_context_memory(self,
-                                    upsert_context_memory_request: UpsertContextMemoryRequest) -> bool:
+                                    request: ContextMemoryRequest) -> bool:
 
-        entry = [{"data": upsert_context_memory_request.data.dict(),
-                  "query": upsert_context_memory_request.query}]
+        entry = [{"data": request.data.dict(),
+                  "query": request.query}]
 
-        return await self._upsert_many(database_name=upsert_context_memory_request.database_name,
+        return await self._upsert_many(database_name=request.database_name,
                                        entries=entry,
                                        collection_name=CONTEXT_MEMORIES_COLLECTION_NAME)
 
     async def get_message_history(self,
-                                  database_name: str,
-                                  context_route_query: dict,
-                                  limit_messages: int = None) -> MessageHistory:
+                                  request:MessageHistoryRequest) -> MessageHistory:
 
-        documents = await self._get_sorted_documents(database_name=database_name,
+        documents = await self._get_sorted_documents(database_name=request.database_name,
                                    collection_name=RAW_MESSAGES_COLLECTION_NAME,
-                                   query=context_route_query,
+                                   query=request.query,
                                    sort_field="timestamp.unix_timestamp_utc",
-                                   limit=limit_messages,
+                                   limit=request.limit_messages,
                                    sort_order=DESCENDING)
 
         message_history = MessageHistory()
-        message_count = 0
         for document in documents:
             discord_message_document = DiscordMessageDocument(**document)
             chat_message = ChatMessage.from_discord_message_document(discord_message_document)
@@ -121,15 +119,14 @@ class MongoDatabaseManager:
         return message_history
 
     async def get_context_memory(self,
-                                 database_name: str,
-                                 context_route_query: dict,
-                                 ) -> Optional[ContextMemoryDocument]:
-        messages_collection = self._get_collection(database_name, CONTEXT_MEMORIES_COLLECTION_NAME)
-        query = {"context_route_query": context_route_query}
+                                 request: ContextMemoryRequest) -> Optional[ContextMemoryDocument]:
+
+        messages_collection = self._get_collection(request.database_name, CONTEXT_MEMORIES_COLLECTION_NAME)
+        query = {**request.query}
         result = await messages_collection.find_one(query)
 
         if result is None:
-            logger.warning(f"Context memory not found for context route: {context_route_query}")
+            logger.warning(f"Context memory not found with query: {query}")
             return None
 
         return ContextMemoryDocument(**result)

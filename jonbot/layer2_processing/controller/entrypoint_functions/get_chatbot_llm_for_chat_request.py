@@ -12,7 +12,7 @@ logger = get_logger()
 async def get_chatbot_llm_chain_for_chat_request(chat_request: ChatRequest,
                                                  existing_chatbot_llm_chains: Dict[str, ChatbotLLMChain],
                                                  database_operations: BackendDatabaseOperations) -> ChatbotLLMChain:
-    context_path = str(chat_request.context_route.as_query)
+    context_path = str(chat_request.context_route.as_flat_dict)
 
     if context_path in existing_chatbot_llm_chains:
         return existing_chatbot_llm_chains[context_path]

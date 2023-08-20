@@ -6,10 +6,9 @@ from jonbot import get_logger
 from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager import get_or_create_mongo_database_manager
 from jonbot.layer3_data_layer.database.mongo_database import MongoDatabaseManager
 from jonbot.models.context_memory_document import ContextMemoryDocument
-from jonbot.models.context_route import ContextRoute
 from jonbot.models.conversation_models import MessageHistory
-from jonbot.models.database_request_response_models import LogDiscordMessageResponse, \
-    MessageHistoryRequest, UpsertContextMemoryRequest, UpsertDiscordMessageRequest
+from jonbot.models.database_request_response_models import DiscordMessageResponse, \
+    MessageHistoryRequest, ContextMemoryRequest, UpsertDiscordMessageRequest
 
 logger = get_logger()
 
@@ -26,45 +25,42 @@ class BackendDatabaseOperations(BaseModel):
         return cls(mongo_database=mongo_database)
 
     async def upsert_discord_message(self,
-                                     upsert_discord_message_request: UpsertDiscordMessageRequest) -> LogDiscordMessageResponse:
-        logger.info(f"Logging message in database: Message id: {upsert_discord_message_request.data.message_id},"
-                    f" content: {upsert_discord_message_request.data.content}")
+                                     request: UpsertDiscordMessageRequest) -> DiscordMessageResponse:
+        logger.info(f"Logging message in database: Message id: {request.data.message_id},"
+                    f" content: {request.data.content}")
         success = await self.mongo_database.upsert_discord_messages(
-            upsert_discord_message_requests=[upsert_discord_message_request])
+            requests=[request])
         if success:
-            return LogDiscordMessageResponse(success=True)
+            return DiscordMessageResponse(success=True)
         else:
-            return LogDiscordMessageResponse(success=False)
+            return DiscordMessageResponse(success=False)
 
     async def get_message_history_document(self,
-                                           message_history_request: MessageHistoryRequest) -> MessageHistory:
+                                           request: MessageHistoryRequest) -> MessageHistory:
         logger.info(
-            f"Getting conversation history for context route: {message_history_request.context_route.dict()}")
-        message_history = await self.mongo_database.get_message_history(
-            database_name=message_history_request.database_name,
-            context_route_query=message_history_request.context_route.as_query,
-            limit_messages=message_history_request.limit_messages, )
+            f"Getting conversation history for context route: {request.context_route.dict()}")
+        message_history = await self.mongo_database.get_message_history(message_history_request=request)
+
         return message_history
 
     async def get_context_memory_document(self,
-                                          context_route: ContextRoute,
-                                          database_name: str) -> Optional[ContextMemoryDocument]:
+                                          request: ContextMemoryRequest) -> Optional[ContextMemoryDocument]:
+        if request.type == "upsert":
+            raise Exception("get_context_memory_document should not be called with request type: upsert")
+
         logger.info(
-            f"Retrieving context memory for context route: {context_route.as_flat_dict}")
-        context_memory_document = await self.mongo_database.get_context_memory(
-            database_name=database_name,
-            context_route_query=context_route.as_query,
-        )
+            f"Retrieving context memory for context route: {request.data.context_route.as_flat_dict}")
+        context_memory_document = await self.mongo_database.get_context_memory(request=request)
         if context_memory_document is None:
-            logger.warning(f"Context memory not found for context route: {context_route.as_flat_dict}")
+            logger.warning(f"Context memory not found for context route: {request.data.context_route.as_flat_dict}")
             return None
 
         return context_memory_document
 
-    async def upsert_context_memory(self, upsert_context_memory_request: UpsertContextMemoryRequest):
+    async def upsert_context_memory(self, request: ContextMemoryRequest):
         logger.info(
-            f"Updating context memory for context route: {upsert_context_memory_request.data.context_route.dict()}")
-        await self.mongo_database.upsert_context_memory(upsert_context_memory_request=upsert_context_memory_request, )
+            f"Updating context memory for context route: {request.data.context_route.dict()}")
+        await self.mongo_database.upsert_context_memory(request=request, )
 
     async def close(self):
         logger.info("Closing database connection...")

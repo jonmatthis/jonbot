@@ -1,4 +1,4 @@
-from typing import AsyncIterable, Dict
+from typing import AsyncIterable, Dict, Optional
 
 from jonbot import get_logger
 from jonbot.layer2_processing.controller.entrypoint_functions.backend_database_operations import \
@@ -39,7 +39,7 @@ class Controller:
         logger.info(f"Chat stream request complete: {chat_request}")
 
     async def calculate_memory_function(self,
-                                        calculate_memory_request: CalculateMemoryRequest) -> ContextMemoryDocument:
+                                        calculate_memory_request: CalculateMemoryRequest) -> Optional[ContextMemoryDocument]:
         try:
             memory_calculator = await MemoryDataCalculator.from_calculate_memory_request(
                 calculate_memory_request=calculate_memory_request,

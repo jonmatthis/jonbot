@@ -21,16 +21,16 @@ class DiscordDatabaseOperations:
     async def upsert_messages(self,
                               messages: List[discord.Message]):
         for message in messages:
-            discord_message_document = await DiscordMessageDocument.from_discord_message(message)
+            document = await DiscordMessageDocument.from_discord_message(message)
 
-            log_discord_message_request = UpsertDiscordMessageRequest(database_name=self._database_name,
-                                                                      data=discord_message_document,
-                                                                      query={"message_id": message.id}
-                                                                      )
+            request = UpsertDiscordMessageRequest(database_name=self._database_name,
+                                                  data=document,
+                                                  query={"message_id": message.id}
+                                                  )
             logger.info(
-                f"Sending database upsert request for message content: `{message.content}` "
-                f"in context_route: {discord_message_document.context_route_path}")
-            asyncio.create_task(self._api_client.send_request_to_api(endpoint_name=UPSERT_MESSAGE_ENDPOINT,
-                                                                     data=log_discord_message_request.dict(),
-                                                                     )
-                                )
+                f"Sending database upsert request for message content: `{request.data.content}` "
+                f"with query: `{request.query}`")
+            await self._api_client.send_request_to_api(endpoint_name=UPSERT_MESSAGE_ENDPOINT,
+                                                       data=request.dict(),
+                                                       )
+

@@ -14,16 +14,22 @@ STOP_STREAMING_TOKEN = "STOP_STREAMING"
 class DiscordMessageResponder:
     def __init__(self):
         self.message_content = ""
-        self.reply_message = None
+        self._reply_message = None
+        self._reply_messages = []
         self.max_message_length = 2000
         self.comfy_message_length = int(self.max_message_length * .9)
         self.done = False
+
+    @property
+    def reply_messages(self):
+        self._add_reply_message_to_list(self._reply_message)
+        return self._reply_messages
 
     async def initialize_reply(self,
                                message: discord.Message,
                                initial_message_content: str = RESPONSE_INCOMING_TEXT):
         logger.info(f"initializing reply to message: `{message.id}`")
-        self.reply_message = await message.reply(initial_message_content)
+        self._reply_message = await message.reply(initial_message_content)
 
     async def update_reply(self, token: str, pause_duration: float = 0.1):
         stop_now = False
@@ -36,18 +42,25 @@ class DiscordMessageResponder:
             logger.trace(f"updating discord reply with token: {repr(token)}")
             self.message_content += token
             await asyncio.sleep(pause_duration)  # sleep to give discord time to update the message
-            await self.reply_message.edit(content=self.message_content)
-
 
             if len(self.message_content) > self.comfy_message_length:
                 logger.trace(
                     f"message content (len: {len(self.message_content)}) is longer than comfy message length: {self.comfy_message_length} - continuing in next message...")
+                self._add_reply_message_to_list(self._reply_message)
+
                 self.message_content = "`continuing from previous message...`\n"
-                self.reply_message = await self.reply_message.reply(self.message_content)
+                self._reply_message = await self._reply_message.reply(self.message_content)
+            else:
+                await self._reply_message.edit(content=self.message_content)
+
         if stop_now:
             self.done = True
             logger.info(f"done streaming")
 
+
+    def _add_reply_message_to_list(self, _reply_message:discord.Message):
+        self._reply_message.content = self.message_content #I'm not sure why this needs done, but without it the conent still reads "response incoming" when the message is logged in the db
+        self._reply_messages.append(_reply_message)
 
 async def update_discord_message(chat_response: ChatResponse,
                                  message: discord.Message,

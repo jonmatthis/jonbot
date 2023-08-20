@@ -27,7 +27,7 @@ class ApiClient:
 
             if not data:
                 data = {}
-            logger.debug(f"Sending request to API endpoint: {endpoint_url} with payload keys: {list(data.keys())}")
+            logger.debug(f"Sending request to API endpoint: {endpoint_url} with data (keys){list(data.keys())}")
             async with aiohttp.ClientSession() as session:
                 if type == "POST":
                     response = await session.post(endpoint_url, json=data)

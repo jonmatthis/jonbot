@@ -9,7 +9,7 @@ from jonbot.layer2_processing.core_processing.ai.components.memory.conversation_
 from jonbot.models.calculate_memory_request import CalculateMemoryRequest
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.conversation_models import MessageHistory
-from jonbot.models.database_request_response_models import MessageHistoryRequest, UpsertContextMemoryRequest
+from jonbot.models.database_request_response_models import MessageHistoryRequest, ContextMemoryRequest
 from jonbot.models.memory_config import CONVERSATION_HISTORY_MAX_TOKENS
 
 logger = get_logger()
@@ -30,13 +30,18 @@ class MemoryDataCalculator(BaseModel):
                                             database_operations: BackendDatabaseOperations, ):
 
         current_context_memory = await database_operations.get_context_memory_document(
-            context_route=calculate_memory_request.context_route,
-            database_name=calculate_memory_request.database_name)
+            ContextMemoryRequest.from_context_route(
+                context_route=calculate_memory_request.context_route,
+                database_name=calculate_memory_request.database_name))
+
+        if current_context_memory is None:
+            logger.warning(f"Context memory not found for request: {calculate_memory_request.context_route.dict()}")
+            return
 
         message_history = await database_operations.get_message_history_document(
-            message_history_request=MessageHistoryRequest(context_route=calculate_memory_request.context_route,
-                                                          database_name=calculate_memory_request.database_name,
-                                                          limit_messages=calculate_memory_request.limit_messages))
+            request=MessageHistoryRequest(context_route=calculate_memory_request.context_route,
+                                          database_name=calculate_memory_request.database_name,
+                                          limit_messages=calculate_memory_request.limit_messages))
 
         if message_history is None:
             logger.warning(f"Message history not found for request: {calculate_memory_request.context_route.dict()}")
@@ -61,14 +66,14 @@ class MemoryDataCalculator(BaseModel):
             message_buffer=[message.dict() for message in self.memory.buffer],
             summary=self.memory.moving_summary_buffer,
             summary_prompt=self.memory.prompt,
-            tokens_in_summary=self.memory.tokens_in_summary,
+            token_count=self.memory.token_count,
         )
 
         if upsert:
             await self.database_operations.upsert_context_memory(
-                UpsertContextMemoryRequest(data=context_memory_document,
-                                           database_name=self.calculate_memory_request.database_name,
-                                           query=self.calculate_memory_request.context_route.as_query))
+                ContextMemoryRequest(data=context_memory_document,
+                                     database_name=self.calculate_memory_request.database_name,
+                                     query=self.calculate_memory_request.context_route.as_query))
 
         return context_memory_document
 
@@ -112,7 +117,8 @@ class MemoryDataCalculator(BaseModel):
             memory_token_length = self.memory.llm.get_num_tokens_from_messages(
                 messages=self.memory.chat_memory.messages)
             if memory_token_length > self.max_tokens:
-                logger.info(f"Memory token length {memory_token_length} exceeds max tokens {self.max_tokens}. Pruning...")
+                logger.info(
+                    f"Memory token length {memory_token_length} exceeds max tokens {self.max_tokens}. Pruning...")
                 logger.info(f"Memory summary before pruning: {self.memory.moving_summary_buffer}\n---\n")
                 self.memory.prune()
                 logger.info(f"Memory summary after pruning: {self.memory.moving_summary_buffer}")

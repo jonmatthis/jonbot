@@ -1,4 +1,5 @@
 import asyncio
+from typing import List
 
 import discord
 
@@ -75,12 +76,12 @@ class DiscordBot(discord.Bot):
                                                                                            responder=message_responder)
                         messages_to_upsert.append(transcription_response_message)
 
-                        response_message = await self.handle_text_message(message=transcription_response_message)
+                        response_messages = await self.handle_text_message(message=transcription_response_message)
                 else:
                     # HANDLE TEXT MESSAGE
-                    response_message = await self.handle_text_message(message=message)
+                    response_messages = await self.handle_text_message(message=message)
 
-                messages_to_upsert.append(response_message)
+                messages_to_upsert.extend(response_messages)
 
             except Exception as e:
                 error_message = f"An error occurred: {str(e)}"
@@ -91,7 +92,7 @@ class DiscordBot(discord.Bot):
 
     async def handle_text_message(self,
                                   message: discord.Message,
-                                  ):
+                                  ) -> List[discord.Message]:
 
         chat_request = ChatRequest.from_discord_message(message=message,
                                                         database_name=self._database_name)
@@ -110,13 +111,11 @@ class DiscordBot(discord.Bot):
                                                                      update_discord_message_callback])
             while not updater.done:
                 await asyncio.sleep(1)
-
-            return updater.reply_message
+            return updater.reply_messages
 
         except Exception as e:
             await updater.update_reply(f"Error while streaming reply: \n >  {e}")
             raise
-        return response_message
 
     async def handle_voice_recording(self,
                                      message: discord.Message,

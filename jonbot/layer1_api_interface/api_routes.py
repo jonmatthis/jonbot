@@ -8,7 +8,7 @@ from jonbot.layer2_processing.controller.entrypoint_functions.backend_database_o
 from jonbot.models.calculate_memory_request import CalculateMemoryRequest
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.conversation_models import ChatRequest
-from jonbot.models.database_request_response_models import LogDiscordMessageResponse, UpsertDiscordMessageRequest
+from jonbot.models.database_request_response_models import DiscordMessageResponse, UpsertDiscordMessageRequest
 from jonbot.models.health_check_status import HealthCheckResponse
 from jonbot.models.voice_to_text_request import VoiceToTextResponse, VoiceToTextRequest
 
@@ -48,6 +48,6 @@ def register_api_routes(app: FastAPI,
                                  media_type="text/event-stream")
 
     @app.post(UPSERT_MESSAGE_ENDPOINT)
-    async def upsert_message_endpoint(upsert_discord_message_request: UpsertDiscordMessageRequest) -> LogDiscordMessageResponse:
+    async def upsert_message_endpoint(upsert_discord_message_request: UpsertDiscordMessageRequest) -> DiscordMessageResponse:
         return await database_operations.upsert_discord_message(
-            upsert_discord_message_request=upsert_discord_message_request)
+            request=upsert_discord_message_request)
