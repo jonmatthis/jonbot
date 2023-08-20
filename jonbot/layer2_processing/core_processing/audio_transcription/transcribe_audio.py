@@ -10,13 +10,12 @@ from jonbot import get_logger
 logger = get_logger()
 
 
-async def transcribe_audio(
+async def transcribe_audio_function(
         audio_file_url: str,
         prompt: str = None,
         response_format: str = None,
         temperature: float = None,
         language: str = None,
-        **kwargs,
 ) -> str:
     TEMP_FILE_PATH = f"/tmp/voice-message"
 

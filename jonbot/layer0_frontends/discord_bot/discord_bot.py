@@ -14,7 +14,7 @@ from jonbot.layer0_frontends.discord_bot.utilities.print_pretty_terminal_message
     print_pretty_startup_message_in_terminal
 from jonbot.layer1_api_interface.api_client.api_client import ApiClient
 from jonbot.layer1_api_interface.api_client.get_or_create_api_client import get_or_create_api_client
-from jonbot.layer1_api_interface.routes import CHAT_ENDPOINT, \
+from jonbot.layer1_api_interface.api_routes import CHAT_ENDPOINT, \
     VOICE_TO_TEXT_ENDPOINT
 from jonbot.models.conversation_models import ChatRequest
 from jonbot.models.discord_stuff.environment_config.discord_environment import DiscordEnvironmentConfig
@@ -100,7 +100,7 @@ class DiscordBot(discord.Bot):
         updater = DiscordMessageResponder()
         await updater.initialize_reply(message)
 
-        async def update_discord_message_callback(token: str, updater: DiscordMessageRe = updater):
+        async def update_discord_message_callback(token: str, updater: DiscordMessageResponder = updater):
             logger.trace(f"Frontend received token: `{repr(token)}`")
             await updater.update_reply(token)
 

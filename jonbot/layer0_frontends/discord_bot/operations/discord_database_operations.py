@@ -5,7 +5,7 @@ import discord
 
 from jonbot import get_logger
 from jonbot.layer1_api_interface.api_client.api_client import ApiClient
-from jonbot.layer1_api_interface.routes import UPSERT_MESSAGE_ENDPOINT
+from jonbot.layer1_api_interface.api_routes import UPSERT_MESSAGE_ENDPOINT
 from jonbot.models.database_request_response_models import UpsertDiscordMessageRequest
 from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
 

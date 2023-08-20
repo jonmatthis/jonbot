@@ -6,7 +6,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from jonbot.layer1_api_interface.api_client.get_or_create_api_client import get_or_create_api_client
-from jonbot.layer1_api_interface.routes import CHAT_ENDPOINT
+from jonbot.layer1_api_interface.api_routes import CHAT_ENDPOINT
 from jonbot.models.conversation_models import ChatInput, ChatResponse
 
 logger = logging.getLogger('httpcore')

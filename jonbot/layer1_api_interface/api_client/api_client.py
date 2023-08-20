@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from jonbot import get_logger
 from jonbot.layer1_api_interface.helpers.error_message_from_response import error_message_from_response
-from jonbot.layer1_api_interface.routes import CALCULATE_MEMORY_ENDPOINT
+from jonbot.layer1_api_interface.api_routes import CALCULATE_MEMORY_ENDPOINT
 from jonbot.models.api_endpoint_url import ApiRoute
 from jonbot.models.calculate_memory_request import CalculateMemoryRequest
 from jonbot.system.environment_variables import API_HOST_NAME

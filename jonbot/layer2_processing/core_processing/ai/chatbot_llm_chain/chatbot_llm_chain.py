@@ -7,10 +7,11 @@ from langchain.schema.runnable import RunnableMap, RunnableSequence
 
 from jonbot import get_logger
 from jonbot.layer0_frontends.discord_bot.handlers.handle_message_responses import STOP_STREAMING_TOKEN
-from jonbot.layer2_core_processes.backend_database_actions import get_context_memory_document, upsert_context_memory
-from jonbot.layer2_core_processes.core.ai.components.memory.conversation_memory.conversation_memory import \
+from jonbot.layer2_processing.controller.entrypoint_functions.backend_database_operations import \
+    BackendDatabaseOperations
+from jonbot.layer2_processing.core_processing.ai.components.memory.conversation_memory.conversation_memory import \
     ChatbotConversationMemory
-from jonbot.layer2_core_processes.core.ai.components.prompt.prompt_builder import ChatbotPrompt
+from jonbot.layer2_processing.core_processing.ai.components.prompt.prompt_builder import ChatbotPrompt
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.context_route import ContextRoute
 from jonbot.models.database_request_response_models import UpsertContextMemoryRequest
@@ -25,10 +26,12 @@ class ChatbotLLMChain:
 
     def __init__(self,
                  context_route: ContextRoute,
-                 database_name: str,
+                    database_name: str,
+                 database_operations: BackendDatabaseOperations,
                  chat_history_placeholder_name: str = "chat_history"):
         self.context_route = context_route
         self.database_name = database_name
+        self.database_operations = database_operations
         self.model = ChatOpenAI(temperature=0.8,
                                 model_name="gpt-4",
                                 verbose=True,
@@ -41,9 +44,11 @@ class ChatbotLLMChain:
     @classmethod
     async def from_context_route(cls,
                                  context_route: ContextRoute,
-                                 database_name: str):
+                                 database_name: str,
+                                 database_operations: BackendDatabaseOperations):
         instance = cls(context_route=context_route,
-                       database_name=database_name)
+                       database_name=database_name,
+                       database_operations=database_operations)
 
         await instance.load_context_memory()
         return instance
@@ -79,8 +84,9 @@ class ChatbotLLMChain:
             raise
 
     async def load_context_memory(self):
-        self.context_memory_document = await get_context_memory_document(context_route=self.context_route,
-                                                                         database_name=self.database_name)
+        self.context_memory_document = await self.database_operations.get_context_memory_document(
+
+            context_route=self.context_route)
         if self.context_memory_document is None:
             logger.warning(
                 f"Could not load context memory from database for context route: {self.context_route.dict()}")
@@ -91,9 +97,10 @@ class ChatbotLLMChain:
         logger.debug(f"Upserting context memory for context route: {self.context_route.dict()}")
         if self.context_memory_document is not None:
             try:
-                await upsert_context_memory(UpsertContextMemoryRequest(database_name=self.database_name,
-                                                                       data=self.context_memory_document,
-                                                                       query=self.context_route.as_query, ))
+                await self.database_operations.upsert_context_memory(
+                    UpsertContextMemoryRequest(database_name=self.database_name,
+                                               data=self.context_memory_document,
+                                               query=self.context_route.as_query, ))
             except Exception as e:
                 logger.exception(e)
                 raise
