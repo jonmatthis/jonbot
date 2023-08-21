@@ -115,8 +115,9 @@ class ChatRequest(BaseModel):
     def from_discord_message(cls,
                              message: discord.Message,
                              database_name: str,
+                             content: str,
                              **kwargs):
-        return cls.from_text(text=message.content,
+        return cls.from_text(text=content,
                              timestamp=Timestamp.from_datetime(message.created_at),
                              database_name=database_name,
                              context_route=ContextRoute.from_discord_message(message),

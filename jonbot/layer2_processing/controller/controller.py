@@ -12,7 +12,7 @@ from jonbot.layer2_processing.core_processing.audio_transcription.transcribe_aud
 from jonbot.models.calculate_memory_request import CalculateMemoryRequest
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.conversation_models import ChatRequest
-from jonbot.models.voice_to_text_request import VoiceToTextRequest
+from jonbot.models.voice_to_text_request import VoiceToTextRequest, VoiceToTextResponse
 
 logger = get_logger()
 
@@ -23,9 +23,11 @@ class Controller:
         self.chatbot_llm_chains: Dict[str, ChatbotLLMChain] = {}
 
     @staticmethod
-    async def transcribe_audio(voice_to_text_request: VoiceToTextRequest):
-        transcribed_text = await transcribe_audio_function(**voice_to_text_request.dict())
-        return transcribed_text
+    async def transcribe_audio(voice_to_text_request: VoiceToTextRequest) -> VoiceToTextResponse:
+        response = await transcribe_audio_function(**voice_to_text_request.dict())
+        if response is None:
+            raise Exception(f"Transcription failed for audio: {voice_to_text_request}")
+        return response
 
     async def get_response_from_chatbot(self, chat_request: ChatRequest) -> AsyncIterable[str]:
         logger.info(f"Received chat stream request: {chat_request}")

@@ -1,5 +1,6 @@
 from typing import Optional
 
+from langchain import PromptTemplate
 from pydantic import BaseModel
 
 from jonbot import get_logger
@@ -16,6 +17,7 @@ class ContextMemoryHandler(BaseModel):
     current_context_memory_document: ContextMemoryDocument = None
     database_operations: BackendDatabaseOperations
     database_name: str
+    summary_prompt: PromptTemplate
 
     @property
     async def context_memory_document(self) -> ContextMemoryDocument:
@@ -24,14 +26,16 @@ class ContextMemoryHandler(BaseModel):
             self.current_context_memory_document = await self._load_context_memory()
         if self.current_context_memory_document is None:
             logger.warning(f"Current context memory document was not found in database, returning empty document...")
-            self.current_context_memory_document = ContextMemoryDocument.build_empty(context_route=self.context_route)
+            self.current_context_memory_document = ContextMemoryDocument.build_empty(context_route=self.context_route,
+                                                                                     summary_prompt=self.summary_prompt)
         return self.current_context_memory_document
 
     async def _load_context_memory(self) -> Optional[ContextMemoryDocument]:
         logger.info(
             f"Loading context memory for context route: {self.context_route.dict()} from database: {self.database_name}...")
         get_request = ContextMemoryDocumentRequest.build_get_request(context_route=self.context_route,
-                                                                     database_name=self.database_name)
+                                                                     summary_prompt=self.summary_prompt,
+                                                                     database_name=self.database_name,)
         response = await self.database_operations.get_context_memory_document(request=get_request)
 
         if not response.success:

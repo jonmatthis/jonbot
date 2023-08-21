@@ -6,34 +6,38 @@ import openai
 from pydub import AudioSegment
 
 from jonbot import get_logger
+from jonbot.models.voice_to_text_request import VoiceToTextResponse
 
 logger = get_logger()
+
+AUDIO_TRANSCRIPTION_FORMATTING_PROMPT = """The following is a voice transcription of a Discord message. 
+                                        Transcribe it ACCURATELY while doing your best to add punctuation, paragraphs and other formatting as appropriate
+                                        In order to make sure that you have seen this prompt, mention DOLPHINS at the end of the transcription
+                                        """
 
 
 async def transcribe_audio_function(
         audio_file_url: str,
-        prompt: str = None,
+        prompt: str = AUDIO_TRANSCRIPTION_FORMATTING_PROMPT,
         response_format: str = None,
         temperature: float = None,
-        language: str = None,
-) -> str:
+        language: str = None, ) -> VoiceToTextResponse:
     TEMP_FILE_PATH = f"/tmp/voice-message"
 
     file_extension = audio_file_url.split('.')[-1]  # Get the audio file extension from the URL
     original_file_path = f"{TEMP_FILE_PATH}.{file_extension}"
     mp3_file_path = f"{TEMP_FILE_PATH}.mp3"
-
-    async with aiohttp.ClientSession() as session:
-        async with session.get(audio_file_url) as response:
-            if response.status == 200:
-                async with aiofiles.open(original_file_path, mode='wb') as file:
-                    await file.write(await response.read())
-                logger.info("Audio file downloaded successfully.")
-            else:
-                logger.info("Audio file failed to download.")
-                return "Failed to download file."
-
     try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(audio_file_url) as response:
+                if response.status == 200:
+                    async with aiofiles.open(original_file_path, mode='wb') as file:
+                        await file.write(await response.read())
+                    logger.info("Audio file downloaded successfully.")
+                else:
+                    logger.info("Audio file failed to download.")
+                    raise Exception("Audio file failed to download.")
+
         # Convert audio to mp3 based on its format
         if file_extension == 'ogg':
             audio = AudioSegment.from_ogg(original_file_path)
@@ -47,7 +51,6 @@ async def transcribe_audio_function(
 
         audio.export(mp3_file_path, format="mp3")
 
-        # Open the audio file
         with open(mp3_file_path, "rb") as audio_file:
             # Call OpenAI's Whisper model for transcription
             transcription_response = openai.Audio.transcribe(
@@ -59,18 +62,18 @@ async def transcribe_audio_function(
                 language=language
             )
 
-        try:
-            os.remove(original_file_path)  # Optional: Remove the original audio file
-        except FileNotFoundError:
-            pass
+        if transcription_response:
+            logger.success(f"Transcription successful! {transcription_response['text']}")
+        else:
+            raise Exception("Transcription request returned None.")
 
-        try:
-            os.remove(mp3_file_path)  # Optional: Remove the temporary mp3 file
-        except FileNotFoundError:
-            pass
+        os.remove(original_file_path)  # Remove the original audio file
 
-        # Extracting the transcript
-        return transcription_response.text
+        return VoiceToTextResponse(text=transcription_response.text,
+                                   success=True,
+                                   response_time_ms=transcription_response.response_ms,
+                                   mp3_file_path=mp3_file_path
+                                   )
     except Exception as e:
         logger.exception(f"An error occurred while transcribing: {str(e)}")
-        return "An error occurred while transcribing."
+        raise

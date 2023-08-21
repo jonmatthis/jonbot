@@ -34,7 +34,8 @@ class ChatbotConversationMemory(ConversationSummaryBufferMemory):
             max_token_limit=config.max_token_limit,
             context_memory_handler=ContextMemoryHandler(context_route=context_route,
                                                         database_name=database_name,
-                                                        database_operations=database_operations)
+                                                        database_operations=database_operations,
+                                                        summary_prompt=config.summary_prompt)
         )
 
         self.prompt = config.summary_prompt

@@ -4,9 +4,10 @@ from typing import List
 import discord
 
 from jonbot import get_logger
-from jonbot.layer0_frontends.discord_bot.commands.cogs.memory_scraper_cog import MemoryScraperCog
-from jonbot.layer0_frontends.discord_bot.commands.cogs.server_scraper_cog import ServerScraperCog
-from jonbot.layer0_frontends.discord_bot.commands.cogs.voice_channel_cog import VoiceChannelCog
+from jonbot.layer0_frontends.discord_bot.cogs.memory_scraper_cog import MemoryScraperCog
+from jonbot.layer0_frontends.discord_bot.cogs.server_scraper_cog import ServerScraperCog
+from jonbot.layer0_frontends.discord_bot.cogs.voice_channel_cog import VoiceChannelCog
+
 from jonbot.layer0_frontends.discord_bot.handlers.handle_message_responses import DiscordMessageResponder
 from jonbot.layer0_frontends.discord_bot.handlers.should_process_message import allowed_to_reply, should_reply, \
     ERROR_MESSAGE_REPLY_PREFIX_TEXT
@@ -72,30 +73,39 @@ class DiscordBot(discord.Bot):
             try:
                 if len(message.attachments) > 0:
                     if any(attachment.content_type.startswith("audio") for attachment in message.attachments):
-                        transcription_response_message = await self.handle_voice_recording(message=message,
+                        transcription_response_messages = await self.handle_voice_recording(message=message,
                                                                                            responder=message_responder)
-                        messages_to_upsert.append(transcription_response_message)
 
-                        response_messages = await self.handle_text_message(message=transcription_response_message)
+
+                        transcription_text = ""
+                        for message in transcription_response_messages:
+                            messages_to_upsert.append(message)
+                            transcription_text += message.content
+
+                        response_messages = await self.handle_text_message(message=transcription_response_messages[-1],
+                                                                           respond_to_this_text=transcription_text)
                 else:
                     # HANDLE TEXT MESSAGE
-                    response_messages = await self.handle_text_message(message=message)
+                    response_messages = await self.handle_text_message(message=message,
+                                                                       respond_to_this_text=message.content)
 
                 messages_to_upsert.extend(response_messages)
 
             except Exception as e:
-                error_message = f"An error occurred: {str(e)}"
+                error_message = f"Error message: {str(e)}"
                 logger.exception(error_message)
-                await message.reply(f"{ERROR_MESSAGE_REPLY_PREFIX_TEXT} \n >  {error_message}")
+                await messages_to_upsert[-1].reply(f"{ERROR_MESSAGE_REPLY_PREFIX_TEXT} \n >  {error_message}")
 
         await self._database_operations.upsert_messages(messages=messages_to_upsert)
 
     async def handle_text_message(self,
                                   message: discord.Message,
+                                  respond_to_this_text: str,
                                   ) -> List[discord.Message]:
 
         chat_request = ChatRequest.from_discord_message(message=message,
-                                                        database_name=self._database_name)
+                                                        database_name=self._database_name,
+                                                        content=respond_to_this_text)
 
         updater = DiscordMessageResponder()
         await updater.initialize_reply(message)
@@ -114,14 +124,14 @@ class DiscordBot(discord.Bot):
             return updater.reply_messages
 
         except Exception as e:
-            await updater.update_reply(f"Error while streaming reply: \n >  {e}")
+            await updater.update_reply(f"  --  \n!!!\n> `Oh no! An error while streaming reply...`")
             raise
 
     async def handle_voice_recording(self,
                                      message: discord.Message,
                                      responder: DiscordMessageResponder):
         logger.info(f"Received voice memo from user: {message.author}")
-        reply_message_content = f"Transcribing audio from user `{message.author}`..."
+        reply_message_content = f"Transcribing audio from user `{message.author}`...\n\n"
         await responder.initialize_reply(message=message,
                                          initial_message_content=reply_message_content)
         for attachment in message.attachments:
@@ -130,12 +140,14 @@ class DiscordBot(discord.Bot):
 
                 response = await self._api_client.send_request_to_api(endpoint_name=VOICE_TO_TEXT_ENDPOINT,
                                                                       data=voice_to_text_request.dict())
-                reply_message_content += f"\n > File URL: {attachment.url}\n" \
-                                         f"Transcribed Text:\n" \
-                                         f"> {response['text']}"
+
+                reply_message_content += f"Transcribed Text:\n" \
+                                         f"> {response['text']}\n\n" \
+                                         f"File URL:{attachment.url}\n\n"
+
                 await responder.update_reply(token=reply_message_content)
 
                 logger.info(f"VoiceToTextResponse payload received: \n {response}\n"
                             f"Successfully sent voice to text request payload to API!")
 
-        return responder.reply_message
+        return responder.reply_messages

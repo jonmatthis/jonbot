@@ -1,5 +1,6 @@
 from typing import Literal, List, Dict, Any
 
+from langchain import PromptTemplate
 from pydantic import BaseModel
 
 from jonbot import get_logger
@@ -51,8 +52,10 @@ class ContextMemoryDocumentRequest(BaseModel):
     @classmethod
     def build_get_request(cls,
                           context_route: ContextRoute,
-                          database_name: str):
-        return cls(data=ContextMemoryDocument.build_empty(context_route=context_route),
+                          database_name: str,
+                          summary_prompt: PromptTemplate):
+        return cls(data=ContextMemoryDocument.build_empty(context_route=context_route,
+                                                          summary_prompt=summary_prompt),
                    database_name=database_name,
                    query=context_route.as_query,
                    request_type="get")

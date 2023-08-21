@@ -33,8 +33,10 @@ def register_api_routes(app: FastAPI,
 
     @app.post(VOICE_TO_TEXT_ENDPOINT, response_model=VoiceToTextResponse)
     async def voice_to_text_endpoint(voice_to_text_request: VoiceToTextRequest) -> VoiceToTextResponse:
-        transcript_text = await controller.transcribe_audio(voice_to_text_request=voice_to_text_request)
-        return VoiceToTextResponse(text=transcript_text)
+        response = await controller.transcribe_audio(voice_to_text_request=voice_to_text_request)
+        if response is None:
+            return VoiceToTextResponse(success=False)
+        return response
 
     @app.post(CALCULATE_MEMORY_ENDPOINT, response_model=ContextMemoryDocument)
     async def calculate_memory_endpoint(calculate_memory_request: CalculateMemoryRequest) -> ContextMemoryDocument:

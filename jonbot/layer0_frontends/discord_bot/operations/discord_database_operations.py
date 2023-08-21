@@ -20,7 +20,6 @@ class DiscordDatabaseOperations:
     async def upsert_messages(self,
                               messages: List[discord.Message]) -> bool:
         try:
-
             documents = [await DiscordMessageDocument.from_discord_message(message) for message in messages]
 
             request = UpsertDiscordMessagesRequest.from_discord_message_documents(documents=documents,
