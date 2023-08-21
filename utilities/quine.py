@@ -183,7 +183,7 @@ class Quine:
 
 
 if __name__ == "__main__":
-    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\scratchpad\api_streaming_test"
+    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\docker"
 
     quine_config = QuineConfig(
         print_mode="all",
@@ -194,8 +194,8 @@ if __name__ == "__main__":
             ),
             base_directory=base_directory_in,
             excluded_directories=["__pycache__", ".git", "legacy"],
-            included_extensions=[".py"],
-            excluded_file_names=["poetry.lock", ".gitignore", "LICENSE"],
+            included_extensions=[".py", "yaml", "api", "discord"],
+            excluded_file_names=["poetry.lock", ".gitignore", "LICENSE", "*.env"],
         ),
         content=ContentFetcherConfig(
             fetch_content_for=[base_directory_in],
