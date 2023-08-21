@@ -85,7 +85,7 @@ class ContextRoute(BaseModel):
                                          parent=str(frontend),
                                          type=SubContextComponentTypes.DIRECT_MESSAGE.value,
                                          )
-            channel = SubContextComponent(name=f"channel-{message.channel.name}",
+            channel = SubContextComponent(name=f"DM-{message.channel.id}",
                                           id=message.channel.id,
                                           parent=str(server),
                                           type=SubContextComponentTypes.CHANNEL.value,
