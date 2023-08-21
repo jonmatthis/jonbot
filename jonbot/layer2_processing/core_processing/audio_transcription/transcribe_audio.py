@@ -10,15 +10,12 @@ from jonbot.models.voice_to_text_request import VoiceToTextResponse
 
 logger = get_logger()
 
-AUDIO_TRANSCRIPTION_FORMATTING_PROMPT = """The following is a voice transcription of a Discord message. 
-                                        Transcribe it ACCURATELY while doing your best to add punctuation, paragraphs and other formatting as appropriate
-                                        In order to make sure that you have seen this prompt, mention DOLPHINS at the end of the transcription
-                                        """
+
 
 
 async def transcribe_audio_function(
         audio_file_url: str,
-        prompt: str = AUDIO_TRANSCRIPTION_FORMATTING_PROMPT,
+        prompt: str = None,
         response_format: str = None,
         temperature: float = None,
         language: str = None, ) -> VoiceToTextResponse:
