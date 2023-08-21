@@ -56,6 +56,7 @@ class MyDiscordBot(discord.Bot):
     @discord.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
 
+
         if not allowed_to_reply(message):
             return
 

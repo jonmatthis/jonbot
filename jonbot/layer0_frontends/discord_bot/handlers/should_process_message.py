@@ -9,7 +9,7 @@ FINISHED_VOICE_RECORDING_PREFIX = "Finished! Recorded audio for"
 TRANSCRIBED_AUDIO_PREFIX = "Transcribed audio for"
 RESPONSE_INCOMING_TEXT = "response incoming..."
 ERROR_MESSAGE_REPLY_PREFIX_TEXT =  f"Sorry, an error occurred while processing your request"
-
+IGNORE_PREFIX = "~" # If a message starts with this, the bot will ignore it
 
 
 def this_message_is_from_a_bot(message: discord.Message) -> bool:
@@ -22,11 +22,20 @@ def check_if_transcribed_audio_message(message: discord.Message) -> bool:
             message.content.startswith(FINISHED_VOICE_RECORDING_PREFIX))
 
 
+def message_starts_with_ignore_prefix(message:discord.Message) -> bool:
+    return message.content.startswith(IGNORE_PREFIX)
+
+
+
 def should_reply(message: discord.Message,
                  bot_user_name: str) -> bool:
 
     if not allowed_to_reply(message):
         logger.debug(f"Message `{message.content}` was not handled by the bot {bot_user_name} (reason: not allowed to reply)")
+        return False
+
+    if message_starts_with_ignore_prefix(message):
+        logger.debug(f"Message `{message.content}` was not handled by the bot {bot_user_name} (reason: starts with ignore prefix{IGNORE_PREFIX})")
         return False
 
     if this_message_is_from_a_bot(message):
