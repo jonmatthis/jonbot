@@ -3,6 +3,8 @@ from enum import Enum
 
 import discord
 
+from jonbot.layer0_frontends.discord_bot.handlers.should_process_message import FINISHED_VOICE_RECORDING_PREFIX
+
 
 class Sinks(Enum):
     mp3 = discord.sinks.MP3Sink()
@@ -17,10 +19,12 @@ class Sinks(Enum):
 
 class VoiceChannelCog(discord.Cog):
 
-    def __init__(self):
+    def __init__(self,
+                 bot : discord.Bot):
         super().__init__()
         self.voice_client_connections = {}
         self.status_message = {}
+        self.bot = bot
 
     @discord.slash_command(name="join", description="Commands related to voice channels")
     async def join(self, ctx: discord.ApplicationContext):
@@ -102,4 +106,6 @@ class VoiceChannelCog(discord.Cog):
             discord.File(audio.file, f"{user_id}.{sink.encoding}")
             for user_id, audio in sink.audio_data.items()
         ]
-        await channel.send(f"{VOICE_RECORDING_PREFIX} {' '.join(recorded_users)}.", files=files)
+        reply_message = await channel.send(f"{FINISHED_VOICE_RECORDING_PREFIX} {' '.join(recorded_users)}.", files=files)
+
+        await self.bot.handle_message(message = reply_message)

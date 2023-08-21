@@ -29,7 +29,7 @@ async def wait_a_bit(duration: float = 1):
     await asyncio.sleep(duration)
 
 
-class DiscordBot(discord.Bot):
+class MyDiscordBot(discord.Bot):
 
     def __init__(self,
                  environment_config: DiscordEnvironmentConfig,
@@ -44,7 +44,7 @@ class DiscordBot(discord.Bot):
                                                               database_name=self._database_name
                                                               )
         self.add_cog(ServerScraperCog(database_operations=self._database_operations))
-        self.add_cog(VoiceChannelCog())
+        self.add_cog(VoiceChannelCog(bot=self))
         self.add_cog(MemoryScraperCog(database_name=self._database_name,
                                       api_client=api_client))
 

@@ -5,7 +5,7 @@ from jonbot.models.discord_stuff.environment_config.load_discord_config import g
 
 logger = get_logger()
 
-VOICE_RECORDING_PREFIX = "Finished! Recorded audio for"
+FINISHED_VOICE_RECORDING_PREFIX = "Finished! Recorded audio for"
 TRANSCRIBED_AUDIO_PREFIX = "Transcribed audio for"
 RESPONSE_INCOMING_TEXT = "response incoming..."
 ERROR_MESSAGE_REPLY_PREFIX_TEXT =  f"Sorry, an error occurred while processing your request"
@@ -19,7 +19,7 @@ def this_message_is_from_a_bot(message: discord.Message) -> bool:
 
 def check_if_transcribed_audio_message(message: discord.Message) -> bool:
     return (message.content.startswith(TRANSCRIBED_AUDIO_PREFIX) or
-            message.content.startswith(VOICE_RECORDING_PREFIX))
+            message.content.startswith(FINISHED_VOICE_RECORDING_PREFIX))
 
 
 def should_reply(message: discord.Message,
