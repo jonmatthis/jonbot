@@ -64,11 +64,15 @@ class ChatbotConversationMemory(ConversationSummaryBufferMemory):
     def _load_messages_from_message_buffer(self, buffer: List[Dict[str, Any]]) -> List[Union[HumanMessage, AIMessage]]:
         messages = []
         try:
-            for message_dict in buffer:
-                if message_dict["additional_kwargs"]["type"] == "human":
-                    messages.append(HumanMessage(**message_dict))
-                elif message_dict["additional_kwargs"]["type"] == "ai":
-                    messages.append(AIMessage(**message_dict))
+            for message in buffer:
+                if message.additional_kwargs["type"] == "human":
+                    if isinstance(message, AIMessage):
+                        logger.warning(f"Message type is AIMessage but type is `human`: {message}")
+                    messages.append(message)
+                elif message.additional_kwargs["type"] == "ai":
+                    if isinstance(message, HumanMessage):
+                        logger.warning(f"Message type is HumanMessage but type is `ai`: {message}")
+                    messages.append(AIMessage(**message.dict()))
             self.chat_memory.messages = messages
         except Exception as e:
             logger.exception(e)
