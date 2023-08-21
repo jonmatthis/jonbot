@@ -4,7 +4,7 @@ from typing import Union
 import discord
 
 from jonbot import get_logger
-from jonbot.layer2_processing.controller.entrypoint_functions.backend_database_operations import get_message_history_document
+from jonbot.layer2_processing.backend_database_operator.backend_database_operator import get_message_history_document
 from jonbot.models.conversation_models import ChatRequest, MessageHistory
 from jonbot.models.database_request_response_models import MessageHistoryRequest
 from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument

@@ -7,7 +7,7 @@ logger = get_logger()
 MONGO_DATABASE_MANAGER = None
 
 
-async def get_or_create_mongo_database_manager() -> MongoDatabaseManager:
+async def get_mongo_database_manager() -> MongoDatabaseManager:
     global MONGO_DATABASE_MANAGER
     if MONGO_DATABASE_MANAGER is None:
         logger.info("Creating new MongoDatabaseManager instance")

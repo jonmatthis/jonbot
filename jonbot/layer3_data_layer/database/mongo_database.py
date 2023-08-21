@@ -7,7 +7,7 @@ from pymongo import UpdateOne, DESCENDING
 from jonbot import get_logger
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.conversation_models import MessageHistory, ChatMessage
-from jonbot.models.database_request_response_models import ContextMemoryRequest, UpsertDiscordMessagesRequest, \
+from jonbot.models.database_request_response_models import ContextMemoryDocumentRequest, UpsertDiscordMessagesRequest, \
     MessageHistoryRequest
 from jonbot.models.discord_stuff.discord_id import DiscordUserID
 from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
@@ -83,7 +83,7 @@ class MongoDatabaseManager:
                                        )
 
     async def upsert_context_memory(self,
-                                    request: ContextMemoryRequest) -> bool:
+                                    request: ContextMemoryDocumentRequest) -> bool:
 
         entries = [{"data": request.data.dict(),
                     "query": request.query}]
@@ -110,7 +110,7 @@ class MongoDatabaseManager:
         return message_history
 
     async def get_context_memory(self,
-                                 request: ContextMemoryRequest) -> Optional[ContextMemoryDocument]:
+                                 request: ContextMemoryDocumentRequest) -> Optional[ContextMemoryDocument]:
 
         messages_collection = self._get_collection(request.database_name, CONTEXT_MEMORIES_COLLECTION_NAME)
         query = {**request.query}

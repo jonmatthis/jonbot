@@ -10,6 +10,9 @@ from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
 
 logger = get_logger()
 
+class MessageHistoryResponse(BaseModel):
+    success: bool
+    data: List[DiscordMessageDocument] = None
 
 class MessageHistoryRequest(BaseModel):
     context_route: ContextRoute
@@ -25,26 +28,30 @@ class MessageHistoryRequest(BaseModel):
     def query(self):
         return self.context_route.as_query
 
+class ContextMemoryDocumentResponse(BaseModel):
+    success: bool
+    data: ContextMemoryDocument = None
 
-class ContextMemoryRequest(BaseModel):
+
+class ContextMemoryDocumentRequest(BaseModel):
     data: ContextMemoryDocument
     database_name: str
     query: Dict[str, Any]
     request_type: Literal["upsert", "get"] = None
 
     @classmethod
-    def build_upsert_request_from_context_memory_document(cls,
-                                                          document: ContextMemoryDocument,
-                                                          database_name: str):
+    def build_upsert_request(cls,
+                             document: ContextMemoryDocument,
+                             database_name: str):
         return cls(data=document,
                    database_name=database_name,
                    query=document.query,
                    request_type="upsert" if document.message_buffer is None else "get")
 
     @classmethod
-    def build_get_request_from_context_route(cls,
-                                             context_route: ContextRoute,
-                                             database_name: str):
+    def build_get_request(cls,
+                          context_route: ContextRoute,
+                          database_name: str):
         return cls(data=ContextMemoryDocument.build_empty(context_route=context_route),
                    database_name=database_name,
                    query=context_route.as_query,

@@ -1,12 +1,13 @@
 from typing import AsyncIterable, Dict, Optional
 
 from jonbot import get_logger
-from jonbot.layer2_processing.controller.entrypoint_functions.backend_database_operations import \
+from jonbot.layer2_processing.backend_database_operator.backend_database_operator import \
     BackendDatabaseOperations
-from jonbot.layer2_processing.controller.entrypoint_functions.get_chatbot_llm_for_chat_request import \
-    get_chatbot_llm_chain_for_chat_request
 from jonbot.layer2_processing.core_processing.ai.chatbot_llm_chain.chatbot_llm_chain import ChatbotLLMChain
-from jonbot.layer2_processing.core_processing.ai.chatbot_llm_chain.components.memory.memory_data_calculator import MemoryDataCalculator
+# from jonbot.layer2_processing.core_processing.ai.chatbot_llm_chain.components.memory.memory_data_calculator import \
+#     MemoryDataCalculator
+from jonbot.layer2_processing.core_processing.ai.chatbot_llm_chain.get_chatbot_llm_chain import \
+    get_chatbot_llm_chain
 from jonbot.layer2_processing.core_processing.audio_transcription.transcribe_audio import transcribe_audio_function
 from jonbot.models.calculate_memory_request import CalculateMemoryRequest
 from jonbot.models.context_memory_document import ContextMemoryDocument
@@ -28,9 +29,9 @@ class Controller:
 
     async def get_response_from_chatbot(self, chat_request: ChatRequest) -> AsyncIterable[str]:
         logger.info(f"Received chat stream request: {chat_request}")
-        llm_chain = await get_chatbot_llm_chain_for_chat_request(chat_request=chat_request,
-                                                                 existing_chatbot_llm_chains=self.chatbot_llm_chains,
-                                                                 database_operations=self.database_operations)
+        llm_chain = await get_chatbot_llm_chain(chat_request=chat_request,
+                                                existing_chatbot_llm_chains=self.chatbot_llm_chains,
+                                                database_operations=self.database_operations)
         logger.debug(f"Grabbed llm_chain: {llm_chain}")
         async for response in llm_chain.execute(message_string=chat_request.chat_input.message):
             logger.trace(f"Yielding response: {response}")
@@ -41,20 +42,21 @@ class Controller:
     async def calculate_memory(self,
                                calculate_memory_request: CalculateMemoryRequest) -> Optional[
         ContextMemoryDocument]:
-        try:
-            memory_calculator = await MemoryDataCalculator.from_calculate_memory_request(
-                calculate_memory_request=calculate_memory_request,
-                database_operations=self.database_operations)
-
-            if memory_calculator is None:
-                logger.exception(
-                    f"`MemoryCalculator` returned  `None` for context route: {calculate_memory_request.context_route.as_flat_dict}")
-                return
-            else:
-                context_memory_document = await memory_calculator.calculate(upsert=True)
-        except Exception as e:
-            logger.error(
-                f"Error occurred while calculating memory from context route: {calculate_memory_request.context_route.as_flat_dict}. Error: {e}")
-            raise
-
-        return context_memory_document
+        pass
+        # try:
+        #     memory_calculator = await MemoryDataCalculator.from_calculate_memory_request(
+        #         calculate_memory_request=calculate_memory_request,
+        #         database_operations=self.database_operations)
+        #
+        #     if memory_calculator is None:
+        #         logger.exception(
+        #             f"`MemoryCalculator` returned  `None` for context route: {calculate_memory_request.context_route.as_flat_dict}")
+        #         return
+        #     else:
+        #         context_memory_document = await memory_calculator.calculate(upsert=True)
+        # except Exception as e:
+        #     logger.error(
+        #         f"Error occurred while calculating memory from context route: {calculate_memory_request.context_route.as_flat_dict}. Error: {e}")
+        #     raise
+        #
+        # return context_memory_document

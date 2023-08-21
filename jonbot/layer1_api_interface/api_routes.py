@@ -2,9 +2,9 @@ from fastapi import FastAPI
 from starlette.responses import StreamingResponse
 
 from jonbot import get_logger
-from jonbot.layer2_processing.controller.controller import Controller
-from jonbot.layer2_processing.controller.entrypoint_functions.backend_database_operations import \
+from jonbot.layer2_processing.backend_database_operator.backend_database_operator import \
     BackendDatabaseOperations
+from jonbot.layer2_processing.controller.controller import Controller
 from jonbot.models.calculate_memory_request import CalculateMemoryRequest
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.conversation_models import ChatRequest

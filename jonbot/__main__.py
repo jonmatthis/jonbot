@@ -24,7 +24,7 @@ def run_services():
     SERVICES = BASE_SERVICES.copy()
     for bot_name in BOT_NICK_NAMES:
         SERVICES.append({"func": run_discord_bot, "kwargs": {"bot_name_or_index": bot_name}})
-        SERVICES.append({"func": run_telegram_bot_sync, "kwargs": {"bot_name_or_index": bot_name}})
+        # SERVICES.append({"func": run_telegram_bot_sync, "kwargs": {"bot_name_or_index": bot_name}})
 
     with ProcessPoolExecutor() as executor:
         futures = [executor.submit(service["func"], **service.get("kwargs", {})) for service in SERVICES]
