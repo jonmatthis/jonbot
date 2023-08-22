@@ -103,7 +103,7 @@ class MyDiscordBot(discord.Bot):
         await message_responder.initialize(message=message)
 
         async def callback(token: str, responder: DiscordMessageResponder = message_responder):
-            logger.trace(f"Frontend received token: `{repr(token)}`")
+            logger.trace(f"FRONTEND received token: `{repr(token)}`")
             await responder.add_token_to_queue(token=token)
 
         try:
