@@ -116,13 +116,13 @@ class LoggerBuilder:
 def configure_logging(level: LogLevel = LogLevel.INFO):
     def trace(self, message, *args, **kws):
         if self.isEnabledFor(LogLevel.TRACE.value):
-            self._log(LogLevel.TRACE.value, message, args, **kws)
+            self._log(LogLevel.TRACE.value, message, args, **kws, stacklevel=2)
 
     logging.Logger.trace = trace
 
     def success(self, message, *args, **kws):
         if self.isEnabledFor(LogLevel.SUCCESS.value):
-            self._log(LogLevel.SUCCESS.value, message, args, **kws)
+            self._log(LogLevel.SUCCESS.value, message, args, **kws, stacklevel=2)
 
     logging.Logger.success = success
 

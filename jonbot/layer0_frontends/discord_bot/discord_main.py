@@ -29,7 +29,7 @@ async def run_discord_bot_async(bot_name_or_index: Union[str, int] = 0):
     await discord_bot.start(discord_environment_config.DISCORD_TOKEN)
 
 
-def run_discord_bot(bot_name_or_index: Union[str, int] = 0):
+def run_discord_bot(bot_name_or_index: Union[str, int]):
     loop = asyncio.get_event_loop()
     loop.run_until_complete(run_discord_bot_async(bot_name_or_index=bot_name_or_index))
 
