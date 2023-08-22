@@ -20,7 +20,17 @@ class LogLevel(Enum):
 logging.addLevelName(LogLevel.TRACE.value, "TRACE")
 logging.addLevelName(LogLevel.SUCCESS.value, "SUCCESS")
 
-previous_timestamp = datetime.now().timestamp()
+class DeltaTimeFilter(logging.Filter):
+    def __init__(self):
+        super().__init__()
+        self.prev_time = datetime.now().timestamp()
+
+    def filter(self, record):
+        current_time = datetime.now().timestamp()
+        delta = current_time - self.prev_time
+        record.delta_t = f"Δt:{delta:.6f}s"
+        self.prev_time = current_time
+        return True
 
 
 class CustomFormatter(logging.Formatter):
@@ -39,7 +49,7 @@ class CustomFormatter(logging.Formatter):
 
 class LoggerBuilder:
     DEFAULT_LOGGING = {"version": 1, "disable_existing_loggers": False}
-    format_string = ("[%(asctime)s] [%(levelname)8s] [%(name)s] [%(module)s:%(funcName)s():%(lineno)s] "
+    format_string = ("[%(asctime)s] [%(delta_t)s] [%(levelname)8s] [%(name)s] [%(module)s:%(funcName)s():%(lineno)s] "
                      "[PID:%(process)d TID:%(thread)d %(threadName)s ] %(message)s")
 
     def __init__(self, level: LogLevel):
@@ -56,6 +66,7 @@ class LoggerBuilder:
         file_handler = logging.FileHandler(get_log_file_path(), encoding="utf-8")
         file_handler.setLevel(LogLevel.TRACE.value)
         file_handler.setFormatter(self.default_logging_formatter)
+        file_handler.addFilter(DeltaTimeFilter())
         return file_handler
 
     class ColoredConsoleHandler(logging.StreamHandler):
@@ -69,36 +80,16 @@ class LoggerBuilder:
             "CRITICAL": "\033[41m",  # Background Red
         }
 
-        def _get_delta_time(self, record):
-            global previous_timestamp
-            created = record.created
-            if isinstance(created, float) or isinstance(created, int):
-                created_timestamp = created
-            else:
-                raise TypeError("Invalid type for 'created'")
-
-            elapsed_time = (created_timestamp - previous_timestamp)
-            delta_time = f"(Δt:{elapsed_time:.6f}s)"
-            previous_timestamp = created_timestamp
-            return delta_time
-
-        def _update_timestamp(self, formatted_record: str, delta_time: str):
-            og_timestamp = formatted_record.split("]")[0]
-            timestamp_w_delta_time = og_timestamp + delta_time
-            formatted_record = formatted_record.replace(og_timestamp, timestamp_w_delta_time)
-            return formatted_record
-
         def emit(self, record):
             color_code = self.COLORS.get(record.levelname, "\033[0m")
             formatted_record = color_code + self.format(record) + "\033[0m"
-            delta_time = self._get_delta_time(record)
-            formatted_record = self._update_timestamp(formatted_record, delta_time)
             print(formatted_record)
 
     def build_console_handler(self):
         console_handler = self.ColoredConsoleHandler(stream=sys.stdout)
         console_handler.setLevel(LogLevel.TRACE.value)
         console_handler.setFormatter(self.default_logging_formatter)
+        console_handler.addFilter(DeltaTimeFilter())
         return console_handler
 
     def configure(self):
