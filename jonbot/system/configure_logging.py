@@ -83,6 +83,13 @@ class LoggerBuilder:
         def emit(self, record):
             color_code = self.COLORS.get(record.levelname, "\033[0m")
             formatted_record = color_code + self.format(record) + "\033[0m"
+            pid_color = get_hashed_color(record.process)
+            tid_color = get_hashed_color(record.thread)
+            formatted_record = formatted_record.replace(f"PID:{record.process}",
+                                                        pid_color + f"PID:{record.process}" + "\033[0m")
+            formatted_record = formatted_record.replace(f"TID:{record.thread}",
+                                                        tid_color + f"TID:{record.thread}" + "\033[0m")
+
             print(formatted_record)
 
     def build_console_handler(self):
@@ -103,6 +110,18 @@ class LoggerBuilder:
             logger = get_logger()
             logger.info("Logging already configured")
 
+def ensure_min_brightness(value, threshold=50):
+    """Ensure the RGB value is above a certain threshold."""
+    return max(value, threshold)
+
+def get_hashed_color(value):
+    """Generate a consistent random color for the given value."""
+    # Use modulo to ensure it's within the range of normal terminal colors.
+    hashed = hash(value) % 0xFFFFFF  # Keep within RGB 24-bit color
+    red = ensure_min_brightness(hashed >> 16 & 255)
+    green = ensure_min_brightness(hashed >> 8 & 255)
+    blue = ensure_min_brightness(hashed & 255)
+    return "\033[38;2;{};{};{}m".format(red, green, blue)
 
 def configure_logging(level: LogLevel = LogLevel.INFO):
     def trace(self, message, *args, **kws):

@@ -14,4 +14,4 @@ RUN apt-get update && \
 
 EXPOSE 8091
 
-CMD ["python", "-m", "jonbot.layer1_api_interface.api_main"]
+CMD ["python", "-m", "jonbot.__main__"]
