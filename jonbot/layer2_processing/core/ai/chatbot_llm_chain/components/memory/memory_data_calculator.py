@@ -6,7 +6,7 @@
 # from jonbot import get_logger
 # from jonbot.layer2_processing.backend_database_operator.backend_database_operator import \
 #     BackendDatabaseOperations
-# from jonbot.layer2_processing.core_processing.ai.chatbot_llm_chain.components.memory.conversation_memory.conversation_memory import \
+# from jonbot.layer2_processing.core.ai.chatbot_llm_chain.components.memory.conversation_memory.conversation_memory import \
 #     ChatbotConversationMemory
 # from jonbot.models.calculate_memory_request import CalculateMemoryRequest
 # from jonbot.models.context_memory_document import ContextMemoryDocument
