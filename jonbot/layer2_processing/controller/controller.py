@@ -3,12 +3,12 @@ from typing import AsyncIterable, Dict, Optional
 from jonbot import get_logger
 from jonbot.layer2_processing.backend_database_operator.backend_database_operator import \
     BackendDatabaseOperations
-from jonbot.layer2_processing.core.ai.chatbot_llm_chain.chatbot_llm_chain import ChatbotLLMChain
+from jonbot.layer2_processing.ai import ChatbotLLMChain
 # from jonbot.layer2_processing.core.ai.chatbot_llm_chain.components.memory.memory_data_calculator import \
 #     MemoryDataCalculator
-from jonbot.layer2_processing.core.ai.chatbot_llm_chain.get_chatbot_llm_chain import \
+from jonbot.layer2_processing.ai.chatbot_llm_chain.get_chatbot_llm_chain import \
     get_chatbot_llm_chain
-from jonbot.layer2_processing.core.audio_transcription.transcribe_audio import transcribe_audio_function
+from jonbot.layer2_processing.ai.audio_transcription.transcribe_audio import transcribe_audio_function
 from jonbot.models.calculate_memory_request import CalculateMemoryRequest
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.conversation_models import ChatRequest

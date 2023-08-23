@@ -119,10 +119,10 @@ class MyDiscordBot(discord.Bot):
             raise
 
     async def handle_voice_recording(self,
-                                     message: discord.Message,
-                                     responder: DiscordMessageResponder):
+                                     message: discord.Message):
         logger.info(f"Received voice memo from user: {message.author}")
         reply_message_content = f"Transcribing audio from user `{message.author}`...\n\n"
+        responder = DiscordMessageResponder()
         await responder.initialize(message=message,
                                    initial_message_content=reply_message_content)
         for attachment in message.attachments:

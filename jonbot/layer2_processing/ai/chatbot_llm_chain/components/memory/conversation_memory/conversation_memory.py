@@ -5,7 +5,7 @@ from langchain.schema import HumanMessage, AIMessage
 
 from jonbot import get_logger
 from jonbot.layer2_processing.backend_database_operator.backend_database_operator import BackendDatabaseOperations
-from jonbot.layer2_processing.core.ai.chatbot_llm_chain.components.memory.conversation_memory.context_memory_handler import \
+from jonbot.layer2_processing.ai.chatbot_llm_chain.components.memory.conversation_memory.context_memory_handler import \
     ContextMemoryHandler
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.context_route import ContextRoute

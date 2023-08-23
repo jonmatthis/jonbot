@@ -49,8 +49,12 @@ class CustomFormatter(logging.Formatter):
 
 class LoggerBuilder:
     DEFAULT_LOGGING = {"version": 1, "disable_existing_loggers": False}
-    format_string = ("[%(asctime)s] [%(delta_t)s] [%(levelname)8s] [%(name)s] [%(module)s:%(funcName)s():%(lineno)s] "
-                     "[PID:%(process)d TID:%(thread)d %(threadName)s ] %(message)s")
+
+    format_string = ("[%(asctime)s] [%(delta_t)s] [%(levelname)8s] [%(name)s] "
+                     "[%(module)s:%(funcName)s():%(lineno)s] "
+                     "[PID:%(process)d:%(processName)s TID:%(thread)d:%(threadName)s ] %(message)s")
+
+
 
     def __init__(self, level: LogLevel):
         self.default_logging_formatter = CustomFormatter(
@@ -83,12 +87,14 @@ class LoggerBuilder:
         def emit(self, record):
             color_code = self.COLORS.get(record.levelname, "\033[0m")
             formatted_record = color_code + self.format(record) + "\033[0m"
+
             pid_color = get_hashed_color(record.process)
             tid_color = get_hashed_color(record.thread)
-            formatted_record = formatted_record.replace(f"PID:{record.process}",
-                                                        pid_color + f"PID:{record.process}" + "\033[0m")
-            formatted_record = formatted_record.replace(f"TID:{record.thread}",
-                                                        tid_color + f"TID:{record.thread}" + "\033[0m")
+
+            formatted_record = formatted_record.replace(f"PID:{record.process}:{record.processName}",
+                                                        pid_color + f"PID:{record.process}:{record.processName}" + "\033[0m")
+            formatted_record = formatted_record.replace(f"TID:{record.thread}:{record.threadName}",
+                                                        tid_color + f"TID:{record.thread}:{record.threadName}" + "\033[0m")
 
             print(formatted_record)
 
@@ -114,6 +120,18 @@ def ensure_min_brightness(value, threshold=50):
     """Ensure the RGB value is above a certain threshold."""
     return max(value, threshold)
 
+def ensure_not_grey(r, g, b, threshold_diff=100):
+    """Ensure that the color isn't desaturated grey by making one color component dominant."""
+    max_val = max(r, g, b)
+    if abs(r - g) < threshold_diff and abs(r - b) < threshold_diff and abs(g - b) < threshold_diff:
+        if max_val == r:
+            r = 255
+        elif max_val == g:
+            g = 255
+        else:
+            b = 255
+    return r, g, b
+
 def get_hashed_color(value):
     """Generate a consistent random color for the given value."""
     # Use modulo to ensure it's within the range of normal terminal colors.
@@ -121,7 +139,11 @@ def get_hashed_color(value):
     red = ensure_min_brightness(hashed >> 16 & 255)
     green = ensure_min_brightness(hashed >> 8 & 255)
     blue = ensure_min_brightness(hashed & 255)
+
+    red, green, blue = ensure_not_grey(red, green, blue)
+
     return "\033[38;2;{};{};{}m".format(red, green, blue)
+
 
 def configure_logging(level: LogLevel = LogLevel.INFO):
     def trace(self, message, *args, **kws):
