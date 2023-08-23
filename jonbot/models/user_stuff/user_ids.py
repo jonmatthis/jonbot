@@ -14,14 +14,19 @@ class UserID(BaseModel):
     discord_id: Optional[DiscordUserID]
     telegram_id: Optional[TelegramUserID]
 
-    def __init__(self, uuid: str,
-                 discord_id: Optional[DiscordUserID] = None,
-                 telegram_id: Optional[TelegramUserID] = None, ):
+    def __init__(
+        self,
+        uuid: str,
+        discord_id: Optional[DiscordUserID] = None,
+        telegram_id: Optional[TelegramUserID] = None,
+    ):
         super().__init__()
         self.uuid = uuid
 
         if not discord_id and not telegram_id:
-            raise ValueError("At least one of `discord_id` or `telegram_id` must be provided.")
+            raise ValueError(
+                "At least one of `discord_id` or `telegram_id` must be provided."
+            )
 
         self.discord_id = discord_id if discord_id else DiscordUserID()
         self.telegram_id = telegram_id if telegram_id else TelegramUserID()

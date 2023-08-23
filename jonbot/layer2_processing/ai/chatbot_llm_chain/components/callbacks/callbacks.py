@@ -15,14 +15,18 @@ class AsyncQueueStuffingCallbackHandler(AsyncCallbackHandler):
 
     async def on_llm_new_token(self, token: str, *args, **kwargs) -> None:
         """Run when a new token is generated."""
-        logger.trace(f"Stuffing new token into queue: {token} - Queue size: {self.queue.qsize()}")
+        logger.trace(
+            f"Stuffing new token into queue: {token} - Queue size: {self.queue.qsize()}"
+        )
         await self.queue.put(token)
 
     async def get_next_token(self) -> Union[str, None]:
         logging.trace(f"Getting next token from queue (size: {self.queue.qsize()})")
         if not self.queue.empty():
             token = await self.queue.get()
-            logger.trace(f"Returning next token (`{token}`) from queue (size: {self.queue.qsize()})")
+            logger.trace(
+                f"Returning next token (`{token}`) from queue (size: {self.queue.qsize()})"
+            )
             return token
         else:
             logger.trace(f"Queue is empty, returning None")
@@ -31,7 +35,8 @@ class AsyncQueueStuffingCallbackHandler(AsyncCallbackHandler):
     async def on_llm_end(self, *args, **kwargs) -> None:
         """Run when chain ends running."""
         logger.trace(
-            f"LLM ended, stuffing stop signal (self.stop_signal: {self.stop_signal}) into queue (size: {self.queue.qsize()})")
+            f"LLM ended, stuffing stop signal (self.stop_signal: {self.stop_signal}) into queue (size: {self.queue.qsize()})"
+        )
         await self.queue.put(self.stop_signal)
 
 

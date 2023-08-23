@@ -10,7 +10,7 @@ from jonbot.system.environment_variables import URL_PREFIX, HOST_NAME
 class ApiRoute(BaseModel):
     host_name: str = HOST_NAME
     url_prefix: str = URL_PREFIX
-    port_number: int = int(os.getenv('PORT_NUMBER', '8080'))
+    port_number: int = int(os.getenv("PORT_NUMBER", "8080"))
     endpoint: Optional[str]
 
     @property
@@ -31,7 +31,7 @@ class ApiRoute(BaseModel):
 
     @validator("url_prefix")
     def validate_url_prefix(cls, v):
-        if v not in ['http', 'https']:
+        if v not in ["http", "https"]:
             raise ValueError("url_prefix should be either 'http' or 'https'")
         return v
 

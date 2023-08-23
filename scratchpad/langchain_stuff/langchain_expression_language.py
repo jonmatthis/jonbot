@@ -10,6 +10,7 @@ from langchain.schema.runnable import RunnableMap
 
 async def create_chain_with_expression_language():
     from dotenv import load_dotenv
+
     load_dotenv()
 
     callback = AsyncIteratorCallbackHandler()
@@ -18,17 +19,22 @@ async def create_chain_with_expression_language():
         verbose=True,
         callbacks=[callback],
     )
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", "You are a helpful chatbot"),
-        MessagesPlaceholder(variable_name="history"),
-        ("human", "{input}")
-    ])
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", "You are a helpful chatbot"),
+            MessagesPlaceholder(variable_name="history"),
+            ("human", "{input}"),
+        ]
+    )
     memory = ConversationBufferMemory(return_messages=True)
     memory.load_memory_variables({})
-    memory_input_mapping = RunnableMap({"input": lambda x: x["input"],
-                                        "memory": memory.load_memory_variables})
-    mapping = {"input": lambda x: x["input"],
-               "history": lambda x: x["memory"]["history"]}
+    memory_input_mapping = RunnableMap(
+        {"input": lambda x: x["input"], "memory": memory.load_memory_variables}
+    )
+    mapping = {
+        "input": lambda x: x["input"],
+        "history": lambda x: x["memory"]["history"],
+    }
     memory_i_guess = memory_input_mapping | mapping
     chain = memory_i_guess | prompt | model
     inputs = {"input": "hi im bob"}
@@ -36,8 +42,8 @@ async def create_chain_with_expression_language():
     print(f"Here that response frnd: {response}")
 
 
-if __name__ == '__main__':
-    if sys.platform == 'win32':
+if __name__ == "__main__":
+    if sys.platform == "win32":
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     loop = asyncio.get_event_loop()

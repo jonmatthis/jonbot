@@ -47,9 +47,10 @@ async def send_message_expression_chain(message: str) -> AsyncIterable[str]:
 
 
 def make_chain(callback: AsyncIteratorCallbackHandler) -> LLMChain:
-    prompt = PromptTemplate(template="tell me a joke about {topic}",
-                            input_variables=["topic"],
-                            )
+    prompt = PromptTemplate(
+        template="tell me a joke about {topic}",
+        input_variables=["topic"],
+    )
 
     llm = ChatOpenAI(
         streaming=True,
@@ -75,9 +76,8 @@ async def send_message_trad_chain(message: str) -> AsyncIterable[str]:
             event.set()
 
     # Begin a task that runs in the background.
-    task = asyncio.create_task(wrap_done(
-        chain.agenerate(input_list=[{"topic": message}]),
-        callback.done),
+    task = asyncio.create_task(
+        wrap_done(chain.agenerate(input_list=[{"topic": message}]), callback.done),
     )
 
     async for token in callback.aiter():
@@ -90,17 +90,22 @@ async def send_message_trad_chain(message: str) -> AsyncIterable[str]:
 
 class StreamRequest(BaseModel):
     """Request body for streaming."""
+
     message: str
 
 
 @app.post("/stream_trad")
 def stream(body: StreamRequest):
-    return StreamingResponse(send_message_trad_chain(body.message), media_type="text/event-stream")
+    return StreamingResponse(
+        send_message_trad_chain(body.message), media_type="text/event-stream"
+    )
 
 
 @app.post("/stream_expression")
 def stream(body: StreamRequest):
-    return StreamingResponse(send_message_expression_chain(body.message), media_type="text/event-stream")
+    return StreamingResponse(
+        send_message_expression_chain(body.message), media_type="text/event-stream"
+    )
 
 
 if __name__ == "__main__":

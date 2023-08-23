@@ -15,9 +15,13 @@ logger = logging.getLogger(__name__)
 
 ## MODEL DEFINITIONS
 class ContentFetcherConfig(BaseModel):
-    fetch_content_for: List[str] = Field([], description="List of files/folders to fetch content for")
-    recursion_depth: int = Field(0,
-                                 description="0 means it won't go into subdirectories, -1 means it will go into all subdirectories")
+    fetch_content_for: List[str] = Field(
+        [], description="List of files/folders to fetch content for"
+    )
+    recursion_depth: int = Field(
+        0,
+        description="0 means it won't go into subdirectories, -1 means it will go into all subdirectories",
+    )
 
 
 class StructureFetcherConfig(BaseModel):
@@ -49,46 +53,57 @@ class StructureFetcher:
     def _parse_file(self, file_path: str) -> dict:
         # Check if the file is in the list of files/folders to fetch content for
         if file_path not in self.config.content.fetch_content_for and not any(
-                os.path.commonpath([file_path, content_path]) == content_path for content_path in
-                self.config.content.fetch_content_for
+            os.path.commonpath([file_path, content_path]) == content_path
+            for content_path in self.config.content.fetch_content_for
         ):
-            return {'functions': [], 'classes': [], 'constants': []}
+            return {"functions": [], "classes": [], "constants": []}
 
         logger.debug(f"Reading file: {file_path}")  # TRACE level log
-        with open(file_path, 'r', encoding='utf-8') as file:
+        with open(file_path, "r", encoding="utf-8") as file:
             node = ast.parse(file.read())
 
-        entities = {
-            'functions': [],
-            'classes': [],
-            'constants': []
-        }
+        entities = {"functions": [], "classes": [], "constants": []}
 
         for item in node.body:
             if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                entities['functions'].append(f"{item.name}({','.join([arg.arg for arg in item.args.args])})")
+                entities["functions"].append(
+                    f"{item.name}({','.join([arg.arg for arg in item.args.args])})"
+                )
             elif isinstance(item, ast.ClassDef):
-                methods = [m.name for m in item.body if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef))]
-                entities['classes'].append(f"{item.name}(init or constructor methods, {methods})")
+                methods = [
+                    m.name
+                    for m in item.body
+                    if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef))
+                ]
+                entities["classes"].append(
+                    f"{item.name}(init or constructor methods, {methods})"
+                )
             elif isinstance(item, ast.Assign):
                 for target in item.targets:
                     if isinstance(target, ast.Name):
-                        entities['constants'].append(target.id)
+                        entities["constants"].append(target.id)
 
         return entities
 
     def fetch_structure(self, indent=None) -> str:
-        logger.debug(f"Fetching structure with base directory: {self.config.base_directory}")
+        logger.debug(
+            f"Fetching structure with base directory: {self.config.base_directory}"
+        )
         output = ""
         indent = indent if indent is not None else self.config.indent
         for root_directory, directories, files in os.walk(self.config.base_directory):
-            directories[:] = [d for d in directories if d not in self.config.excluded_directories]
-            ind = '| ' * indent
+            directories[:] = [
+                d for d in directories if d not in self.config.excluded_directories
+            ]
+            ind = "| " * indent
             output += f"{ind}| {os.path.basename(root_directory)}/\n"
             for file_name in files:
                 if file_name in self.config.excluded_file_names:
                     continue
-                if any(file_name.endswith(extension) for extension in self.config.included_extensions):
+                if any(
+                    file_name.endswith(extension)
+                    for extension in self.config.included_extensions
+                ):
                     file_path = os.path.join(root_directory, file_name)
                     entities = self._parse_file(file_path)
                     output += f"{ind}|- {file_name}\n"
@@ -114,7 +129,10 @@ class ContentFetcher:
         output = ""
 
         # Check the recursion depth
-        if self.config.recursion_depth != -1 and current_depth > self.config.recursion_depth:
+        if (
+            self.config.recursion_depth != -1
+            and current_depth > self.config.recursion_depth
+        ):
             return output
 
         for content_path in path:
@@ -133,7 +151,7 @@ class ContentFetcher:
     def _get_file_content(self, file_path) -> str:
         logger.debug(f"Getting content for file: {file_path}")  # TRACE level log
         try:
-            with open(file_path, 'r', encoding="utf-8") as file:
+            with open(file_path, "r", encoding="utf-8") as file:
                 content = file.read()
             return f"Content of {file_path}:\n{'=' * 40}\n{content}\n\n"
         except Exception as e:
@@ -153,7 +171,7 @@ class Quine:
         output += "\n\n" + self.content_fetcher.fetch_content()
 
         logger.debug(f"Writing output to file: {self.config.output_file_path()}")
-        with open(self.config.output_file_path(), 'w') as file:
+        with open(self.config.output_file_path(), "w") as file:
             file.write(output)
 
         if self.config.print_mode in ["clipboard", "all"]:
@@ -173,9 +191,13 @@ class Quine:
             if current_os == "Windows":
                 os.startfile(self.config.content.output_file_path())
             elif current_os == "Darwin":
-                subprocess.run(("open", self.config.content.output_file_path()), check=True)
+                subprocess.run(
+                    ("open", self.config.content.output_file_path()), check=True
+                )
             elif current_os == "Linux":
-                subprocess.run(("xdg-open", self.config.content.output_file_path()), check=True)
+                subprocess.run(
+                    ("xdg-open", self.config.content.output_file_path()), check=True
+                )
             else:
                 print(f"Unsupported operating system: {current_os}")
         except Exception as e:

@@ -21,30 +21,31 @@ class ContextMemoryDocument(BaseModel):
     thread_name: Optional[str]
     thread_id: Optional[int]
 
-    message_buffer:List[Union[HumanMessage, AIMessage]] = None
+    message_buffer: List[Union[HumanMessage, AIMessage]] = None
     # message_uuids: List[str] = None
     summary: str = ""
     tokens_count: int = 0
 
     @classmethod
-    def build_empty(cls,
-                    context_route: ContextRoute,
-                    summary_prompt: PromptTemplate):
+    def build_empty(cls, context_route: ContextRoute, summary_prompt: PromptTemplate):
+        return cls(
+            context_route=context_route,
+            context_route_full_path=context_route.full_path,
+            context_route_friendly_path=context_route.friendly_path,
+            message_buffer=[],
+            summary="",
+            summary_prompt=summary_prompt,
+            tokens_count=0,
+            query=context_route.as_query,
+            **context_route.as_flat_dict,
+        )
 
-        return cls(context_route=context_route,
-                   context_route_full_path=context_route.full_path,
-                   context_route_friendly_path=context_route.friendly_path,
-                   message_buffer=[],
-                   summary="",
-                   summary_prompt=summary_prompt,
-                   tokens_count=0,
-                   query=context_route.as_query,
-                   **context_route.as_flat_dict)
-
-    def update(self,
-               message_buffer: List[Union[HumanMessage, AIMessage]],
-               summary: str,
-               tokens_count: int):
+    def update(
+        self,
+        message_buffer: List[Union[HumanMessage, AIMessage]],
+        summary: str,
+        tokens_count: int,
+    ):
         for message in message_buffer:
             if isinstance(message, HumanMessage):
                 message.additional_kwargs["type"] = "human"

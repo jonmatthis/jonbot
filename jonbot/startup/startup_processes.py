@@ -20,7 +20,6 @@ def startup():
     run_services(services)
 
 
-
 class NamedProcess(multiprocessing.Process):
     def __init__(self, *args, name=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -43,7 +42,9 @@ def run_services(services):
     processes = []
     for service in services:
         process_name = f"{service['func'].__name__}__{service.get('kwargs', {}).get('bot_name_or_index', '')}"
-        process = NamedProcess(target=service["func"], name=process_name, kwargs=service.get("kwargs", {}))
+        process = NamedProcess(
+            target=service["func"], name=process_name, kwargs=service.get("kwargs", {})
+        )
         processes.append(process)
 
     # Start the processes
@@ -83,14 +84,18 @@ def create_discord_services():
     bots = []
 
     for bot_name in BOT_NICK_NAMES:
-        bots.append({"func": run_discord_bot, "kwargs": {"bot_name_or_index": bot_name}})
+        bots.append(
+            {"func": run_discord_bot, "kwargs": {"bot_name_or_index": bot_name}}
+        )
     return bots
 
 
 def create_telegram_services():
     bots = []
     for bot_name in BOT_NICK_NAMES:
-        bots.append({"func": run_telegram_bot_sync, "kwargs": {"bot_name_or_index": bot_name}})
+        bots.append(
+            {"func": run_telegram_bot_sync, "kwargs": {"bot_name_or_index": bot_name}}
+        )
     return bots
 
 

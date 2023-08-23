@@ -3,7 +3,9 @@ from enum import Enum
 
 import discord
 
-from jonbot.layer0_frontends.discord_bot.handlers.should_process_message import FINISHED_VOICE_RECORDING_PREFIX
+from jonbot.layer0_frontends.discord_bot.handlers.should_process_message import (
+    FINISHED_VOICE_RECORDING_PREFIX,
+)
 
 
 class Sinks(Enum):
@@ -18,15 +20,15 @@ class Sinks(Enum):
 
 
 class VoiceChannelCog(discord.Cog):
-
-    def __init__(self,
-                 bot : discord.Bot):
+    def __init__(self, bot: discord.Bot):
         super().__init__()
         self.voice_client_connections = {}
         self.status_message = {}
         self.bot = bot
 
-    @discord.slash_command(name="join", description="Commands related to voice channels")
+    @discord.slash_command(
+        name="join", description="Commands related to voice channels"
+    )
     async def join(self, ctx: discord.ApplicationContext):
         """Join the voice channel!"""
         if ctx.author.voice:
@@ -42,7 +44,9 @@ class VoiceChannelCog(discord.Cog):
     @discord.slash_command(name="leave", description="Leave the voice channel")
     async def leave_voice(self, ctx: discord.ApplicationContext):
         """Leave the voice channel!"""
-        voice_client: discord.VoiceClient = self.voice_client_connections.get(ctx.guild.id, None)
+        voice_client: discord.VoiceClient = self.voice_client_connections.get(
+            ctx.guild.id, None
+        )
         if not voice_client:
             return await ctx.respond("I'm not in a voice channel right now")
 
@@ -53,10 +57,21 @@ class VoiceChannelCog(discord.Cog):
         except KeyError:
             pass
 
-    @discord.slash_command(name="start", description="Start recording audio from the voice channel")
-    @discord.option(name="sink", description="The format to record in", required=True, choices=Sinks)
-    @discord.option(name="duration", description="The duration to record for (sec)", required=False, type=int)
-    async def start_recording(self, ctx: discord.ApplicationContext, sink: Sinks, duration: int = 10):
+    @discord.slash_command(
+        name="start", description="Start recording audio from the voice channel"
+    )
+    @discord.option(
+        name="sink", description="The format to record in", required=True, choices=Sinks
+    )
+    @discord.option(
+        name="duration",
+        description="The duration to record for (sec)",
+        required=False,
+        type=int,
+    )
+    async def start_recording(
+        self, ctx: discord.ApplicationContext, sink: Sinks, duration: int = 10
+    ):
         """Record your voice!"""
 
         if not ctx.author.voice:
@@ -73,19 +88,26 @@ class VoiceChannelCog(discord.Cog):
             ctx.channel,
         )
 
-        self.status_message[ctx.guild_id] = await ctx.channel.send("The recording has started!")
+        self.status_message[ctx.guild_id] = await ctx.channel.send(
+            "The recording has started!"
+        )
 
         if duration is not None:
             for wait_sec in range(duration):
                 await asyncio.sleep(1)
                 await self.status_message[ctx.guild_id].edit(
-                    content=f"The recording has started! {duration - wait_sec} seconds remaining.")
+                    content=f"The recording has started! {duration - wait_sec} seconds remaining."
+                )
 
             await self.stop(ctx)
 
-    @discord.slash_command(name="stop", description="Stop recording audio from the voice channel")
-    async def stop(self,
-                   ctx: discord.ApplicationContext, ):
+    @discord.slash_command(
+        name="stop", description="Stop recording audio from the voice channel"
+    )
+    async def stop(
+        self,
+        ctx: discord.ApplicationContext,
+    ):
         """Stop recording."""
         if ctx.guild.id in self.voice_client_connections:
             voice_connection = self.voice_client_connections[ctx.guild.id]
@@ -95,17 +117,16 @@ class VoiceChannelCog(discord.Cog):
         else:
             await ctx.respond("Not recording in this guild.")
 
-    async def finished_callback(self,
-                                sink,
-                                channel: discord.TextChannel
-                                ):
-
+    async def finished_callback(self, sink, channel: discord.TextChannel):
         recorded_users = [f"<@{user_id}>" for user_id, audio in sink.audio_data.items()]
         await sink.vc.disconnect()
         files = [
             discord.File(audio.file, f"{user_id}.{sink.encoding}")
             for user_id, audio in sink.audio_data.items()
         ]
-        reply_message = await channel.send(f"{FINISHED_VOICE_RECORDING_PREFIX} {' '.join(recorded_users)}.", files=files)
+        reply_message = await channel.send(
+            f"{FINISHED_VOICE_RECORDING_PREFIX} {' '.join(recorded_users)}.",
+            files=files,
+        )
 
-        await self.bot.handle_message(message = reply_message)
+        await self.bot.handle_message(message=reply_message)

@@ -2,7 +2,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Union
 
-from jonbot.system.environment_variables import BASE_DATA_FOLDER_NAME, LOG_FILE_FOLDER_NAME, DATABASE_BACKUP
+from jonbot.system.environment_variables import (
+    BASE_DATA_FOLDER_NAME,
+    LOG_FILE_FOLDER_NAME,
+    DATABASE_BACKUP,
+)
 
 
 def os_independent_home_dir():
@@ -16,7 +20,9 @@ def get_log_file_path():
     return str(log_file_path)
 
 
-def get_base_data_folder_path(parent_folder: Union[str, Path] = os_independent_home_dir()):
+def get_base_data_folder_path(
+    parent_folder: Union[str, Path] = os_independent_home_dir()
+):
     base_folder_path = Path(parent_folder) / BASE_DATA_FOLDER_NAME
 
     if not base_folder_path.exists():
@@ -26,11 +32,17 @@ def get_base_data_folder_path(parent_folder: Union[str, Path] = os_independent_h
 
 
 SAMPLE_DISCORD_MESSAGE_FILE_NAME = "sample_discord_message.json"
-get_sample_discord_message_json_path = lambda: str(Path(get_base_data_folder_path()) / SAMPLE_DISCORD_MESSAGE_FILE_NAME)
+get_sample_discord_message_json_path = lambda: str(
+    Path(get_base_data_folder_path()) / SAMPLE_DISCORD_MESSAGE_FILE_NAME
+)
 
 
 def get_new_attachments_folder_path():
-    return str(Path(get_base_data_folder_path()) / "attachments" / f"{get_current_date_time_string()}")
+    return str(
+        Path(get_base_data_folder_path())
+        / "attachments"
+        / f"{get_current_date_time_string()}"
+    )
 
 
 def get_log_file_path():
@@ -52,8 +64,7 @@ def clean_path_string(filename: str):
     return filename.replace(":", "_").replace(".", "_").replace(" ", "_")
 
 
-def get_default_database_json_save_path(filename: str,
-                                        timestamp: bool = False):
+def get_default_database_json_save_path(filename: str, timestamp: bool = False):
     if filename.endswith(".json"):
         filename.replace(".json", "")
     filename = clean_path_string(filename)

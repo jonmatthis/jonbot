@@ -16,4 +16,3 @@ class VoiceToTextResponse(BaseModel):
     text: str = None
     response_time: float = None
     mp3_file_path: str = None
-

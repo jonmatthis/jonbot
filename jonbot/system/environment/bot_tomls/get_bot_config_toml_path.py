@@ -15,7 +15,9 @@ def get_bot_config_toml_path(bot_nick_name: str) -> List[str]:
         if Path(toml_file).name == target_toml:
             return [toml_file]
 
-    raise FileNotFoundError(f"No TOML file named {target_toml} found in this directory!")
+    raise FileNotFoundError(
+        f"No TOML file named {target_toml} found in this directory!"
+    )
 
 
 if __name__ == "__main__":

@@ -45,8 +45,7 @@ class DiscordMessageDocument(BaseModel):
     query: dict
 
     @classmethod
-    async def from_discord_message(cls,
-                                   message: discord.Message):
+    async def from_discord_message(cls, message: discord.Message):
         context_route = ContextRoute.from_discord_message(message)
         discord_message_document = cls(
             content=message.content,
@@ -59,15 +58,21 @@ class DiscordMessageDocument(BaseModel):
             is_bot=message.author.bot,
             in_thread="thread" in message.channel.type.name,
             timestamp=Timestamp.from_datetime(message.created_at),
-            edited_timestamp=Timestamp.from_datetime(message.edited_at) if message.edited_at else '',
+            edited_timestamp=Timestamp.from_datetime(message.edited_at)
+            if message.edited_at
+            else "",
             mentions=[mention.name for mention in message.mentions],
             jump_url=message.jump_url,
             dump=str(message),
             received_timestamp=Timestamp.now(),
             reactions=[str(reaction) for reaction in message.reactions],
             parent_message_id=message.reference.message_id if message.reference else 0,
-            parent_message_jump_url=message.reference.jump_url if message.reference else '',
-            context_description=ConversationContextDescription.from_discord_message(message).description,
+            parent_message_jump_url=message.reference.jump_url
+            if message.reference
+            else "",
+            context_description=ConversationContextDescription.from_discord_message(
+                message
+            ).description,
             context_route=context_route,
             context_route_full_path=context_route.full_path,
             context_route_as_friendly_dict=context_route.friendly_path,
@@ -77,11 +82,13 @@ class DiscordMessageDocument(BaseModel):
         await discord_message_document._add_attachments_to_message(message)
         return discord_message_document
 
-    async def _add_attachments_to_message(self,
-                                          message: discord.Message,
-                                          attachment_local_path: Optional[
-                                              Union[str, Path]] = get_new_attachments_folder_path(),
-                                          ):
+    async def _add_attachments_to_message(
+        self,
+        message: discord.Message,
+        attachment_local_path: Optional[
+            Union[str, Path]
+        ] = get_new_attachments_folder_path(),
+    ):
         """Save attachments from a message and add their paths to the message data.
 
         Args:
@@ -92,8 +99,10 @@ class DiscordMessageDocument(BaseModel):
         attachments_folder.mkdir(parents=True, exist_ok=True)
         for attachment in message.attachments:
             try:
-                file_path = attachments_folder / f'{message.id}_{attachment.filename}'
+                file_path = attachments_folder / f"{message.id}_{attachment.filename}"
                 await attachment.save(file_path)
                 self.attachment_local_paths.append(str(file_path))
             except Exception as e:
-                logger.warning(f"Failed to save attachment: {attachment.filename}. Error: {e}")
+                logger.warning(
+                    f"Failed to save attachment: {attachment.filename}. Error: {e}"
+                )

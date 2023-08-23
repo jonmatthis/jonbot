@@ -9,13 +9,17 @@ logger = get_logger()
 
 @retry(
     stop=stop_after_attempt(60),
-    wait=wait_exponential(multiplier=1, max=60)  # start waiting for 1s, then double with each retry to a maximum of 60s
+    wait=wait_exponential(
+        multiplier=1, max=60
+    ),  # start waiting for 1s, then double with each retry to a maximum of 60s
 )
 async def run_api_health_check():
     logger.info("Checking API health...")
 
     try:
-        response = await api_client.send_request_to_api(endpoint_name=HEALTH_ENDPOINT, method="GET")
+        response = await api_client.send_request_to_api(
+            endpoint_name=HEALTH_ENDPOINT, method="GET"
+        )
         if response["status"] == "alive":
             logger.info(f"API is alive! \n {response}")
             return

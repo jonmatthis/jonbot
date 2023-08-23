@@ -22,7 +22,9 @@ async def call_streaming_endpoint_trad(message: str) -> str:
                 result_string += token
                 print(result_string.strip())  # Print the accumulated string each time
 
-    return result_string.strip()  # Return the final string without leading or trailing spaces
+    return (
+        result_string.strip()
+    )  # Return the final string without leading or trailing spaces
 
 
 async def call_streaming_endpoint_expression(message: str) -> str:
@@ -44,7 +46,9 @@ async def call_streaming_endpoint_expression(message: str) -> str:
                 result_string += token
                 print(result_string.strip())  # Print the accumulated string each time
 
-    return result_string.strip()  # Return the final string without leading or trailing spaces
+    return (
+        result_string.strip()
+    )  # Return the final string without leading or trailing spaces
 
 
 async def main():
@@ -52,7 +56,9 @@ async def main():
     response_content_trad = await call_streaming_endpoint_trad("Hello, Langchain!")
     print("\nFinal content (Traditional Chain):")
     print(response_content_trad)
-    response_content_expr = await call_streaming_endpoint_expression("Hello, Langchain!")
+    response_content_expr = await call_streaming_endpoint_expression(
+        "Hello, Langchain!"
+    )
     print("\n------------\nFinal content (Expression Chain):")
     print(response_content_expr)
 

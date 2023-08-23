@@ -5,6 +5,7 @@ import gradio as gr
 
 # Chatbot demo with multimodal input (text, markdown, LaTeX, code blocks, image, audio, & video). Plus shows support for streaming text.
 
+
 def add_text(history, text):
     history = history + [(text, None)]
     return history, gr.update(value="", interactive=False)
@@ -32,7 +33,8 @@ with gr.Blocks() as demo:
             txt = gr.Textbox(
                 show_label=False,
                 placeholder="Enter text and press enter, or upload an image",
-                container=False)
+                container=False,
+            )
         with gr.Column(scale=0.15, min_width=0):
             btn = gr.UploadButton("📁", file_types=["image", "video", "audio"])
 

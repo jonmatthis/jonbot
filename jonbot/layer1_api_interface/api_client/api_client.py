@@ -4,7 +4,9 @@ from typing import Union, Callable, List, Coroutine
 import aiohttp
 
 from jonbot import get_logger
-from jonbot.layer1_api_interface.helpers.error_message_from_response import error_message_from_response
+from jonbot.layer1_api_interface.helpers.error_message_from_response import (
+    error_message_from_response,
+)
 from jonbot.models.api_endpoint_url import ApiRoute
 from jonbot.system.environment_variables import API_HOST_NAME
 
@@ -14,13 +16,13 @@ logger = get_logger()
 class ApiClient:
     api_host_name = API_HOST_NAME
 
-    async def send_request_to_api(self,
-                                  endpoint_name: str,
-                                  data: dict = None,
-                                  method: str = "POST") -> dict:
+    async def send_request_to_api(
+        self, endpoint_name: str, data: dict = None, method: str = "POST"
+    ) -> dict:
         try:
-            endpoint_url = ApiRoute.from_endpoint(host_name=self.api_host_name,
-                                                  endpoint=endpoint_name).endpoint_url
+            endpoint_url = ApiRoute.from_endpoint(
+                host_name=self.api_host_name, endpoint=endpoint_name
+            ).endpoint_url
 
             if not data:
                 data = {}
@@ -40,16 +42,21 @@ class ApiClient:
                     logger.exception(error_message)
                     raise Exception(error_message)
         except Exception as e:
-            error_msg = f"An error occurred while sending a request to the API: {str(e)}"
+            error_msg = (
+                f"An error occurred while sending a request to the API: {str(e)}"
+            )
             logger.exception(error_msg)
             raise
 
-    async def send_request_to_api_streaming(self,
-                                            endpoint_name: str,
-                                            data: dict = dict(),
-                                            callbacks: Union[Callable, Coroutine] = None) -> List[str]:
-        endpoint_url = ApiRoute.from_endpoint(host_name=self.api_host_name,
-                                              endpoint=endpoint_name).endpoint_url
+    async def send_request_to_api_streaming(
+        self,
+        endpoint_name: str,
+        data: dict = dict(),
+        callbacks: Union[Callable, Coroutine] = None,
+    ) -> List[str]:
+        endpoint_url = ApiRoute.from_endpoint(
+            host_name=self.api_host_name, endpoint=endpoint_name
+        ).endpoint_url
         if not callbacks:
             callbacks = []
 
@@ -62,16 +69,16 @@ class ApiClient:
                     if response.status == 200:
                         async for line in response.content.iter_any():
                             await run_callbacks(callbacks, line)
-                            response_tokens.append(line.decode('utf-8'))
+                            response_tokens.append(line.decode("utf-8"))
                     else:
                         error_message = await error_message_from_response(response)
                         logger.error(error_message)
-                        await run_callbacks(callbacks, error_message.encode('utf-8'))
+                        await run_callbacks(callbacks, error_message.encode("utf-8"))
                         raise Exception(error_message)
         except Exception as e:
             error_msg = f"An error occurred while streaming from the API: {str(e)}"
             logger.exception(error_msg)
-            await run_callbacks(callbacks, error_msg.encode('utf-8'))
+            await run_callbacks(callbacks, error_msg.encode("utf-8"))
             raise
 
         return response_tokens
@@ -79,7 +86,7 @@ class ApiClient:
 
 async def run_callbacks(callbacks: List[Callable], line: bytes):
     try:
-        line_str = line.decode('utf-8')
+        line_str = line.decode("utf-8")
         logger.trace(f"Received line from server: {line_str}")
         for callback in callbacks:
             logger.trace(f"Running callback: {callback.__name__}")

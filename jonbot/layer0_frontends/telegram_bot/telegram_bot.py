@@ -24,7 +24,9 @@ from jonbot.layer0_frontends.telegram_bot.handlers.telegram_chat import telegram
 from jonbot.system.environment_variables import TELEGRAM_BOT_TOKEN
 
 try:
-    from jonbot.layer0_frontends.telegram_bot.utilities.check_version_compatibility import __version_info__
+    from jonbot.layer0_frontends.telegram_bot.utilities.check_version_compatibility import (
+        __version_info__,
+    )
     from telegram import __version_info__
 except ImportError:
     pass
@@ -36,7 +38,13 @@ if __version_info__ < (20, 0, 0, "alpha", 1):
         f"visit https://docs.python-telegram-bot.org/en/v{TG_VER}/examples.html"
     )
 from telegram import ForceReply, Update
-from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    ContextTypes,
+    MessageHandler,
+    filters,
+)
 
 # Enable logging
 logging.basicConfig(
@@ -72,8 +80,9 @@ def run_telegram_bot() -> None:
     application.add_handler(CommandHandler("help", help_command))
 
     # on non command i.e message - echo the message on Telegram
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND,
-                                           telegram_chat))
+    application.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, telegram_chat)
+    )
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling(allowed_updates=Update.ALL_TYPES)

@@ -12,7 +12,9 @@ class DiscordUserID(BaseModel):
 
     @classmethod
     def from_message(cls, message: discord.Message):
-        return cls(id=message.author.id,
-                   name=message.author.name,
-                   discriminator=message.author.discriminator,
-                   display_name=message.author.display_name)
+        return cls(
+            id=message.author.id,
+            name=message.author.name,
+            discriminator=message.author.discriminator,
+            display_name=message.author.display_name,
+        )

@@ -1,6 +1,7 @@
 from jonbot import get_logger
-from jonbot.layer2_processing.backend_database_operator.backend_database_operator import \
-    BackendDatabaseOperations
+from jonbot.layer2_processing.backend_database_operator.backend_database_operator import (
+    BackendDatabaseOperations,
+)
 from jonbot.layer2_processing.controller.controller import Controller
 
 logger = get_logger()

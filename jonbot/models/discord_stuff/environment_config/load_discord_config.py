@@ -2,7 +2,9 @@ from typing import Union
 
 from dotenv import load_dotenv
 
-from jonbot.models.discord_stuff.environment_config.discord_environment import DiscordEnvironmentConfig
+from jonbot.models.discord_stuff.environment_config.discord_environment import (
+    DiscordEnvironmentConfig,
+)
 
 load_dotenv()
 
@@ -20,10 +22,14 @@ def get_or_create_discord_environment_config(bot_name_or_index: Union[str, int] 
         return _DISCORD_ENVIRONMENT_CONFIG
 
     if bot_name_or_index is None:
-        raise ValueError("bot_name_or_index must be specified when creating the first DiscordConfig instance!")
+        raise ValueError(
+            "bot_name_or_index must be specified when creating the first DiscordConfig instance!"
+        )
 
     try:
-        _DISCORD_ENVIRONMENT_CONFIG = DiscordEnvironmentConfig.configure(bot_name_or_index=bot_name_or_index)
+        _DISCORD_ENVIRONMENT_CONFIG = DiscordEnvironmentConfig.configure(
+            bot_name_or_index=bot_name_or_index
+        )
     except Exception as e:
         logger.exception("Error creating DISCORD_ENVIRONMENT_CONFIG.")
         raise

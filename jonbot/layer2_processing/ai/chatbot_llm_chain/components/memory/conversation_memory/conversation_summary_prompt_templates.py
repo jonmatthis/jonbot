@@ -97,4 +97,6 @@ CONVERSATION_SUMMARY_PROMPT = PromptTemplate(
     template=CUSTOM_SUMMARIZER_TEMPLATE,
     input_variables=["current_timestamp", "summary", "new_lines"],
     output_variables=["current_timestamp"],
-).partial(current_timestamp=f"local: {Timestamp.now().human_friendly_local}, utc: {Timestamp.now().human_friendly_utc}")
+).partial(
+    current_timestamp=f"local: {Timestamp.now().human_friendly_local}, utc: {Timestamp.now().human_friendly_utc}"
+)
