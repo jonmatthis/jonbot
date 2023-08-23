@@ -10,6 +10,17 @@ from jonbot.system.environment_variables import BOT_NICK_NAMES
 
 logger = get_logger()
 
+
+def startup():
+    logger.info("Starting services...")
+    selection = get_services_selection()
+    logger.info(f"Selected services: {selection}")
+    services = create_services(selection=selection)
+    logger.info(f"Services to run: {services}")
+    run_services(services)
+
+
+
 class NamedProcess(multiprocessing.Process):
     def __init__(self, *args, name=None, **kwargs):
         super().__init__(*args, **kwargs)

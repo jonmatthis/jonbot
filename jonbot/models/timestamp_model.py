@@ -13,8 +13,8 @@ class Timestamp(BaseModel):
     unix_timestamp_local_isoformat: str
     perf_counter_ns: Optional[int]
     local_time_zone: str
-    human_readable_utc: str
-    human_readable_local: str
+    human_friendly_utc: str
+    human_friendly_local: str
     day_of_week: str
     calendar_week: int
     day_of_year: int
@@ -31,8 +31,8 @@ class Timestamp(BaseModel):
             unix_timestamp_utc_isoformat=date_time_utc.isoformat(),
             unix_timestamp_local_isoformat=date_time_local.isoformat(),
             local_time_zone=str(get_localzone()),
-            human_readable_utc=date_time_utc.strftime('%Y-%m-%d %H:%M:%S.%f'),
-            human_readable_local=date_time_local.strftime('%Y-%m-%d %H:%M:%S.%f'),
+            human_friendly_utc=date_time_utc.strftime('%Y-%m-%d %H:%M:%S.%f'),
+            human_friendly_local=date_time_local.strftime('%Y-%m-%d %H:%M:%S.%f'),
             day_of_week=calendar.day_name[date_time_local.weekday()],
             calendar_week=date_time_local.isocalendar()[1],
             day_of_year=date_time_local.timetuple().tm_yday,
@@ -48,7 +48,7 @@ class Timestamp(BaseModel):
         return self.unix_timestamp_utc
 
     def __str__(self):
-        return f"{self.day_of_week}, {self.human_readable_local} (local timezone: {self.local_time_zone})"
+        return f"{self.day_of_week}, {self.human_friendly_local} (local timezone: {self.local_time_zone})"
 
 
 if __name__ == "__main__":

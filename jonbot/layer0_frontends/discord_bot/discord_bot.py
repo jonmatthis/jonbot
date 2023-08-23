@@ -6,6 +6,7 @@ import discord
 from jonbot import get_logger
 from jonbot.layer0_frontends.discord_bot.cogs.memory_scraper_cog import MemoryScraperCog
 from jonbot.layer0_frontends.discord_bot.cogs.server_scraper_cog import ServerScraperCog
+from jonbot.layer0_frontends.discord_bot.cogs.thread_cog import ThreadCog
 from jonbot.layer0_frontends.discord_bot.cogs.voice_channel_cog import VoiceChannelCog
 from jonbot.layer0_frontends.discord_bot.handlers.discord_message_responder import DiscordMessageResponder
 from jonbot.layer0_frontends.discord_bot.handlers.should_process_message import allowed_to_reply, should_reply, \
@@ -47,6 +48,7 @@ class MyDiscordBot(discord.Bot):
                                                               )
         self.add_cog(ServerScraperCog(database_operations=self._database_operations))
         self.add_cog(VoiceChannelCog(bot=self))
+        self.add_cog(ThreadCog(bot=self))
         self.add_cog(MemoryScraperCog(database_name=self._database_name,
                                       api_client=api_client))
 
