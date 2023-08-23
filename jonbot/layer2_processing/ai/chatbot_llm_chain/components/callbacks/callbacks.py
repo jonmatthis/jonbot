@@ -4,9 +4,9 @@ from typing import Union
 
 from langchain.callbacks.base import AsyncCallbackHandler
 
-from jonbot import get_logger
+from jonbot import get_jonbot_logger
 
-logger = get_logger()
+logger = get_jonbot_logger()
 
 
 class AsyncQueueStuffingCallbackHandler(AsyncCallbackHandler):

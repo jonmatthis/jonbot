@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from starlette.responses import StreamingResponse
 
-from jonbot import get_logger
+from jonbot import get_jonbot_logger
 from jonbot.layer2_processing.backend_database_operator.backend_database_operator import (
     BackendDatabaseOperations,
 )
@@ -16,7 +16,7 @@ from jonbot.models.database_request_response_models import (
 from jonbot.models.health_check_status import HealthCheckResponse
 from jonbot.models.voice_to_text_request import VoiceToTextResponse, VoiceToTextRequest
 
-logger = get_logger()
+logger = get_jonbot_logger()
 
 HEALTH_ENDPOINT = "/health"
 
@@ -28,7 +28,9 @@ CALCULATE_MEMORY_ENDPOINT = "/calculate_memory"
 
 
 def register_api_routes(
-    app: FastAPI, database_operations: BackendDatabaseOperations, controller: Controller
+    app: FastAPI,
+        database_operations: BackendDatabaseOperations,
+        controller: Controller
 ):
     @app.get(HEALTH_ENDPOINT, response_model=HealthCheckResponse)
     async def health_check_endpoint():

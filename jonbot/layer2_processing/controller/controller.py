@@ -1,25 +1,24 @@
 from typing import AsyncIterable, Dict, Optional
 
-from jonbot import get_logger
+from jonbot import get_jonbot_logger
+from jonbot.layer2_processing.ai.audio_transcription.transcribe_audio import (
+    transcribe_audio_function,
+)
 from jonbot.layer2_processing.ai.chatbot_llm_chain.chatbot_llm_chain import (
     ChatbotLLMChain,
 )
-from jonbot.layer2_processing.backend_database_operator.backend_database_operator import (
-    BackendDatabaseOperations,
-)
-
 from jonbot.layer2_processing.ai.chatbot_llm_chain.get_chatbot_llm_chain import (
     get_chatbot_llm_chain,
 )
-from jonbot.layer2_processing.ai.audio_transcription.transcribe_audio import (
-    transcribe_audio_function,
+from jonbot.layer2_processing.backend_database_operator.backend_database_operator import (
+    BackendDatabaseOperations,
 )
 from jonbot.models.calculate_memory_request import CalculateMemoryRequest
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.conversation_models import ChatRequest
 from jonbot.models.voice_to_text_request import VoiceToTextRequest, VoiceToTextResponse
 
-logger = get_logger()
+logger = get_jonbot_logger()
 
 
 class Controller:

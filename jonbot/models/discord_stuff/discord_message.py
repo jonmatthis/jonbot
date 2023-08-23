@@ -4,12 +4,12 @@ from typing import List, Optional, Union
 import discord
 from pydantic import BaseModel
 
-from jonbot import get_logger
+from jonbot import get_jonbot_logger
 from jonbot.models.context_route import ContextRoute
 from jonbot.models.conversation_context import ConversationContextDescription
 from jonbot.models.timestamp_model import Timestamp
 
-logger = get_logger()
+logger = get_jonbot_logger()
 from jonbot.system.path_getters import get_new_attachments_folder_path
 
 

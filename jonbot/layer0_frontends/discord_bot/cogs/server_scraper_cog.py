@@ -5,12 +5,12 @@ import discord
 from discord import Forbidden
 from discord.ext import commands
 
-from jonbot import get_logger
+from jonbot import get_jonbot_logger
 from jonbot.layer0_frontends.discord_bot.operations.discord_database_operations import (
     DiscordDatabaseOperations,
 )
 
-logger = get_logger()
+logger = get_jonbot_logger()
 
 logging.getLogger("discord").setLevel(logging.INFO)
 

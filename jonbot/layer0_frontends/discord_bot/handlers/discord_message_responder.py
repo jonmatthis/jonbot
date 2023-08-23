@@ -3,12 +3,12 @@ import time
 
 import discord
 
-from jonbot import get_logger
+from jonbot import get_jonbot_logger
 from jonbot.layer0_frontends.discord_bot.handlers.should_process_message import (
     RESPONSE_INCOMING_TEXT,
 )
 
-logger = get_logger()
+logger = get_jonbot_logger()
 
 STOP_STREAMING_TOKEN = "STOP_STREAMING"
 
@@ -67,14 +67,17 @@ class DiscordMessageResponder:
                     token = await self._token_queue.get()
                     chunk.append(token)
                     logger.trace(
-                        f"FRONTEND - dequeueing  token: {repr(token)} (token_queue size: {self._token_queue.qsize()})"
+                        f"FRONTEND - de-queueing  token: {repr(token)} (token_queue size: {self._token_queue.qsize()})"
                     )
                     if len(chunk) > chunk_size:
-                        await self._update_reply_message("".join(chunk))
+                        await self.add_text_to_reply_message("".join(chunk))
                         chunk = []
+
+        logger.trace(f"Appending final chunk to reply message {chunk}...")
+        await self.add_text_to_reply_message("".join(chunk))
         logger.info(f"queue loop finished")
 
-    async def _update_reply_message(self, token: str, show_delta_t: bool = False):
+    async def add_text_to_reply_message(self, token: str, show_delta_t: bool = False):
         stop_now = False
         if STOP_STREAMING_TOKEN in token:
             logger.debug(f"Recieved `{STOP_STREAMING_TOKEN}`, stopping stream...")

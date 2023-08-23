@@ -1,43 +1,35 @@
-import multiprocessing
 import os
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
-from jonbot import get_logger
+from dotenv import load_dotenv
+
+from jonbot import get_jonbot_logger
 from jonbot.layer0_frontends.discord_bot.discord_main import run_discord_bot
 from jonbot.layer0_frontends.telegram_bot.telegram_bot import run_telegram_bot_sync
 from jonbot.layer1_api_interface.api_main import run_api_sync
+from jonbot.startup.named_process import NamedProcess
 from jonbot.system.environment_variables import BOT_NICK_NAMES
 
-logger = get_logger()
+logger = get_jonbot_logger()
 
 
 def startup():
     logger.info("Starting services...")
     selection = get_services_selection()
     logger.info(f"Selected services: {selection}")
-    services = create_services(selection=selection)
+    services = create_services(selected_services=selection)
     logger.info(f"Services to run: {services}")
     run_services(services)
 
 
-class NamedProcess(multiprocessing.Process):
-    def __init__(self, *args, name=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.custom_name = name
-
-    def run(self):
-        # Set the process name (visible in system tools like top/htop on Unix)
-        # Note: This step is optional
-        if self.custom_name:
-            multiprocessing.current_process().name = self.custom_name
-        super().run()
-
-
-def run_services(services):
+def run_services(services: List[Dict[str, Any]]):
     """
     Run the Discord bot, the API server, and the Telegram bot.
     """
     logger.info(f"Starting Services: {services}")
+
+    if not services:
+        raise ValueError("No services provided!")
 
     processes = []
     for service in services:
@@ -62,20 +54,30 @@ def run_services(services):
                 other_process.terminate()
 
 
-def create_services(selection: Optional[str]) -> List:
-    if selection is None:
-        selection = "all"
-    selection = selection.lower()
-
+def create_services(selected_services: str) -> List:
+    selected_services = selected_services.lower()
+    logger.trace(f"Creating services for `selected_services.lower()`: {selected_services}")
     services = []
 
     # Creating services based on selection
-    if selection in ["discord", "all"]:
+    if selected_services in ["discord", "all"]:
         services.extend(create_discord_services())
+    else:
+        logger.debug(f"selected_services: {selected_services} not in ['discord', 'all']")
+
     # if selection in ["telegram", "all"]:
     #     services.extend(create_telegram_services()) # Uncomment when create_telegram_services is defined
-    if selection in ["api", "all"]:
+    # else:
+    #     logger.debug(f"selected_services: {selected_services} not in ['telegram', 'all']")
+
+    if selected_services in ["api", "all"]:
         services.append({"func": run_api_sync})
+    else:
+        logger.debug(f"selected_services: {selected_services} not in ['discord', 'all']")
+
+    logger.trace(f"Created services: {services}")
+    if len(services) == 0:
+        raise ValueError("No services selected")
 
     return services
 
@@ -100,5 +102,11 @@ def create_telegram_services():
 
 
 def get_services_selection() -> Optional[str]:
+    if not os.getenv("IS_DOCKER"):
+        load_dotenv()
+
+    load_dotenv()
     selection = os.getenv("RUN_SERVICES")
+    if not selection:
+        raise EnvironmentError("Could not find `RUN_SERVICES` environment variable")
     return selection

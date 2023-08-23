@@ -3,14 +3,14 @@ from typing import Union, Callable, List, Coroutine
 
 import aiohttp
 
-from jonbot import get_logger
+from jonbot import get_jonbot_logger
 from jonbot.layer1_api_interface.helpers.error_message_from_response import (
     error_message_from_response,
 )
 from jonbot.models.api_endpoint_url import ApiRoute
 from jonbot.system.environment_variables import API_HOST_NAME
 
-logger = get_logger()
+logger = get_jonbot_logger()
 
 
 class ApiClient:

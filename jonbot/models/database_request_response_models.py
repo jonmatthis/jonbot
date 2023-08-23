@@ -3,13 +3,13 @@ from typing import Literal, List, Dict, Any
 from langchain import PromptTemplate
 from pydantic import BaseModel
 
-from jonbot import get_logger
+from jonbot import get_jonbot_logger
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.context_route import ContextRoute
 from jonbot.models.conversation_models import ChatRequest
 from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
 
-logger = get_logger()
+logger = get_jonbot_logger()
 
 
 class MessageHistoryResponse(BaseModel):

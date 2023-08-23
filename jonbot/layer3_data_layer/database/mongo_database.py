@@ -4,7 +4,7 @@ from typing import Union, List, Dict, Optional
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import UpdateOne, DESCENDING
 
-from jonbot import get_logger
+from jonbot import get_jonbot_logger
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.conversation_models import MessageHistory, ChatMessage
 from jonbot.models.database_request_response_models import (
@@ -22,7 +22,7 @@ from jonbot.system.environment_variables import (
     CONTEXT_MEMORIES_COLLECTION_NAME,
 )
 
-logger = get_logger()
+logger = get_jonbot_logger()
 
 
 class MongoDatabaseManager:

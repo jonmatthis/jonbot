@@ -4,12 +4,9 @@ from typing import AsyncIterable
 from langchain.chat_models import ChatOpenAI
 from langchain.schema.runnable import RunnableMap, RunnableSequence
 
-from jonbot import get_logger
+from jonbot import get_jonbot_logger
 from jonbot.layer0_frontends.discord_bot.handlers.discord_message_responder import (
     STOP_STREAMING_TOKEN,
-)
-from jonbot.layer2_processing.backend_database_operator.backend_database_operator import (
-    BackendDatabaseOperations,
 )
 from jonbot.layer2_processing.ai.chatbot_llm_chain.components.memory.conversation_memory.conversation_memory import (
     ChatbotConversationMemory,
@@ -17,11 +14,14 @@ from jonbot.layer2_processing.ai.chatbot_llm_chain.components.memory.conversatio
 from jonbot.layer2_processing.ai.chatbot_llm_chain.components.prompt.prompt_builder import (
     ChatbotPrompt,
 )
+from jonbot.layer2_processing.backend_database_operator.backend_database_operator import (
+    BackendDatabaseOperations,
+)
 from jonbot.models.context_route import ContextRoute
 
 # langchain.debug = True
 
-logger = get_logger()
+logger = get_jonbot_logger()
 
 
 class ChatbotLLMChain:

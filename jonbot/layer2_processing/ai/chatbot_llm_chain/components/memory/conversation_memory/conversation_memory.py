@@ -3,18 +3,18 @@ from typing import List, Union, Any, Dict
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.schema import HumanMessage, AIMessage
 
-from jonbot import get_logger
-from jonbot.layer2_processing.backend_database_operator.backend_database_operator import (
-    BackendDatabaseOperations,
-)
+from jonbot import get_jonbot_logger
 from jonbot.layer2_processing.ai.chatbot_llm_chain.components.memory.conversation_memory.context_memory_handler import (
     ContextMemoryHandler,
+)
+from jonbot.layer2_processing.backend_database_operator.backend_database_operator import (
+    BackendDatabaseOperations,
 )
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.context_route import ContextRoute
 from jonbot.models.memory_config import ChatbotConversationMemoryConfig
 
-logger = get_logger()
+logger = get_jonbot_logger()
 
 
 class ChatbotConversationMemory(ConversationSummaryBufferMemory):

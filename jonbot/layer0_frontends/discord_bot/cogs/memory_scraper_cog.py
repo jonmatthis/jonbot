@@ -3,13 +3,13 @@ import logging
 import discord
 from discord.ext import commands
 
-from jonbot import get_logger
+from jonbot import get_jonbot_logger
 from jonbot.layer1_api_interface.api_client.api_client import ApiClient
 from jonbot.layer1_api_interface.api_routes import CALCULATE_MEMORY_ENDPOINT
 from jonbot.models.calculate_memory_request import CalculateMemoryRequest
 from jonbot.models.context_route import ContextRoute
 
-logger = get_logger()
+logger = get_jonbot_logger()
 
 logging.getLogger("discord").setLevel(logging.INFO)
 
