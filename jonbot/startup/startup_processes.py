@@ -3,14 +3,14 @@ from typing import Optional, List, Dict, Any
 
 from dotenv import load_dotenv
 
-from jonbot import get_jonbot_logger
+from jonbot import get_logger
 from jonbot.layer0_frontends.discord_bot.discord_main import run_discord_bot
 from jonbot.layer0_frontends.telegram_bot.telegram_bot import run_telegram_bot_sync
 from jonbot.layer1_api_interface.api_main import run_api_sync
 from jonbot.startup.named_process import NamedProcess
 from jonbot.system.environment_variables import BOT_NICK_NAMES
 
-logger = get_jonbot_logger()
+logger = get_logger()
 
 
 def startup():

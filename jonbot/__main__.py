@@ -1,7 +1,7 @@
-from jonbot import get_jonbot_logger
+from jonbot import get_logger
 from jonbot.startup.startup_processes import startup
 
-logger = get_jonbot_logger()
+logger = get_logger()
 
 
 def main():

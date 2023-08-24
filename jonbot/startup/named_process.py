@@ -1,8 +1,8 @@
 import multiprocessing
 
-from jonbot import get_jonbot_logger
+from jonbot import get_logger
 
-logger = get_jonbot_logger()
+logger = get_logger()
 
 
 class NamedProcess(multiprocessing.Process):

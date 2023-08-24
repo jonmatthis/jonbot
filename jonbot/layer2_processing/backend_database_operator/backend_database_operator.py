@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from jonbot import get_jonbot_logger
+from jonbot import get_logger
 from jonbot.layer3_data_layer.database.mongo_database import MongoDatabaseManager
 from jonbot.models.database_request_response_models import (
     UpsertDiscordMessagesResponse,
@@ -13,7 +13,7 @@ from jonbot.models.database_request_response_models import (
     MessageHistoryResponse,
 )
 
-logger = get_jonbot_logger()
+logger = get_logger()
 
 
 class BackendDatabaseOperations(BaseModel):

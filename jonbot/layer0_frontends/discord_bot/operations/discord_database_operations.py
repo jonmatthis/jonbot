@@ -2,13 +2,13 @@ from typing import List
 
 import discord
 
-from jonbot import get_jonbot_logger
+from jonbot import get_logger
 from jonbot.layer1_api_interface.api_client.api_client import ApiClient
 from jonbot.layer1_api_interface.api_routes import UPSERT_MESSAGES_ENDPOINT
 from jonbot.models.database_request_response_models import UpsertDiscordMessagesRequest
 from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
 
-logger = get_jonbot_logger()
+logger = get_logger()
 
 
 class DiscordDatabaseOperations:

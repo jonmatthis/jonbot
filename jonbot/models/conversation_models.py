@@ -4,7 +4,7 @@ from typing import Union, Optional, List, Literal
 import discord
 from pydantic import BaseModel, Field
 
-from jonbot.models.ai_chatbot_models import VectorStoreMemoryConfig
+from jonbot.models.memory_config import VectorStoreMemoryConfig
 from jonbot.models.context_route import ContextRoute
 from jonbot.models.conversation_context import ConversationContextDescription
 from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
@@ -89,7 +89,7 @@ class MessageHistory(BaseModel):
 
 class ChatRequestConfig(BaseModel):
     dummy: str = "hi:D"
-    vector_store_memory_config: VectorStoreMemoryConfig = VectorStoreMemoryConfig()
+    # vector_store_memory_config: VectorStoreMemoryConfig = VectorStoreMemoryConfig()
     limit_messages: Optional[int] = 20
 
 

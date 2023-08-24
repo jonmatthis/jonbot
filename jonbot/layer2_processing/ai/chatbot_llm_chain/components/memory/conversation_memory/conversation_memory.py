@@ -3,7 +3,7 @@ from typing import List, Union, Any, Dict
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.schema import HumanMessage, AIMessage
 
-from jonbot import get_jonbot_logger
+from jonbot import get_logger
 from jonbot.layer2_processing.ai.chatbot_llm_chain.components.memory.conversation_memory.context_memory_handler import (
     ContextMemoryHandler,
 )
@@ -14,7 +14,7 @@ from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.context_route import ContextRoute
 from jonbot.models.memory_config import ChatbotConversationMemoryConfig
 
-logger = get_jonbot_logger()
+logger = get_logger()
 
 
 class ChatbotConversationMemory(ConversationSummaryBufferMemory):
@@ -50,16 +50,16 @@ class ChatbotConversationMemory(ConversationSummaryBufferMemory):
     async def context_memory_document(self) -> ContextMemoryDocument:
         return await self.context_memory_handler.context_memory_document
 
-    async def configure_memory(self):
-        self._build_memory_from_context_memory_document(
-            document=await self.context_memory_document
-        )
-
     @property
     def token_count(self) -> int:
         tokens_in_messages = self.llm.get_num_tokens_from_messages(self.buffer)
         tokens_in_summary = self.llm.get_num_tokens(self.moving_summary_buffer)
         return tokens_in_messages + tokens_in_summary
+
+    async def configure_memory(self):
+        self._build_memory_from_context_memory_document(
+            document=await self.context_memory_document
+        )
 
     def _build_memory_from_context_memory_document(
         self, document: ContextMemoryDocument

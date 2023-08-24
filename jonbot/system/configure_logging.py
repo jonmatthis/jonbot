@@ -122,9 +122,9 @@ class LoggerBuilder:
                 if handler not in logging.getLogger("").handlers:
                     logging.getLogger("").handlers.append(handler)
         else:
-            from jonbot import get_jonbot_logger
+            from jonbot import get_logger
 
-            logger = get_jonbot_logger()
+            logger = get_logger()
             logger.info("Logging already configured")
 
 
@@ -209,9 +209,9 @@ def log_test_messages(logger):
 
 
 if __name__ == "__main__":
-    from jonbot import get_jonbot_logger
+    from jonbot import get_logger
 
-    logger = get_jonbot_logger()
+    logger = get_logger()
     configure_logging(LogLevel.TRACE)  # Setting the root logger level to TRACE
     log_test_messages(logger)
     logger.success(

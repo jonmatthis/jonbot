@@ -4,7 +4,7 @@ from typing import AsyncIterable
 from langchain.chat_models import ChatOpenAI
 from langchain.schema.runnable import RunnableMap, RunnableSequence
 
-from jonbot import get_jonbot_logger
+from jonbot import get_logger
 from jonbot.layer0_frontends.discord_bot.handlers.discord_message_responder import (
     STOP_STREAMING_TOKEN,
 )
@@ -21,7 +21,7 @@ from jonbot.models.context_route import ContextRoute
 
 # langchain.debug = True
 
-logger = get_jonbot_logger()
+logger = get_logger()
 
 
 class ChatbotLLMChain:
@@ -81,7 +81,8 @@ class ChatbotLLMChain:
         )
 
     async def execute(
-        self, message_string: str, pause_at_end: float = 1.0
+        self,
+            message_string: str
     ) -> AsyncIterable[str]:
         inputs = {"human_input": message_string}
         response_message = ""
@@ -91,8 +92,6 @@ class ChatbotLLMChain:
                 response_message += token.content
                 yield token.content
             yield STOP_STREAMING_TOKEN
-
-            await asyncio.sleep(pause_at_end)  # give it a sec to clear the buffer
 
             logger.debug(f"Successfully executed chain! - Saving context to memory...")
 

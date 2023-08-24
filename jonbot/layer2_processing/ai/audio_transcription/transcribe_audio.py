@@ -5,10 +5,10 @@ import aiohttp
 import openai
 from pydub import AudioSegment
 
-from jonbot import get_jonbot_logger
+from jonbot import get_logger
 from jonbot.models.voice_to_text_request import VoiceToTextResponse
 
-logger = get_jonbot_logger()
+logger = get_logger()
 
 
 async def transcribe_audio_function(

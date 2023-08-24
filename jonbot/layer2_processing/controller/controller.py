@@ -1,6 +1,6 @@
 from typing import AsyncIterable, Dict, Optional
 
-from jonbot import get_jonbot_logger
+from jonbot import get_logger
 from jonbot.layer2_processing.ai.audio_transcription.transcribe_audio import (
     transcribe_audio_function,
 )
@@ -18,7 +18,7 @@ from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.conversation_models import ChatRequest
 from jonbot.models.voice_to_text_request import VoiceToTextRequest, VoiceToTextResponse
 
-logger = get_jonbot_logger()
+logger = get_logger()
 
 
 class Controller:

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from starlette.responses import StreamingResponse
 
-from jonbot import get_jonbot_logger
+from jonbot import get_logger
 from jonbot.layer2_processing.backend_database_operator.backend_database_operator import (
     BackendDatabaseOperations,
 )
@@ -16,7 +16,7 @@ from jonbot.models.database_request_response_models import (
 from jonbot.models.health_check_status import HealthCheckResponse
 from jonbot.models.voice_to_text_request import VoiceToTextResponse, VoiceToTextRequest
 
-logger = get_jonbot_logger()
+logger = get_logger()
 
 HEALTH_ENDPOINT = "/health"
 

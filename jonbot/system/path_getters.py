@@ -78,5 +78,5 @@ def get_default_database_json_save_path(filename: str, timestamp: bool = False):
     return str(save_path)
 
 
-def get_chroma_vector_store_path() -> str:
-    return str(Path(get_base_data_folder_path()) / "chroma_vectorstore_persistence")
+def get_chroma_vector_store_path(database_name:str) -> str:
+    return str(Path(get_base_data_folder_path()) / f"{database_name.split('_')[0]}_chroma_vectorstore_persistence")

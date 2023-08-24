@@ -4,12 +4,12 @@ from typing import List, Dict, Any, Union, Optional
 import toml
 from pydantic import BaseModel
 
-from jonbot import get_jonbot_logger
+from jonbot import get_logger
 from jonbot.system.environment.bot_tomls.get_bot_config_toml_path import (
     get_bot_config_toml_path,
 )
 
-logger = get_jonbot_logger()
+logger = get_logger()
 
 
 class BotConfigError(Exception):

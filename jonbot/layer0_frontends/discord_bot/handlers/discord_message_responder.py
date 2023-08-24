@@ -3,12 +3,12 @@ import time
 
 import discord
 
-from jonbot import get_jonbot_logger
+from jonbot import get_logger
 from jonbot.layer0_frontends.discord_bot.handlers.should_process_message import (
     RESPONSE_INCOMING_TEXT,
 )
 
-logger = get_jonbot_logger()
+logger = get_logger()
 
 STOP_STREAMING_TOKEN = "STOP_STREAMING"
 

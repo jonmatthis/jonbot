@@ -3,7 +3,7 @@ from typing import List
 
 import discord
 
-from jonbot import get_jonbot_logger
+from jonbot import get_logger
 from jonbot.layer0_frontends.discord_bot.cogs.memory_scraper_cog import MemoryScraperCog
 from jonbot.layer0_frontends.discord_bot.cogs.server_scraper_cog import ServerScraperCog
 from jonbot.layer0_frontends.discord_bot.cogs.thread_cog import ThreadCog
@@ -33,7 +33,7 @@ from jonbot.models.discord_stuff.environment_config.discord_environment import (
 )
 from jonbot.models.voice_to_text_request import VoiceToTextRequest
 
-logger = get_jonbot_logger()
+logger = get_logger()
 
 
 async def wait_a_bit(duration: float = 1):
