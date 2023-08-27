@@ -1,6 +1,6 @@
-from typing import List, Any, Optional, Union
+from typing import List, Optional, Union
 
-from langchain import PromptTemplate
+from langchain import BasePromptTemplate, PromptTemplate
 from langchain.schema import HumanMessage, AIMessage
 from pydantic import BaseModel
 
@@ -11,7 +11,6 @@ class ContextMemoryDocument(BaseModel):
     context_route: ContextRoute
     context_route_full_path: str
     context_route_friendly_path: str
-    summary_prompt: PromptTemplate
 
     query: dict
     server_name: str
@@ -24,26 +23,30 @@ class ContextMemoryDocument(BaseModel):
     message_buffer: List[Union[HumanMessage, AIMessage]] = None
     # message_uuids: List[str] = None
     summary: str = ""
+    summary_prompt: BasePromptTemplate = None
     tokens_count: int = 0
 
     @classmethod
-    def build_empty(cls, context_route: ContextRoute, summary_prompt: PromptTemplate):
+    def build_empty(
+        cls, context_route: ContextRoute, summary_prompt: Optional[PromptTemplate]
+    ):
         return cls(
             context_route=context_route,
             context_route_full_path=context_route.full_path,
             context_route_friendly_path=context_route.friendly_path,
+            query=context_route.as_query,
+            **context_route.as_flat_dict,
             message_buffer=[],
             summary="",
             summary_prompt=summary_prompt,
             tokens_count=0,
-            query=context_route.as_query,
-            **context_route.as_flat_dict,
         )
 
     def update(
         self,
         message_buffer: List[Union[HumanMessage, AIMessage]],
         summary: str,
+        summary_prompt: PromptTemplate,
         tokens_count: int,
     ):
         for message in message_buffer:
@@ -56,3 +59,4 @@ class ContextMemoryDocument(BaseModel):
         self.message_buffer = message_buffer
         self.summary = summary
         self.tokens_count = tokens_count
+        self.summary_prompt = summary_prompt

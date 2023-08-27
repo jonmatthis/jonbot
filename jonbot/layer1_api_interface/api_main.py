@@ -41,14 +41,21 @@ async def run_api_async():
     """
     Run the API for jonbot
     """
-    logger.info("Starting API")
-    fastapi_app = await get_or_create_fastapi_app()
-    config = Config(app=fastapi_app, host=HOST_NAME, port=PORT_NUMBER)
-    server = Server(config)
-    logger.success(
-        f"Server: {server} - {server.config} - {server.config.app} - Started on {server.config.host}:{str(server.config.port)}"
-    )
-    await server.serve()
+    try:
+        logger.info("Starting API")
+        fastapi_app = await get_or_create_fastapi_app()
+        config = Config(app=fastapi_app, host=HOST_NAME, port=PORT_NUMBER)
+        server = Server(config)
+        logger.success(
+            f"Server: {server} - {server.config} - {server.config.app} - Started on {server.config.host}:{str(server.config.port)}"
+        )
+        await server.serve()
+    except Exception as e:
+        logger.exception(f"Failed to run API: {e}")
+        raise e
+    finally:
+        logger.info("API stopped")
+        get_mongo_database_manager().close()
 
 
 def run_api_sync():

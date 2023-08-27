@@ -93,7 +93,7 @@ NEW LINES OF CONVERSATION:
 
 NEW SUMMARY:"""
 
-CONVERSATION_SUMMARY_PROMPT = PromptTemplate(
+DEFAULT_CONVERSATION_SUMMARY_PROMPT = PromptTemplate(
     template=CUSTOM_SUMMARIZER_TEMPLATE,
     input_variables=["current_timestamp", "summary", "new_lines"],
     output_variables=["current_timestamp"],

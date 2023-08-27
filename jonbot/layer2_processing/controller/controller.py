@@ -1,15 +1,10 @@
-from typing import AsyncIterable, Dict, Optional
+from typing import AsyncIterable, Optional
 
 from jonbot import get_logger
 from jonbot.layer2_processing.ai.audio_transcription.transcribe_audio import (
     transcribe_audio_function,
 )
-from jonbot.layer2_processing.ai.chatbot_llm_chain.chatbot_llm_chain import (
-    ChatbotLLMChain,
-)
-from jonbot.layer2_processing.ai.chatbot_llm_chain.get_chatbot_llm_chain import (
-    get_chatbot_llm_chain,
-)
+from jonbot.layer2_processing.ai.chatbot.chatbot_handler import ChatbotHandler
 from jonbot.layer2_processing.backend_database_operator.backend_database_operator import (
     BackendDatabaseOperations,
 )
@@ -24,7 +19,7 @@ logger = get_logger()
 class Controller:
     def __init__(self, database_operations: BackendDatabaseOperations):
         self.database_operations = database_operations
-        self.chatbot_llm_chains: Dict[str, ChatbotLLMChain] = {}
+        self.chatbot_handler = ChatbotHandler(database_operations=database_operations)
 
     @staticmethod
     async def transcribe_audio(
@@ -39,16 +34,11 @@ class Controller:
         self, chat_request: ChatRequest
     ) -> AsyncIterable[str]:
         logger.info(f"Received chat stream request: {chat_request}")
-        llm_chain = await get_chatbot_llm_chain(
-            chat_request=chat_request,
-            existing_chatbot_llm_chains=self.chatbot_llm_chains,
-            database_operations=self.database_operations,
-        )
-        logger.debug(f"Grabbed llm_chain: {llm_chain}")
-        async for response in llm_chain.execute(
+        chatbot = await self.chatbot_handler.get_chatbot(chat_request=chat_request)
+        async for response in chatbot.execute(
             message_string=chat_request.chat_input.message
         ):
-            logger.trace(f"Yielding response: {response}")
+            logger.trace(f"BACKEND (CONTROLLER) - Yielding response: {response}")
             yield response
 
         logger.info(f"Chat stream request complete: {chat_request}")

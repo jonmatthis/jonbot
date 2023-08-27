@@ -1,6 +1,7 @@
-from typing import Optional
+from typing import Optional, List
 
 from langchain import PromptTemplate
+from langchain.schema import BaseMessage
 from pydantic import BaseModel
 
 from jonbot import get_logger
@@ -9,6 +10,7 @@ from jonbot.layer2_processing.backend_database_operator.backend_database_operato
 )
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.context_route import ContextRoute
+from jonbot.models.conversation_models import ChatRequest
 from jonbot.models.database_request_response_models import ContextMemoryDocumentRequest
 
 logger = get_logger()
@@ -16,13 +18,23 @@ logger = get_logger()
 
 class ContextMemoryHandler(BaseModel):
     context_route: ContextRoute
-    current_context_memory_document: ContextMemoryDocument = None
     database_operations: BackendDatabaseOperations
     database_name: str
-    summary_prompt: PromptTemplate
+    current_context_memory_document: ContextMemoryDocument = None
 
-    @property
-    async def context_memory_document(self) -> ContextMemoryDocument:
+    @classmethod
+    def build(
+        cls,
+        chat_request: ChatRequest,
+        database_operations: BackendDatabaseOperations,
+    ):
+        return cls(
+            context_route=chat_request.context_route,
+            database_name=chat_request.database_name,
+            database_operations=database_operations,
+        )
+
+    async def get_context_memory_document(self) -> ContextMemoryDocument:
         if self.current_context_memory_document is None:
             logger.trace(
                 f"Current context memory document is None, loading from database..."
@@ -35,7 +47,29 @@ class ContextMemoryHandler(BaseModel):
             self.current_context_memory_document = ContextMemoryDocument.build_empty(
                 context_route=self.context_route, summary_prompt=self.summary_prompt
             )
+        if self.current_context_memory_document is None:
+            raise Exception("Failed to load a context memory docyument...")
+
         return self.current_context_memory_document
+
+    async def update(
+        self,
+        message_buffer: List[BaseMessage],
+        summary: str,
+        summary_prompt: PromptTemplate,
+        token_count: int,
+    ):
+        logger.debug(
+            f"Updating context memory for context route: {self.context_route.dict()} - summary: {summary}"
+        )
+        document = await self.get_context_memory_document()
+        document.update(
+            message_buffer=message_buffer,
+            summary=summary,
+            tokens_count=token_count,
+            summary_prompt=summary_prompt,
+        )
+        await self._upsert_context_memory()
 
     async def _load_context_memory(self) -> Optional[ContextMemoryDocument]:
         logger.info(
@@ -43,7 +77,6 @@ class ContextMemoryHandler(BaseModel):
         )
         get_request = ContextMemoryDocumentRequest.build_get_request(
             context_route=self.context_route,
-            summary_prompt=self.summary_prompt,
             database_name=self.database_name,
         )
         response = await self.database_operations.get_context_memory_document(
@@ -60,7 +93,7 @@ class ContextMemoryHandler(BaseModel):
 
     @property
     async def _upsert_request(self) -> ContextMemoryDocumentRequest:
-        document = await self.context_memory_document
+        document = await self.get_context_memory_document()
         return ContextMemoryDocumentRequest.build_upsert_request(
             document=document, database_name=self.database_name
         )
@@ -76,13 +109,3 @@ class ContextMemoryHandler(BaseModel):
         except Exception as e:
             logger.exception(e)
             raise
-
-    async def update(self, message_buffer: list, summary: str, token_count: int):
-        logger.debug(
-            f"Updating context memory for context route: {self.context_route.dict()} - summary: {summary}"
-        )
-        document = await self.context_memory_document
-        document.update(
-            message_buffer=message_buffer, summary=summary, tokens_count=token_count
-        )
-        await self._upsert_context_memory()

@@ -1,16 +1,16 @@
 import uuid
-from typing import Union, List, Dict, Optional
+from typing import Union, List, Dict
 
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import UpdateOne, DESCENDING
 
 from jonbot import get_logger
-from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.conversation_models import MessageHistory, ChatMessage
 from jonbot.models.database_request_response_models import (
     ContextMemoryDocumentRequest,
     UpsertDiscordMessagesRequest,
     MessageHistoryRequest,
+    ContextMemoryDocumentResponse,
 )
 from jonbot.models.discord_stuff.discord_id import DiscordUserID
 from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
@@ -95,17 +95,6 @@ class MongoDatabaseManager:
             collection_name=RAW_MESSAGES_COLLECTION_NAME,
         )
 
-    async def upsert_context_memory(
-        self, request: ContextMemoryDocumentRequest
-    ) -> bool:
-        entries = [{"data": request.data.dict(), "query": request.query}]
-
-        return await self._upsert_many(
-            database_name=request.database_name,
-            entries=entries,
-            collection_name=CONTEXT_MEMORIES_COLLECTION_NAME,
-        )
-
     async def get_message_history(
         self, request: MessageHistoryRequest
     ) -> MessageHistory:
@@ -127,9 +116,20 @@ class MongoDatabaseManager:
             message_history.add_message(chat_message)
         return message_history
 
+    async def upsert_context_memory(
+        self, request: ContextMemoryDocumentRequest
+    ) -> bool:
+        entries = [{"data": request.data.dict(), "query": request.query}]
+
+        return await self._upsert_many(
+            database_name=request.database_name,
+            entries=entries,
+            collection_name=CONTEXT_MEMORIES_COLLECTION_NAME,
+        )
+
     async def get_context_memory(
         self, request: ContextMemoryDocumentRequest
-    ) -> Optional[ContextMemoryDocument]:
+    ) -> ContextMemoryDocumentResponse:
         messages_collection = self._get_collection(
             request.database_name, CONTEXT_MEMORIES_COLLECTION_NAME
         )
@@ -138,9 +138,9 @@ class MongoDatabaseManager:
 
         if result is None:
             logger.warning(f"Context memory not found with query: {query}")
-            return None
+            return ContextMemoryDocumentResponse(success=False)
 
-        return ContextMemoryDocument(**result)
+        return ContextMemoryDocumentResponse(**result)
 
     async def get_or_create_user(
         self,

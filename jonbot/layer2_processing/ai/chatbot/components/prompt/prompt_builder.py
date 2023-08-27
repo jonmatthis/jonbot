@@ -6,7 +6,7 @@ from langchain.prompts import (
     MessagesPlaceholder,
 )
 
-from jonbot.layer2_processing.ai.chatbot_llm_chain.components.prompt.prompt_strings import (
+from jonbot.layer2_processing.ai.chatbot.components.prompt.prompt_strings import (
     DEFAULT_RULES_FOR_LIVING,
     DEFAULT_CHATBOT_SYSTEM_PROMPT_TEMPLATE,
 )

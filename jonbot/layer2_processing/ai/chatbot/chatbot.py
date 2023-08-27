@@ -1,4 +1,3 @@
-import asyncio
 from typing import AsyncIterable
 
 from langchain.chat_models import ChatOpenAI
@@ -8,28 +7,25 @@ from jonbot import get_logger
 from jonbot.layer0_frontends.discord_bot.handlers.discord_message_responder import (
     STOP_STREAMING_TOKEN,
 )
-from jonbot.layer2_processing.ai.chatbot_llm_chain.components.memory.conversation_memory.conversation_memory import (
+from jonbot.layer2_processing.ai.chatbot.components.memory.conversation_memory.conversation_memory import (
     ChatbotConversationMemory,
 )
-from jonbot.layer2_processing.ai.chatbot_llm_chain.components.prompt.prompt_builder import (
+from jonbot.layer2_processing.ai.chatbot.components.memory.memory_handler import (
+    MemoryHandler,
+)
+from jonbot.layer2_processing.ai.chatbot.components.prompt.prompt_builder import (
     ChatbotPrompt,
 )
-from jonbot.layer2_processing.backend_database_operator.backend_database_operator import (
-    BackendDatabaseOperations,
-)
-from jonbot.models.context_route import ContextRoute
 
 # langchain.debug = True
 
 logger = get_logger()
 
 
-class ChatbotLLMChain:
+class Chatbot:
     def __init__(
         self,
-        context_route: ContextRoute,
-        database_name: str,
-        database_operations: BackendDatabaseOperations,
+        memory_handler: MemoryHandler,
         chat_history_placeholder_name: str = "chat_history",
     ):
         self.model = ChatOpenAI(
@@ -42,23 +38,17 @@ class ChatbotLLMChain:
         )
 
         self.memory = ChatbotConversationMemory(
-            database_operations=database_operations,
-            database_name=database_name,
-            context_route=context_route,
+            memory_handler=memory_handler,
         )
         self.chain = self._build_chain()
 
     @classmethod
-    async def from_context_route(
+    async def from_memory_handler(
         cls,
-        context_route: ContextRoute,
-        database_name: str,
-        database_operations: BackendDatabaseOperations,
+        memory_handler: MemoryHandler,
     ):
         instance = cls(
-            context_route=context_route,
-            database_name=database_name,
-            database_operations=database_operations,
+            memory_handler=memory_handler,
         )
 
         await instance.memory.configure_memory()
@@ -80,10 +70,7 @@ class ChatbotLLMChain:
             | self.model
         )
 
-    async def execute(
-        self,
-            message_string: str
-    ) -> AsyncIterable[str]:
+    async def execute(self, message_string: str) -> AsyncIterable[str]:
         inputs = {"human_input": message_string}
         response_message = ""
         try:
@@ -105,17 +92,17 @@ class ChatbotLLMChain:
             raise
 
 
-async def demo():
-    from jonbot.tests.load_save_sample_data import load_sample_message_history
-
-    conversation_history = await load_sample_message_history()
-    llm_chain = ChatbotLLMChain(conversation_history=conversation_history)
-    async for token in llm_chain.chain.astream(
-        {"human_input": "Hello, how are you?"}
-    ):  # Use 'async for' here
-        print(token.content)
-    f = 9
-
-
-if __name__ == "__main__":
-    asyncio.run(demo())
+#
+# async def demo():
+#     from jonbot.tests.load_save_sample_data import load_sample_message_history
+#
+#     chat_bot = Chatbot.build_empty()
+#     async for token in llm_chain.chain.astream(
+#         {"human_input": "Hello, how are you?"}
+#     ):  # Use 'async for' here
+#         print(token.content)
+#     f = 9
+#
+#
+# if __name__ == "__main__":
+#     asyncio.run(demo())

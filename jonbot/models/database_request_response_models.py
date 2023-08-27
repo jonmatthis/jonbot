@@ -1,4 +1,4 @@
-from typing import Literal, List, Dict, Any
+from typing import Literal, List, Dict, Any, Optional
 
 from langchain import PromptTemplate
 from pydantic import BaseModel
@@ -59,7 +59,7 @@ class ContextMemoryDocumentRequest(BaseModel):
         cls,
         context_route: ContextRoute,
         database_name: str,
-        summary_prompt: PromptTemplate,
+        summary_prompt: Optional[PromptTemplate] = None,
     ):
         return cls(
             data=ContextMemoryDocument.build_empty(
