@@ -28,9 +28,7 @@ CALCULATE_MEMORY_ENDPOINT = "/calculate_memory"
 
 
 def register_api_routes(
-    app: FastAPI,
-        database_operations: BackendDatabaseOperations,
-        controller: Controller
+    app: FastAPI, database_operations: BackendDatabaseOperations, controller: Controller
 ):
     @app.get(HEALTH_ENDPOINT, response_model=HealthCheckResponse)
     async def health_check_endpoint():

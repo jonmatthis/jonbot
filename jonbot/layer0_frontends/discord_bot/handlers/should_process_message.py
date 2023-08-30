@@ -107,7 +107,11 @@ def allowed_to_reply(message: discord.Message) -> bool:
         )
         return True
 
-    if message.channel.id not in allowed_channels:
+    if "thread" in message.channel.type.name:
+        channel_id = message.channel.parent.id
+    else:
+        channel_id = message.channel.id
+    if channel_id not in allowed_channels:
         logger.debug(
             f"Message `{message.content}` is not allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: not allowed channel)"
         )
