@@ -13,6 +13,8 @@ RESPONSE_INCOMING_TEXT = "response incoming..."
 ERROR_MESSAGE_REPLY_PREFIX_TEXT = (
     f"Sorry, an error occurred while processing your request"
 )
+NEW_THREAD_MESSAGE_PREFIX_TEXT = "A new thread has been created! \n"
+
 IGNORE_PREFIX = "~"  # If a message starts with this, the bot will ignore it
 
 
@@ -21,10 +23,14 @@ def this_message_is_from_a_bot(message: discord.Message) -> bool:
     return message.author.bot
 
 
-def check_if_transcribed_audio_message(message: discord.Message) -> bool:
-    return message.content.startswith(
-        TRANSCRIBED_AUDIO_PREFIX
-    ) or message.content.startswith(FINISHED_VOICE_RECORDING_PREFIX)
+# def check_if_transcribed_audio_message(message: discord.Message) -> bool:
+#     return message.content.startswith(
+#         TRANSCRIBED_AUDIO_PREFIX
+#     ) or message.content.startswith(FINISHED_VOICE_RECORDING_PREFIX)
+
+
+def check_if_new_thread_message(message: discord.Message) -> bool:
+    return message.content.startswith(NEW_THREAD_MESSAGE_PREFIX_TEXT)
 
 
 def message_starts_with_ignore_prefix(message: discord.Message) -> bool:
@@ -43,6 +49,12 @@ def should_reply(message: discord.Message, bot_user_name: str) -> bool:
             f"Message `{message.content}` was not handled by the bot {bot_user_name} (reason: starts with ignore prefix{IGNORE_PREFIX})"
         )
         return False
+
+    if check_if_new_thread_message(message):
+        logger.debug(
+            f"Message `{message.content}` was handled by the bot {bot_user_name} (reason: new thread message)"
+        )
+        return True
 
     if this_message_is_from_a_bot(message):
         logger.debug(
@@ -67,6 +79,7 @@ def allowed_to_reply(message: discord.Message) -> bool:
     logger.trace(
         f"Checking if message `{message.content}` is allowed to be handled by the bot {discord_config.BOT_NICK_NAME}"
     )
+
     # Handle DMs
     if message.channel.type == discord.ChannelType.private:
         logger.trace(
@@ -75,6 +88,11 @@ def allowed_to_reply(message: discord.Message) -> bool:
         return discord_config.DIRECT_MESSAGES_ALLOWED
 
     # Handle server messages
+    if "thread" in message.channel.type.name:
+        channel_id = message.channel.parent.id
+    else:
+        channel_id = message.channel.id
+
     server_data = None
     for server_name, details in discord_config.SERVERS_DETAILS.items():
         if message.guild.id == details["SERVER_ID"]:
@@ -84,6 +102,13 @@ def allowed_to_reply(message: discord.Message) -> bool:
     if not server_data:
         logger.error(
             f"Message received from server {message.guild.id} which is not in the list of allowed servers :O"
+        )
+        return False
+
+    excluded_channels = server_data.get("EXCLUDED_CHANNEL_IDS", [])
+    if channel_id in excluded_channels:
+        logger.debug(
+            f"Message `{message.content}` is not allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: excluded channel)"
         )
         return False
 
@@ -107,10 +132,6 @@ def allowed_to_reply(message: discord.Message) -> bool:
         )
         return True
 
-    if "thread" in message.channel.type.name:
-        channel_id = message.channel.parent.id
-    else:
-        channel_id = message.channel.id
     if channel_id not in allowed_channels:
         logger.debug(
             f"Message `{message.content}` is not allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: not allowed channel)"
