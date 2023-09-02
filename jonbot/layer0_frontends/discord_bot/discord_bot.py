@@ -116,10 +116,11 @@ class MyDiscordBot(discord.Bot):
 
     async def _send_error_response(self, e, messages_to_upsert):
         error_type, error_instance, traceback = sys.exc_info()
-        filename = traceback.tb_frame.f_code.co_filename
         function_name = traceback.tb_frame.f_code.co_name
+        module_name = traceback.tb_frame.f_globals["__name__"]
         line_number = traceback.tb_lineno
-        error_message = f"Error message: {str(e)} in {filename}/{function_name}:{line_number}"
+        error_message = (f"Error message: \n {str(e)}\n"
+                         f"{module_name}:{function_name}:Line# {line_number}")
         logger.exception(error_message)
         await messages_to_upsert[-1].reply(f"{ERROR_MESSAGE_REPLY_PREFIX_TEXT} \n >  {error_message}")
 
