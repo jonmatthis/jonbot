@@ -87,7 +87,7 @@ class MyDiscordBot(discord.Bot):
     async def handle_message(self, message: discord.Message):
         messages_to_upsert = [message]
         try:
-            with message.channel.typing():
+            async with message.channel.typing():
                 if len(message.attachments) > 0:
                     if any(
                         attachment.content_type.startswith("audio")
@@ -95,7 +95,7 @@ class MyDiscordBot(discord.Bot):
                     ):
                         response_messages = await self.handle_voice_recording(
                             message=message
-                            )
+                        )
 
                 else:
                     # HANDLE TEXT MESSAGE
@@ -176,7 +176,9 @@ class MyDiscordBot(discord.Bot):
                         f"File URL:{attachment.url}\n\n"
                     )
 
-                    await responder.add_text_to_reply_message(token=reply_message_content)
+                    await responder.add_text_to_reply_message(
+                        token=reply_message_content
+                    )
                     await responder.shutdown()
 
                     logger.success(
