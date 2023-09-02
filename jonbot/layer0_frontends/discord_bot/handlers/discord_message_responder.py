@@ -31,9 +31,9 @@ class DiscordMessageResponder:
         return self._reply_messages
 
     async def initialize(
-        self,
-        message: discord.Message,
-        initial_message_content: str = RESPONSE_INCOMING_TEXT,
+            self,
+            message: discord.Message,
+            initial_message_content: str = RESPONSE_INCOMING_TEXT,
     ):
         logger.info(f"initializing reply to message: `{message.id}`")
         self._reply_message = await message.reply(initial_message_content)
@@ -77,20 +77,20 @@ class DiscordMessageResponder:
         await self.add_text_to_reply_message("".join(chunk))
         logger.info(f"queue loop finished")
 
-    async def add_text_to_reply_message(self, token: str, show_delta_t: bool = False):
+    async def add_text_to_reply_message(self, chunk: str, show_delta_t: bool = False):
         stop_now = False
-        if STOP_STREAMING_TOKEN in token:
+        if STOP_STREAMING_TOKEN in chunk:
             logger.debug(f"Recieved `{STOP_STREAMING_TOKEN}`, stopping stream...")
             stop_now = True
-            token = token.replace(STOP_STREAMING_TOKEN, "")
+            chunk = chunk.replace(STOP_STREAMING_TOKEN, "")
 
-        if not token == "":
-            logger.trace(f"FRONTEND - updating discord reply with token: {repr(token)}")
+        if not chunk == "":
+            logger.trace(f"FRONTEND - updating discord reply with chunk: {repr(chunk)}")
 
-            if show_delta_t:  # append delta_t to token, useful for debugging
-                token = self._add_delta_t_to_token(token)
+            if show_delta_t:  # append delta_t to chunk, useful for debugging
+                chunk = self._add_delta_t_to_token(chunk)
 
-            self.message_content += token
+            self.message_content += chunk
 
             if len(self.message_content) > self.comfy_message_length:
                 logger.trace(
@@ -98,7 +98,7 @@ class DiscordMessageResponder:
                 )
                 await self._add_reply_message_to_list()
 
-                self.message_content = "`continuing from previous message...`\n"
+                self.message_content = f"`continuing from previous message...`\n\n {chunk}"
                 self._reply_message = await self._reply_message.reply(
                     self.message_content
                 )
@@ -109,16 +109,16 @@ class DiscordMessageResponder:
             logger.debug(f"Stopping stream (setting `self.done` to True)...")
             self.done = True
 
-    def _add_delta_t_to_token(self, token: str):
+    def _add_delta_t_to_token(self, chunk: str):
         current_timestamp = time.perf_counter()
         updated_token = (
-            f"[delta_t:{current_timestamp - self._previous_timestamp:.6f}]{token}\n"
+            f"[delta_t:{current_timestamp - self._previous_timestamp:.6f}]{chunk}\n"
         )
         self._previous_timestamp = current_timestamp
         return updated_token
 
     async def _add_reply_message_to_list(
-        self,
+            self,
     ):
         self._reply_message.content = (
             self.message_content
