@@ -87,6 +87,7 @@ class MyDiscordBot(discord.Bot):
 
     async def handle_message(self, message: discord.Message):
         messages_to_upsert = [message]
+        text_to_reply_to = f"{message.author}: {message.content}"
         try:
             async with message.channel.typing():
                 if len(message.attachments) > 0:
@@ -95,12 +96,11 @@ class MyDiscordBot(discord.Bot):
                         if "audio" in attachment.content_type:
                             audio_response_dict = await self.handle_audio_message(message=message)
                             messages_to_upsert.extend(audio_response_dict["transcriptions_messages"])
-                            text_to_reply_to = audio_response_dict["transcription_text"]
+                            new_text_to_reply_to = audio_response_dict["transcription_text"]
+                            text_to_reply_to += f"\n\n{new_text_to_reply_to}"
                         else:
-                            text_to_reply_to = await self.handle_text_attachments(message=message)
-
-                else:
-                    text_to_reply_to = f"{message.author}: {message.content}"
+                            new_text_to_reply_to = await self.handle_text_attachments(attachment=attachment)
+                            text_to_reply_to += f"\n\n{new_text_to_reply_to}"
 
             response_messages = await self.handle_text_message(
                 message=message, respond_to_this_text=text_to_reply_to
