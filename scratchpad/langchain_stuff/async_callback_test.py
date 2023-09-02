@@ -12,10 +12,10 @@ class MyCustomSyncHandler(BaseCallbackHandler):
 
 
 class MyCustomAsyncHandler(AsyncCallbackHandler):
-    """Async callback handler that can be used to handle callbacks from chatbot_llm_chain."""
+    """Async callback handler that can be used to handle callbacks from chatbot."""
 
     async def on_llm_start(
-        self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any
+            self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any
     ) -> None:
         """Run when chain starts running."""
         print("zzzz....")
@@ -44,8 +44,10 @@ if __name__ == "__main__":
         callbacks=[MyCustomSyncHandler(), MyCustomAsyncHandler()],
     )
 
+
     async def stream_generator():
         async for token in llm.astream("Say 3 words"):
             print(f"wowooo - {token.content}")
+
 
     asyncio.run(stream_generator())

@@ -1,7 +1,7 @@
 from typing import Dict
 
 from jonbot import get_jonbot_logger
-from jonbot.layer2_processing.ai.chatbot_llm_chain.chatbot_llm_chain import (
+from jonbot.layer2_processing.ai.chatbot.chatbot_llm_chain import (
     ChatbotLLMChain,
 )
 from jonbot.layer2_processing.backend_database_operator.backend_database_operator import (
@@ -13,9 +13,9 @@ logger = get_jonbot_logger()
 
 
 async def get_chatbot_llm_chain(
-    chat_request: ChatRequest,
-    existing_chatbot_llm_chains: Dict[str, ChatbotLLMChain],
-    database_operations: BackendDatabaseOperations,
+        chat_request: ChatRequest,
+        existing_chatbot_llm_chains: Dict[str, ChatbotLLMChain],
+        database_operations: BackendDatabaseOperations,
 ) -> ChatbotLLMChain:
     context_path = str(chat_request.context_route.as_flat_dict)
 

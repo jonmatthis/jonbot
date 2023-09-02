@@ -21,27 +21,40 @@ class ThreadCog(discord.Cog):
         required=False,
     )
     async def create_thread(
-        self,
-        ctx: discord.ApplicationContext,
-        initial_message: str = None,
+            self,
+            ctx: discord.ApplicationContext,
+            initial_message_text: str = None,
     ):
         logger.info(
-            f"Received thread request from {ctx.user.name} with initial message: {initial_message}"
+            f"Received thread request from {ctx.user.name} with initial message: {initial_message_text}"
         )
-        reply_message = await self._send_title_card_as_reply_message(ctx)
+        parent_message_embed = await self._create_parent_message_embed(ctx)
+        in_thread = False
+        if "thread" in ctx.channel.name:
+            logger.debug(
+                f"Create thread called from thread, creating thread in parent channel: {ctx.channel.parent.name}")
+            reply_message = await ctx.channel.parent.send(embed=parent_message_embed)
+            in_thread = True
+        else:
+            logger.debug(f"Creating thread in {ctx.channel.name}")
+            reply_message = await ctx.channel.send(embed=parent_message_embed)
 
-        await self._spawn_thread(
+        initial_message = await self._spawn_thread(
             parent_message=reply_message,
             user_name=str(ctx.user),
-            initial_text_input=initial_message,
+            initial_text_input=initial_message_text,
         )
 
+        if in_thread:
+            await ctx.send(
+                f"Created thread in parent channel: {ctx.channel.parent.name}:\n\n {initial_message.jump_url}")
+
     async def _spawn_thread(
-        self,
-        parent_message: discord.Message,
-        user_name: str,
-        initial_text_input: str = None,
-    ):
+            self,
+            parent_message: discord.Message,
+            user_name: str,
+            initial_text_input: str = None,
+    ) -> discord.Message:
         logger.debug(f"Spawning thread for {user_name}")
         thread_title = self._create_chat_title_string(user_name=user_name)
 
@@ -64,21 +77,20 @@ class ThreadCog(discord.Cog):
         )
         await thread.send(embed=initial_message_embed)
 
-        initial_message = f"{NEW_THREAD_MESSAGE_PREFIX_TEXT} \n" f"{starting_text}"
-        logger.debug(f"Sending initial message to thread: {initial_message}")
-        await thread.send(initial_message)
+        initial_message_text = f"{NEW_THREAD_MESSAGE_PREFIX_TEXT} \n" f"{starting_text}"
+        logger.debug(f"Sending initial message to thread: {initial_message_text}")
+        initial_message = await thread.send(initial_message_text)
+        return initial_message
 
     def _create_chat_title_string(self, user_name: str) -> str:
         return f"{user_name}'s thread {Timestamp.now().human_friendly_local}"
 
-    async def _send_title_card_as_reply_message(self, ctx):
+    async def _create_parent_message_embed(self, ctx: discord.ApplicationContext) -> discord.Embed:
         logger.debug(f"Sending title card as reply message to {ctx.user.name}")
         chat_title = self._create_chat_title_string(user_name=str(ctx.user))
-        title_card_embed = await self._make_thread_title_embed(
+        return await self._make_thread_title_embed(
             str(ctx.user), chat_title
         )
-        reply_message = await ctx.send(embed=title_card_embed)
-        return reply_message
 
     async def _make_thread_title_embed(self, user_name: str, chat_title: str):
         return discord.Embed(

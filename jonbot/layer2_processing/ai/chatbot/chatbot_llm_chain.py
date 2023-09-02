@@ -8,10 +8,10 @@ from jonbot import get_jonbot_logger
 from jonbot.layer0_frontends.discord_bot.handlers.discord_message_responder import (
     STOP_STREAMING_TOKEN,
 )
-from jonbot.layer2_processing.ai.chatbot_llm_chain.components.memory.conversation_memory.conversation_memory import (
+from jonbot.layer2_processing.ai.chatbot.components.memory.conversation_memory.conversation_memory import (
     ChatbotConversationMemory,
 )
-from jonbot.layer2_processing.ai.chatbot_llm_chain.components.prompt.prompt_builder import (
+from jonbot.layer2_processing.ai.chatbot.components.prompt.prompt_builder import (
     ChatbotPrompt,
 )
 from jonbot.layer2_processing.backend_database_operator.backend_database_operator import (
@@ -26,11 +26,11 @@ logger = get_jonbot_logger()
 
 class ChatbotLLMChain:
     def __init__(
-        self,
-        context_route: ContextRoute,
-        database_name: str,
-        database_operations: BackendDatabaseOperations,
-        chat_history_placeholder_name: str = "chat_history",
+            self,
+            context_route: ContextRoute,
+            database_name: str,
+            database_operations: BackendDatabaseOperations,
+            chat_history_placeholder_name: str = "chat_history",
     ):
         self.model = ChatOpenAI(
             temperature=0.8,
@@ -50,10 +50,10 @@ class ChatbotLLMChain:
 
     @classmethod
     async def from_context_route(
-        cls,
-        context_route: ContextRoute,
-        database_name: str,
-        database_operations: BackendDatabaseOperations,
+            cls,
+            context_route: ContextRoute,
+            database_name: str,
+            database_operations: BackendDatabaseOperations,
     ):
         instance = cls(
             context_route=context_route,
@@ -66,22 +66,22 @@ class ChatbotLLMChain:
 
     def _build_chain(self) -> RunnableSequence:
         return (
-            RunnableMap(
-                {
+                RunnableMap(
+                    {
+                        "human_input": lambda x: x["human_input"],
+                        "memory": self.memory.load_memory_variables,
+                    }
+                )
+                | {
                     "human_input": lambda x: x["human_input"],
-                    "memory": self.memory.load_memory_variables,
+                    "chat_history": lambda x: x["memory"]["chat_memory"],
                 }
-            )
-            | {
-                "human_input": lambda x: x["human_input"],
-                "chat_history": lambda x: x["memory"]["chat_memory"],
-            }
-            | self.prompt
-            | self.model
+                | self.prompt
+                | self.model
         )
 
     async def execute(
-        self, message_string: str, pause_at_end: float = 1.0
+            self, message_string: str, pause_at_end: float = 1.0
     ) -> AsyncIterable[str]:
         inputs = {"human_input": message_string}
         response_message = ""
@@ -112,7 +112,7 @@ async def demo():
     conversation_history = await load_sample_message_history()
     llm_chain = ChatbotLLMChain(conversation_history=conversation_history)
     async for token in llm_chain.chain.astream(
-        {"human_input": "Hello, how are you?"}
+            {"human_input": "Hello, how are you?"}
     ):  # Use 'async for' here
         print(token.content)
     f = 9

@@ -1,5 +1,6 @@
 import asyncio
-from typing import List
+import sys
+from typing import List, Union, Dict
 
 import discord
 
@@ -42,10 +43,10 @@ async def wait_a_bit(duration: float = 1):
 
 class MyDiscordBot(discord.Bot):
     def __init__(
-        self,
-        environment_config: DiscordEnvironmentConfig,
-        api_client: ApiClient = get_or_create_api_client(),
-        **kwargs,
+            self,
+            environment_config: DiscordEnvironmentConfig,
+            api_client: ApiClient = get_or_create_api_client(),
+            **kwargs,
     ):
         super().__init__(**kwargs)
         self._local_message_prefix = "wowo"
@@ -89,35 +90,53 @@ class MyDiscordBot(discord.Bot):
         try:
             async with message.channel.typing():
                 if len(message.attachments) > 0:
-                    if any(
-                        attachment.content_type.startswith("audio")
-                        for attachment in message.attachments
-                    ):
-                        response_messages = await self.handle_voice_recording(
-                            message=message
-                        )
+                    logger.debug(f"Message has attachments: {message.attachments}")
+                    for attachment in message.attachments:
+                        if "audio" in attachment.content_type:
+                            audio_response_dict = await self.handle_audio_message(message=message)
+                            messages_to_upsert.extend(audio_response_dict["transcriptions_messages"])
+                            text_to_reply_to = audio_response_dict["transcription_text"]
+                        else:
+                            text_to_reply_to = await self.handle_text_attachments(message=message)
 
                 else:
-                    # HANDLE TEXT MESSAGE
-                    response_messages = await self.handle_text_message(
-                        message=message, respond_to_this_text=message.content
-                    )
+                    text_to_reply_to = f"{message.author}: {message.content}"
+
+            response_messages = await self.handle_text_message(
+                message=message, respond_to_this_text=text_to_reply_to
+            )
 
             messages_to_upsert.extend(response_messages)
 
         except Exception as e:
-            error_message = f"Error message: {str(e)}"
-            logger.exception(error_message)
-            await messages_to_upsert[-1].reply(
-                f"{ERROR_MESSAGE_REPLY_PREFIX_TEXT} \n >  {error_message}"
-            )
+            await self._send_error_response(e, messages_to_upsert)
+            return
 
         await self._database_operations.upsert_messages(messages=messages_to_upsert)
 
+    async def _send_error_response(self, e, messages_to_upsert):
+        error_type, error_instance, traceback = sys.exc_info()
+        filename = traceback.tb_frame.f_code.co_filename
+        function_name = traceback.tb_frame.f_code.co_name
+        line_number = traceback.tb_lineno
+        error_message = f"Error message: {str(e)} in {filename}/{function_name}:{line_number}"
+        logger.exception(error_message)
+        await messages_to_upsert[-1].reply(f"{ERROR_MESSAGE_REPLY_PREFIX_TEXT} \n >  {error_message}")
+
+    async def handle_text_attachments(self, attachment: discord.Attachment) -> str:
+        try:
+            # Try to convert to text
+            text_file = await attachment.read()
+            text = text_file.decode("utf-8")
+            return f"\n\n{attachment.filename}:\n\n++++++\n{text}\n++++++\n"
+        except UnicodeDecodeError:
+            logger.warning(f"Attachment type not supported: {attachment.content_type}")
+            return f"\n\n{attachment.filename}:\n\n++++++\n{attachment.url}\n++++++(Note: Could not convert this file to text)\n"
+
     async def handle_text_message(
-        self,
-        message: discord.Message,
-        respond_to_this_text: str,
+            self,
+            message: discord.Message,
+            respond_to_this_text: str,
     ) -> List[discord.Message]:
         chat_request = ChatRequest.from_discord_message(
             message=message,
@@ -128,7 +147,7 @@ class MyDiscordBot(discord.Bot):
         await message_responder.initialize(message=message)
 
         async def callback(
-            token: str, responder: DiscordMessageResponder = message_responder
+                token: str, responder: DiscordMessageResponder = message_responder
         ):
             logger.trace(f"FRONTEND received token: `{repr(token)}`")
             await responder.add_token_to_queue(token=token)
@@ -149,7 +168,7 @@ class MyDiscordBot(discord.Bot):
             await message_responder.shutdown()
             raise
 
-    async def handle_voice_recording(self, message: discord.Message):
+    async def handle_audio_message(self, message: discord.Message) -> Dict[str, Union[str, List[discord.Message]]]:
         logger.info(f"Received voice memo from user: {message.author}")
         try:
             reply_message_content = (
@@ -194,10 +213,17 @@ class MyDiscordBot(discord.Bot):
         transcription_text = ""
         for message in transcriptions_messages:
             transcription_text += message.content
+        return {"transcription_text": transcription_text, "transcriptions_messages": transcriptions_messages}
+        # response_messages = await self.handle_text_message(
+        #     message=transcriptions_messages[-1],
+        #     respond_to_this_text=transcription_text,
+        # )
+        #
+        # return transcriptions_messages + response_messages
 
-        response_messages = await self.handle_text_message(
-            message=transcriptions_messages[-1],
-            respond_to_this_text=transcription_text,
-        )
+    def get_text_to_reply_to(self, message: discord.Message) -> str:
+        text_to_reply_to = ""
+        if message.content:
+            text_to_reply_to += f"{message.author.name}: {message.content}\n"
 
-        return transcriptions_messages + response_messages
+        text_from_attachments = self.handle_message_attachments()

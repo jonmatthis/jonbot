@@ -6,7 +6,7 @@ from langchain.prompts import (
     MessagesPlaceholder,
 )
 
-from jonbot.layer2_processing.ai.chatbot_llm_chain.components.prompt.prompt_strings import (
+from jonbot.layer2_processing.ai.chatbot.components.prompt.prompt_strings import (
     DEFAULT_RULES_FOR_LIVING,
     DEFAULT_CHATBOT_SYSTEM_PROMPT_TEMPLATE,
 )
@@ -17,10 +17,10 @@ from jonbot.models.timestamp_model import Timestamp
 class ChatbotPrompt(ChatPromptTemplate):
     @classmethod
     def build(
-        cls,
-        chat_history_placeholder_name: str,
-        conversation_context: ConversationContextDescription = None,
-        system_prompt_template: str = DEFAULT_CHATBOT_SYSTEM_PROMPT_TEMPLATE,
+            cls,
+            chat_history_placeholder_name: str,
+            conversation_context: ConversationContextDescription = None,
+            system_prompt_template: str = DEFAULT_CHATBOT_SYSTEM_PROMPT_TEMPLATE,
     ) -> ChatPromptTemplate:
         system_prompt = PromptTemplate(
             template=system_prompt_template,

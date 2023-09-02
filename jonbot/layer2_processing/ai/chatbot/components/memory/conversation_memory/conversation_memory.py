@@ -4,7 +4,7 @@ from langchain.memory import ConversationSummaryBufferMemory
 from langchain.schema import HumanMessage, AIMessage
 
 from jonbot import get_jonbot_logger
-from jonbot.layer2_processing.ai.chatbot_llm_chain.components.memory.conversation_memory.context_memory_handler import (
+from jonbot.layer2_processing.ai.chatbot.components.memory.conversation_memory.context_memory_handler import (
     ContextMemoryHandler,
 )
 from jonbot.layer2_processing.backend_database_operator.backend_database_operator import (
@@ -21,11 +21,11 @@ class ChatbotConversationMemory(ConversationSummaryBufferMemory):
     context_memory_handler: ContextMemoryHandler
 
     def __init__(
-        self,
-        context_route: ContextRoute,
-        database_name: str,
-        database_operations: BackendDatabaseOperations,
-        config: ChatbotConversationMemoryConfig = None,
+            self,
+            context_route: ContextRoute,
+            database_name: str,
+            database_operations: BackendDatabaseOperations,
+            config: ChatbotConversationMemoryConfig = None,
     ):
         if config is None:
             config = ChatbotConversationMemoryConfig()
@@ -62,7 +62,7 @@ class ChatbotConversationMemory(ConversationSummaryBufferMemory):
         return tokens_in_messages + tokens_in_summary
 
     def _build_memory_from_context_memory_document(
-        self, document: ContextMemoryDocument
+            self, document: ContextMemoryDocument
     ):
         self._load_messages_from_message_buffer(buffer=document.message_buffer)
 
@@ -71,7 +71,7 @@ class ChatbotConversationMemory(ConversationSummaryBufferMemory):
         self.prompt = document.summary_prompt
 
     def _load_messages_from_message_buffer(
-        self, buffer: List[Dict[str, Any]]
+            self, buffer: List[Dict[str, Any]]
     ) -> List[Union[HumanMessage, AIMessage]]:
         messages = []
         try:

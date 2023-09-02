@@ -3,7 +3,7 @@ from typing import Any
 from langchain import OpenAI, PromptTemplate
 from pydantic import BaseModel
 
-from jonbot.layer2_processing.ai.chatbot_llm_chain.components.memory.conversation_memory.conversation_summary_prompt_templates import (
+from jonbot.layer2_processing.ai.chatbot.components.memory.conversation_memory.conversation_summary_prompt_templates import (
     CONVERSATION_SUMMARY_PROMPT,
 )
 
