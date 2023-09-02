@@ -48,21 +48,24 @@ class DiscordMessageResponder:
         )
         await self._token_queue.put(token)
 
-    async def _run_token_queue_loop(self, delay: float = 0.1, chunk_size: int = 10):
+    async def _run_token_queue_loop(self, base_delay: float = 0.1, chunk_size: int = 10):
         chunk = []
+        delay = base_delay
         while True:
             await asyncio.sleep(delay)
+            delay *= 1.1
             if self._token_queue.empty():
                 logger.trace(
                     f"FRONTEND - token_queue is empty, waiting {delay} seconds"
                 )
-                await asyncio.sleep(delay)
+                await asyncio.sleep(base_delay)
                 if self.done:
                     logger.trace(
                         f"FRONTEND - self.done is True and token_queue is empty, breaking token_queue_loop!"
                     )
                     break
             else:
+                delay = base_delay
                 while not self._token_queue.empty():
                     token = await self._token_queue.get()
                     chunk.append(token)
