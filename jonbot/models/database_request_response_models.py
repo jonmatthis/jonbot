@@ -3,11 +3,11 @@ from typing import Literal, List, Dict, Any
 from langchain import PromptTemplate
 from pydantic import BaseModel
 
-from jonbot import get_jonbot_logger
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.context_route import ContextRoute
 from jonbot.models.conversation_models import ChatRequest
 from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 
@@ -56,10 +56,10 @@ class ContextMemoryDocumentRequest(BaseModel):
 
     @classmethod
     def build_get_request(
-        cls,
-        context_route: ContextRoute,
-        database_name: str,
-        summary_prompt: PromptTemplate,
+            cls,
+            context_route: ContextRoute,
+            database_name: str,
+            summary_prompt: PromptTemplate,
     ):
         return cls(
             data=ContextMemoryDocument.build_empty(
@@ -78,7 +78,7 @@ class UpsertDiscordMessagesRequest(BaseModel):
 
     @classmethod
     def from_discord_message_documents(
-        cls, documents: List[DiscordMessageDocument], database_name: str
+            cls, documents: List[DiscordMessageDocument], database_name: str
     ):
         query = [message.query for message in documents]
         return cls(data=documents, query=query, database_name=database_name)

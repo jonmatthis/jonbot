@@ -3,11 +3,11 @@ import logging
 import discord
 from discord.ext import commands
 
-from jonbot import get_jonbot_logger
 from jonbot.layer1_api_interface.api_client.api_client import ApiClient
 from jonbot.layer1_api_interface.api_routes import CALCULATE_MEMORY_ENDPOINT
 from jonbot.models.calculate_memory_request import CalculateMemoryRequest
 from jonbot.models.context_route import ContextRoute
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 
@@ -18,9 +18,9 @@ class MemoryScraperCog(commands.Cog):
     """A cog for calculating the memory from contexts within a server."""
 
     def __init__(
-        self,
-        database_name: str,
-        api_client: ApiClient,
+            self,
+            database_name: str,
+            api_client: ApiClient,
     ):
         self._database_name = database_name
         self._api_client = api_client
@@ -36,9 +36,9 @@ class MemoryScraperCog(commands.Cog):
         required=False,
     )
     async def memory_calc_local(
-        self,
-        ctx: discord.ApplicationContext,
-        limit_messages: int = None,
+            self,
+            ctx: discord.ApplicationContext,
+            limit_messages: int = None,
     ):
         logger.info(
             f"Received calculate_memory_server command from channel:  {ctx.channel.name}"
@@ -76,9 +76,9 @@ class MemoryScraperCog(commands.Cog):
         required=False,
     )
     async def memory_calc_local(
-        self,
-        ctx: discord.ApplicationContext,
-        limit_messages: int = None,
+            self,
+            ctx: discord.ApplicationContext,
+            limit_messages: int = None,
     ):
         logger.info(
             f"Received calculate_memory_local command from channel:  {ctx.channel.name}"
@@ -100,9 +100,9 @@ class MemoryScraperCog(commands.Cog):
         )
 
     async def _send_memory_calculation_request_from_channel(
-        self,
-        channel: discord.TextChannel,
-        limit_messages: int = None,
+            self,
+            channel: discord.TextChannel,
+            limit_messages: int = None,
     ):
         request = CalculateMemoryRequest(
             context_route=ContextRoute.from_discord_channel(channel=channel),

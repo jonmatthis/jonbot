@@ -2,12 +2,12 @@ from datetime import datetime
 
 import discord
 
-from jonbot import get_jonbot_logger
 from jonbot.layer0_frontends.discord_bot.handlers.should_process_message import (
     NEW_THREAD_MESSAGE_PREFIX_TEXT,
 )
 from jonbot.models.context_route import ContextRoute
 from jonbot.models.timestamp_model import Timestamp
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 

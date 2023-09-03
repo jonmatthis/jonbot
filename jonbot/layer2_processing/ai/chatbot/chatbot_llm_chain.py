@@ -4,7 +4,6 @@ from typing import AsyncIterable
 from langchain.chat_models import ChatOpenAI
 from langchain.schema.runnable import RunnableMap, RunnableSequence
 
-from jonbot import get_jonbot_logger
 from jonbot.layer0_frontends.discord_bot.handlers.discord_message_responder import (
     STOP_STREAMING_TOKEN,
 )
@@ -18,6 +17,7 @@ from jonbot.layer2_processing.backend_database_operator.backend_database_operato
     BackendDatabaseOperations,
 )
 from jonbot.models.context_route import ContextRoute
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 # langchain.debug = True
 

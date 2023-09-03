@@ -5,18 +5,18 @@ import aiohttp
 import openai
 from pydub import AudioSegment
 
-from jonbot import get_jonbot_logger
 from jonbot.models.voice_to_text_request import VoiceToTextResponse
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 
 
 async def transcribe_audio_function(
-    audio_file_url: str,
-    prompt: str = None,
-    response_format: str = None,
-    temperature: float = None,
-    language: str = None,
+        audio_file_url: str,
+        prompt: str = None,
+        response_format: str = None,
+        temperature: float = None,
+        language: str = None,
 ) -> VoiceToTextResponse:
     TEMP_FILE_PATH = f"/tmp/voice-message"
 

@@ -2,7 +2,6 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from jonbot import get_jonbot_logger
 from jonbot.layer3_data_layer.database.mongo_database import MongoDatabaseManager
 from jonbot.models.database_request_response_models import (
     UpsertDiscordMessagesResponse,
@@ -12,6 +11,7 @@ from jonbot.models.database_request_response_models import (
     ContextMemoryDocumentResponse,
     MessageHistoryResponse,
 )
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 
@@ -23,7 +23,7 @@ class BackendDatabaseOperations(BaseModel):
         arbitrary_types_allowed = True
 
     async def upsert_discord_messages(
-        self, request: UpsertDiscordMessagesRequest
+            self, request: UpsertDiscordMessagesRequest
     ) -> UpsertDiscordMessagesResponse:
         logger.info(
             f"Upserting {len(request.data)} messages to database: {request.database_name} with query: {request.query}"
@@ -36,7 +36,7 @@ class BackendDatabaseOperations(BaseModel):
             return UpsertDiscordMessagesResponse(success=False)
 
     async def get_message_history_document(
-        self, request: MessageHistoryRequest
+            self, request: MessageHistoryRequest
     ) -> MessageHistoryResponse:
         logger.info(
             f"Getting conversation history for context route: {request.context_route.dict()}"
@@ -52,7 +52,7 @@ class BackendDatabaseOperations(BaseModel):
         return MessageHistoryResponse(success=True, data=message_history)
 
     async def get_context_memory_document(
-        self, request: ContextMemoryDocumentRequest
+            self, request: ContextMemoryDocumentRequest
     ) -> Optional[ContextMemoryDocumentResponse]:
         if request.request_type == "upsert":
             raise Exception(

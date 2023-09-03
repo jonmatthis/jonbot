@@ -1,8 +1,8 @@
-from jonbot import get_jonbot_logger
 from jonbot.layer2_processing.backend_database_operator.backend_database_operator import (
     BackendDatabaseOperations,
 )
 from jonbot.layer3_data_layer.database.mongo_database import MongoDatabaseManager
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 
@@ -10,7 +10,7 @@ BACKEND_DATABASE_OPERATOR = None
 
 
 def get_backend_database_operator(
-    mongo_database: MongoDatabaseManager,
+        mongo_database: MongoDatabaseManager,
 ) -> BackendDatabaseOperations:
     global BACKEND_DATABASE_OPERATOR
     if BACKEND_DATABASE_OPERATOR is None:

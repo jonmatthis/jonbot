@@ -3,13 +3,13 @@ from typing import Optional
 from langchain import PromptTemplate
 from pydantic import BaseModel
 
-from jonbot import get_jonbot_logger
 from jonbot.layer2_processing.backend_database_operator.backend_database_operator import (
     BackendDatabaseOperations,
 )
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.context_route import ContextRoute
 from jonbot.models.database_request_response_models import ContextMemoryDocumentRequest
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 

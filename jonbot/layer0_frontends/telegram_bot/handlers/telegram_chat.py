@@ -16,7 +16,7 @@ logger.setLevel(logging.INFO)
 logger = logging.getLogger("telegram")
 logger.setLevel(logging.INFO)
 
-from jonbot import get_jonbot_logger
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 
@@ -30,7 +30,7 @@ async def telegram_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     async with aiohttp.ClientSession() as session:
         async with session.post(
-            api_client.get_api_endpoint_url(CHAT_ENDPOINT), json=chat_input.dict()
+                api_client.get_api_endpoint_url(CHAT_ENDPOINT), json=chat_input.dict()
         ) as response:
             if response.status == 200:
                 data = await response.json()

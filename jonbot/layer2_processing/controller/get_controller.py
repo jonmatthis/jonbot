@@ -1,8 +1,8 @@
-from jonbot import get_jonbot_logger
 from jonbot.layer2_processing.backend_database_operator.backend_database_operator import (
     BackendDatabaseOperations,
 )
 from jonbot.layer2_processing.controller.controller import Controller
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 

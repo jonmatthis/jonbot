@@ -4,7 +4,6 @@ from typing import Union, List, Dict, Optional
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import UpdateOne, DESCENDING
 
-from jonbot import get_jonbot_logger
 from jonbot.models.context_memory_document import ContextMemoryDocument
 from jonbot.models.conversation_models import MessageHistory, ChatMessage
 from jonbot.models.database_request_response_models import (
@@ -21,6 +20,7 @@ from jonbot.system.environment_variables import (
     RAW_MESSAGES_COLLECTION_NAME,
     CONTEXT_MEMORIES_COLLECTION_NAME,
 )
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 
@@ -38,7 +38,7 @@ class MongoDatabaseManager:
         return database[collection_name]
 
     async def _upsert_many(
-        self, database_name: str, entries: List[Dict[str, dict]], collection_name: str
+            self, database_name: str, entries: List[Dict[str, dict]], collection_name: str
     ) -> bool:
         operations = [
             UpdateOne(entry["query"], {"$set": entry["data"]}, upsert=True)
@@ -55,13 +55,13 @@ class MongoDatabaseManager:
             return False
 
     async def _get_sorted_documents(
-        self,
-        database_name: str,
-        collection_name: str,
-        query: dict,
-        sort_field: str,
-        limit: int = None,
-        sort_order: int = DESCENDING,
+            self,
+            database_name: str,
+            collection_name: str,
+            query: dict,
+            sort_field: str,
+            limit: int = None,
+            sort_order: int = DESCENDING,
     ) -> list:
         try:
             collection = self._get_collection(
@@ -82,7 +82,7 @@ class MongoDatabaseManager:
             return []
 
     async def upsert_discord_messages(
-        self, request: UpsertDiscordMessagesRequest
+            self, request: UpsertDiscordMessagesRequest
     ) -> bool:
         entries = [
             {"data": document.dict(), "query": query}
@@ -96,7 +96,7 @@ class MongoDatabaseManager:
         )
 
     async def upsert_context_memory(
-        self, request: ContextMemoryDocumentRequest
+            self, request: ContextMemoryDocumentRequest
     ) -> bool:
         entries = [{"data": request.data.dict(), "query": request.query}]
 
@@ -107,7 +107,7 @@ class MongoDatabaseManager:
         )
 
     async def get_message_history(
-        self, request: MessageHistoryRequest
+            self, request: MessageHistoryRequest
     ) -> MessageHistory:
         documents = await self._get_sorted_documents(
             database_name=request.database_name,
@@ -128,7 +128,7 @@ class MongoDatabaseManager:
         return message_history
 
     async def get_context_memory(
-        self, request: ContextMemoryDocumentRequest
+            self, request: ContextMemoryDocumentRequest
     ) -> Optional[ContextMemoryDocument]:
         messages_collection = self._get_collection(
             request.database_name, CONTEXT_MEMORIES_COLLECTION_NAME
@@ -143,10 +143,10 @@ class MongoDatabaseManager:
         return ContextMemoryDocument(**result)
 
     async def get_or_create_user(
-        self,
-        database_name: str,
-        discord_id: DiscordUserID = None,
-        telegram_id: TelegramUserID = None,
+            self,
+            database_name: str,
+            discord_id: DiscordUserID = None,
+            telegram_id: TelegramUserID = None,
     ) -> str:
         user = await self.get_user(
             database_name, discord_id=discord_id, telegram_id=telegram_id
@@ -163,10 +163,10 @@ class MongoDatabaseManager:
         return user.uuid
 
     async def get_user(
-        self,
-        database_name: str,
-        discord_id: DiscordUserID = None,
-        telegram_id: TelegramUserID = None,
+            self,
+            database_name: str,
+            discord_id: DiscordUserID = None,
+            telegram_id: TelegramUserID = None,
     ) -> Union[None, UserID]:
         users_collection = self._get_collection(database_name, USERS_COLLECTION_NAME)
 
@@ -181,10 +181,10 @@ class MongoDatabaseManager:
             return UserID(**user)
 
     async def create_user(
-        self,
-        database_name: str,
-        discord_id: DiscordUserID = None,
-        telegram_id: TelegramUserID = None,
+            self,
+            database_name: str,
+            discord_id: DiscordUserID = None,
+            telegram_id: TelegramUserID = None,
     ) -> Union[None, UserID]:
         users_collection = self._get_collection(database_name, USERS_COLLECTION_NAME)
 

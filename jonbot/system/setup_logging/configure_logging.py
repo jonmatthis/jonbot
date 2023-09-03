@@ -122,7 +122,7 @@ class LoggerBuilder:
                 if handler not in logging.getLogger("").handlers:
                     logging.getLogger("").handlers.append(handler)
         else:
-            from jonbot import get_jonbot_logger
+            from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
             logger = get_jonbot_logger()
             logger.info("Logging already configured")
@@ -137,9 +137,9 @@ def ensure_not_grey(r, g, b, threshold_diff=100):
     """Ensure that the color isn't desaturated grey by making one color component dominant."""
     max_val = max(r, g, b)
     if (
-        abs(r - g) < threshold_diff
-        and abs(r - b) < threshold_diff
-        and abs(g - b) < threshold_diff
+            abs(r - g) < threshold_diff
+            and abs(r - b) < threshold_diff
+            and abs(g - b) < threshold_diff
     ):
         if max_val == r:
             r = 255
@@ -209,7 +209,7 @@ def log_test_messages(logger):
 
 
 if __name__ == "__main__":
-    from jonbot import get_jonbot_logger
+    from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
     logger = get_jonbot_logger()
     configure_logging(LogLevel.TRACE)  # Setting the root logger level to TRACE

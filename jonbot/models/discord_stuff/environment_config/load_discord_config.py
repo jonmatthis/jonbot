@@ -8,7 +8,7 @@ from jonbot.models.discord_stuff.environment_config.discord_environment import (
 
 load_dotenv()
 
-from jonbot import get_jonbot_logger
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 

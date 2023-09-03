@@ -4,10 +4,10 @@ from typing import List, Optional, Union
 import discord
 from pydantic import BaseModel
 
-from jonbot import get_jonbot_logger
 from jonbot.models.context_route import ContextRoute
 from jonbot.models.conversation_context import ConversationContextDescription
 from jonbot.models.timestamp_model import Timestamp
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 from jonbot.system.path_getters import get_new_attachments_folder_path
@@ -83,11 +83,11 @@ class DiscordMessageDocument(BaseModel):
         return discord_message_document
 
     async def _add_attachments_to_message(
-        self,
-        message: discord.Message,
-        attachment_local_path: Optional[
-            Union[str, Path]
-        ] = get_new_attachments_folder_path(),
+            self,
+            message: discord.Message,
+            attachment_local_path: Optional[
+                Union[str, Path]
+            ] = get_new_attachments_folder_path(),
     ):
         """Save attachments from a message and add their paths to the message data.
 

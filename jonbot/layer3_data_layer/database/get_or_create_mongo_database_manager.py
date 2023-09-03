@@ -1,6 +1,6 @@
-from jonbot import get_jonbot_logger
 from jonbot.layer3_data_layer.database.mongo_database import MongoDatabaseManager
 from jonbot.layer3_data_layer.utilities.run_mongo_test import run_mongo_test
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 

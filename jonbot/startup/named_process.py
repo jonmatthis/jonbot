@@ -1,6 +1,6 @@
 import multiprocessing
 
-from jonbot import get_jonbot_logger
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 

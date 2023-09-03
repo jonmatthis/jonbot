@@ -3,7 +3,6 @@ from typing import Union
 
 import discord
 
-from jonbot import get_jonbot_logger
 from jonbot.layer2_processing.backend_database_operator.backend_database_operator import (
     get_message_history_document,
 )
@@ -11,6 +10,7 @@ from jonbot.models.conversation_models import ChatRequest, MessageHistory
 from jonbot.models.database_request_response_models import MessageHistoryRequest
 from jonbot.models.discord_stuff.discord_message import DiscordMessageDocument
 from jonbot.system.path_getters import get_sample_discord_message_json_path
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 
@@ -34,7 +34,7 @@ async def save_sample_discord_message(message: discord.Message) -> None:
 
 
 def load_sample_discord_message_document(
-    json_path: Union[str, Path] = get_sample_discord_message_json_path()
+        json_path: Union[str, Path] = get_sample_discord_message_json_path()
 ) -> DiscordMessageDocument:
     with open(json_path, "r") as file:
         json_content = file.read()

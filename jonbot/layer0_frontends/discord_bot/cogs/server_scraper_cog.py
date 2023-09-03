@@ -5,10 +5,10 @@ import discord
 from discord import Forbidden
 from discord.ext import commands
 
-from jonbot import get_jonbot_logger
 from jonbot.layer0_frontends.discord_bot.operations.discord_database_operations import (
     DiscordDatabaseOperations,
 )
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 
@@ -59,8 +59,8 @@ class ServerScraperCog(commands.Cog):
     )
     @commands.has_permissions(administrator=True)
     async def scrape_messages_from_channel(
-        self,
-        ctx: discord.ApplicationContext,
+            self,
+            ctx: discord.ApplicationContext,
     ):
         logger.info(f"Received scrape_local command from channel:  {ctx.channel.name}")
         channel_messages = await self._get_message_list_from_channel(
@@ -83,7 +83,7 @@ class ServerScraperCog(commands.Cog):
             )
 
     async def _send_messages_to_database(
-        self, messages_to_upsert: List[discord.Message]
+            self, messages_to_upsert: List[discord.Message]
     ) -> bool:
         logger.info(f"Sending {len(messages_to_upsert)} messages to database...")
         return await self._database_operations.upsert_messages(
@@ -91,7 +91,7 @@ class ServerScraperCog(commands.Cog):
         )
 
     async def _get_message_list_from_channel(
-        self, channel: discord.abc.Messageable
+            self, channel: discord.abc.Messageable
     ) -> List[discord.Message]:
         channel_messages = []
         try:

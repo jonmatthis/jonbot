@@ -1,9 +1,9 @@
 import discord
 
-from jonbot import get_jonbot_logger
 from jonbot.models.discord_stuff.environment_config.load_discord_config import (
     get_or_create_discord_environment_config,
 )
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 

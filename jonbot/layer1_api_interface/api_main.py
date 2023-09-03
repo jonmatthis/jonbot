@@ -3,7 +3,6 @@ import asyncio
 from fastapi import FastAPI
 from uvicorn import Config, Server
 
-from jonbot import get_jonbot_logger
 from jonbot.layer1_api_interface.api_routes import register_api_routes
 from jonbot.layer2_processing.backend_database_operator.get_backend_database_operator import (
     get_backend_database_operator,
@@ -13,6 +12,7 @@ from jonbot.layer3_data_layer.database.get_or_create_mongo_database_manager impo
     get_mongo_database_manager,
 )
 from jonbot.system.environment_variables import HOST_NAME, PORT_NUMBER
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 

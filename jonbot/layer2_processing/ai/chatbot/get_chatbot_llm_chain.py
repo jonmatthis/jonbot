@@ -1,6 +1,5 @@
 from typing import Dict
 
-from jonbot import get_jonbot_logger
 from jonbot.layer2_processing.ai.chatbot.chatbot_llm_chain import (
     ChatbotLLMChain,
 )
@@ -8,6 +7,7 @@ from jonbot.layer2_processing.backend_database_operator.backend_database_operato
     BackendDatabaseOperations,
 )
 from jonbot.models.conversation_models import ChatRequest
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 

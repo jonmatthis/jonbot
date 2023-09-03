@@ -5,7 +5,6 @@ from typing import List, Union, Dict
 
 import discord
 
-from jonbot import get_jonbot_logger
 from jonbot.layer0_frontends.discord_bot.cogs.memory_scraper_cog import MemoryScraperCog
 from jonbot.layer0_frontends.discord_bot.cogs.server_scraper_cog import ServerScraperCog
 from jonbot.layer0_frontends.discord_bot.cogs.thread_cog import ThreadCog
@@ -34,6 +33,7 @@ from jonbot.models.discord_stuff.environment_config.discord_environment import (
     DiscordEnvironmentConfig,
 )
 from jonbot.models.voice_to_text_request import VoiceToTextRequest
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 

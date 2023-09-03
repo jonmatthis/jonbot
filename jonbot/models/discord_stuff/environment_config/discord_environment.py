@@ -4,10 +4,10 @@ from typing import List, Dict, Any, Union, Optional
 import toml
 from pydantic import BaseModel
 
-from jonbot import get_jonbot_logger
-from jonbot.system.environment.bot_tomls.get_bot_config_toml_path import (
+from jonbot.bot_tomls.get_bot_config_toml_path import (
     get_bot_config_toml_path,
 )
+from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 
@@ -41,7 +41,7 @@ class DiscordEnvironmentConfig(BaseModel):
 
     @classmethod
     def configure(
-        cls, bot_name_or_index: Union[str, int] = 0
+            cls, bot_name_or_index: Union[str, int] = 0
     ) -> "DiscordEnvironmentConfig":
         """
         Configures the environment settings based on the provided bot name or index.
@@ -54,7 +54,7 @@ class DiscordEnvironmentConfig(BaseModel):
         if isinstance(bot_name_or_index, str) and bot_name_or_index in BOT_NICK_NAMES:
             cls._BOT_NICK_NAME = bot_name_or_index
         elif isinstance(bot_name_or_index, int) and 0 <= bot_name_or_index < len(
-            BOT_NICK_NAMES
+                BOT_NICK_NAMES
         ):
             cls._BOT_NICK_NAME = BOT_NICK_NAMES[bot_name_or_index]
         else:
