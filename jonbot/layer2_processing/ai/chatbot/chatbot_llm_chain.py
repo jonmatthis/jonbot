@@ -1,7 +1,7 @@
 import asyncio
 from typing import AsyncIterable
 
-from langchain.chat_models import ChatOpenAI, ChatAnthropic
+from langchain.chat_models import ChatOpenAI
 from langchain.schema.runnable import RunnableMap, RunnableSequence
 
 from jonbot import get_jonbot_logger
@@ -32,23 +32,11 @@ class ChatbotLLMChain:
             database_operations: BackendDatabaseOperations,
             chat_history_placeholder_name: str = "chat_history",
     ):
-        self.llm_main = ChatOpenAI(
+        self.model = ChatOpenAI(
             temperature=0.8,
             model_name="gpt-4",
             verbose=True,
         )
-        self.llm_backup = ChatOpenAI(
-            temperature=0.8,
-            model_name="gpt-3.5-turbo-16k",
-            verbose=True,
-        )
-        self.llm_backup_backup = ChatAnthropic(
-            temperature=0.8,
-            model="claude-2",
-            verbose=True,
-        )
-        self.llm = self.llm_main.with_fallbacks([self.llm_backup, self.llm_backup_backup])
-
         self.prompt = ChatbotPrompt.build(
             chat_history_placeholder_name=chat_history_placeholder_name
         )
@@ -89,7 +77,7 @@ class ChatbotLLMChain:
                     "chat_history": lambda x: x["memory"]["chat_memory"],
                 }
                 | self.prompt
-                | self.llm
+                | self.model
         )
 
     async def execute(
