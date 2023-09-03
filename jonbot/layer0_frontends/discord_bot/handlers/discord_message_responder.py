@@ -1,5 +1,6 @@
 import asyncio
 import time
+from typing import List
 
 import discord
 
@@ -14,13 +15,14 @@ STOP_STREAMING_TOKEN = "STOP_STREAMING"
 
 
 class DiscordMessageResponder:
-    def __init__(self):
-        self.message_content = ""
-        self._reply_message = None
-        self._reply_messages = []
-        self.max_message_length = 2000
-        self.comfy_message_length = int(self.max_message_length * 0.9)
-        self.done = False
+    def __init__(self, message_prefix: str = ""):
+        self.message_prefix: str = message_prefix
+        self.message_content: str = self.message_prefix
+        self._reply_message: discord.Message = None
+        self._reply_messages: List[discord.Message] = []
+        self.max_message_length: int = 2000
+        self.comfy_message_length: int = int(self.max_message_length * 0.9)
+        self.done: bool = False
 
         self._token_queue = asyncio.Queue()
         self.loop_task = None
@@ -56,7 +58,7 @@ class DiscordMessageResponder:
             delay *= 1.1
             if self._token_queue.empty():
                 logger.trace(
-                    f"FRONTEND - token_queue is empty, waiting {delay} seconds"
+                    f"FRONTEND - token_queue is empty, waiting {delay:.2f} seconds"
                 )
                 await asyncio.sleep(base_delay)
                 if self.done:
@@ -96,21 +98,31 @@ class DiscordMessageResponder:
             self.message_content += chunk
 
             if len(self.message_content) > self.comfy_message_length:
-                logger.trace(
-                    f"message content (len: {len(self.message_content)}) is longer than comfy message length: {self.comfy_message_length} - continuing in next message..."
-                )
-                await self._add_reply_message_to_list()
+                await self.handle_message_length_overflow(chunk)
 
-                self.message_content = f"`continuing from previous message...`\n\n {chunk}"
-                self._reply_message = await self._reply_message.reply(
-                    self.message_content
-                )
             else:
                 await self._reply_message.edit(content=self.message_content)
 
         if stop_now:
             logger.debug(f"Stopping stream (setting `self.done` to True)...")
             self.done = True
+
+    async def handle_message_length_overflow(self, chunk):
+        logger.trace(
+            f"message content (len: {len(self.message_content)}) is longer than comfy message length: {self.comfy_message_length} - continuing in next message..."
+        )
+
+        new_message_initial_content = f"{self.message_prefix}`continuing from previous message...`\n\n {chunk}"
+
+        new_message = await self._reply_message.reply(
+            new_message_initial_content, mention_author=False
+        )
+
+        self.message_content += "\n `continued in next message: {new_message.jump_url}`"
+        self._reply_message.edit(content=self.message_content)
+
+        await self._add_reply_message_to_list()
+        self._reply_message = new_message
 
     def _add_delta_t_to_token(self, chunk: str):
         current_timestamp = time.perf_counter()
