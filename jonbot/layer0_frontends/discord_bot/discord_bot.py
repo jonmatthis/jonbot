@@ -1,5 +1,6 @@
-import asyncio
-import sys
+import tempfile
+import traceback
+from pathlib import Path
 from typing import List, Union, Dict
 
 import discord
@@ -37,10 +38,6 @@ from jonbot.models.voice_to_text_request import VoiceToTextRequest
 logger = get_jonbot_logger()
 
 
-async def wait_a_bit(duration: float = 1):
-    await asyncio.sleep(duration)
-
-
 class MyDiscordBot(discord.Bot):
     def __init__(
             self,
@@ -49,7 +46,7 @@ class MyDiscordBot(discord.Bot):
             **kwargs,
     ):
         super().__init__(**kwargs)
-        self._local_message_prefix = "wowo"
+        self._local_message_prefix = ""
         if environment_config.IS_LOCAL:
             self._local_message_prefix = (
                 f"(local - `{environment_config.BOT_NICK_NAME}`)\n"
@@ -103,7 +100,8 @@ class MyDiscordBot(discord.Bot):
                             text_to_reply_to += f"\n\n{new_text_to_reply_to}"
 
             response_messages = await self.handle_text_message(
-                message=message, respond_to_this_text=text_to_reply_to
+                message=message,
+                respond_to_this_text=text_to_reply_to
             )
 
             messages_to_upsert.extend(response_messages)
@@ -114,15 +112,26 @@ class MyDiscordBot(discord.Bot):
 
         await self._database_operations.upsert_messages(messages=messages_to_upsert)
 
-    async def _send_error_response(self, e, messages_to_upsert):
-        error_type, error_instance, traceback = sys.exc_info()
-        function_name = traceback.tb_frame.f_code.co_name
-        module_name = traceback.tb_frame.f_globals["__name__"]
-        line_number = traceback.tb_lineno
-        error_message = (f"Error message: \n {str(e)}\n"
-                         f"{module_name}:{function_name}:Line# {line_number}")
-        logger.exception(error_message)
-        await messages_to_upsert[-1].reply(f"{ERROR_MESSAGE_REPLY_PREFIX_TEXT} \n >  {error_message}")
+    async def _send_error_response(self, e: Exception, messages_to_upsert):
+        # Create traceback string
+        traceback_str = traceback.format_exc(limit=None)
+        traceback_str = traceback_str.replace(str(Path.home()), "~")
+        error_message = f"Error message: \n {str(e)}"
+
+        # Write traceback to a temporary text file
+        with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as temp_file:
+            temp_file.write(traceback_str.encode())
+            temp_filepath = temp_file.name
+
+        # Log the error message and traceback
+        logger.exception(f"{error_message}\nTraceback: \n{traceback_str}")
+
+        # Send the error message and the traceback file as an attachment
+        await messages_to_upsert[-1].reply(f"{ERROR_MESSAGE_REPLY_PREFIX_TEXT} \n >  {error_message}",
+                                           file=discord.File(temp_filepath))
+
+        # Delete the temporary file after sending it
+        Path(temp_filepath).unlink()
 
     async def handle_text_attachments(self, attachment: discord.Attachment) -> str:
         try:
@@ -144,7 +153,7 @@ class MyDiscordBot(discord.Bot):
             database_name=self._database_name,
             content=respond_to_this_text,
         )
-        message_responder = DiscordMessageResponder()
+        message_responder = DiscordMessageResponder(message_prefix=self._local_message_prefix)
         await message_responder.initialize(message=message)
 
         async def callback(
@@ -175,7 +184,7 @@ class MyDiscordBot(discord.Bot):
             reply_message_content = (
                 f"Transcribing audio from user `{message.author}`...\n\n"
             )
-            responder = DiscordMessageResponder()
+            responder = DiscordMessageResponder(message_prefix=self._local_message_prefix)
             await responder.initialize(
                 message=message, initial_message_content=reply_message_content
             )
@@ -197,7 +206,7 @@ class MyDiscordBot(discord.Bot):
                     )
 
                     await responder.add_text_to_reply_message(
-                        token=reply_message_content
+                        chunk=reply_message_content
                     )
                     await responder.shutdown()
 

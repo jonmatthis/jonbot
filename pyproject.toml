@@ -31,6 +31,9 @@ tenacity = "^8.2.2"
 pydub = "^0.25.1"
 toml = "^0.10.2"
 anthropic = "^0.3.11"
+langsmith = "^0.0.33"
+pytest = "^7.4.1"
+pytest-asyncio = "^0.21.1"
 
 
 [tool.poetry.group.dev.dependencies]

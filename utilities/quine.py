@@ -53,8 +53,8 @@ class StructureFetcher:
     def _parse_file(self, file_path: str) -> dict:
         # Check if the file is in the list of files/folders to fetch content for
         if file_path not in self.config.content.fetch_content_for and not any(
-            os.path.commonpath([file_path, content_path]) == content_path
-            for content_path in self.config.content.fetch_content_for
+                os.path.commonpath([file_path, content_path]) == content_path
+                for content_path in self.config.content.fetch_content_for
         ):
             return {"functions": [], "classes": [], "constants": []}
 
@@ -101,8 +101,8 @@ class StructureFetcher:
                 if file_name in self.config.excluded_file_names:
                     continue
                 if any(
-                    file_name.endswith(extension)
-                    for extension in self.config.included_extensions
+                        file_name.endswith(extension)
+                        for extension in self.config.included_extensions
                 ):
                     file_path = os.path.join(root_directory, file_name)
                     entities = self._parse_file(file_path)
@@ -130,8 +130,8 @@ class ContentFetcher:
 
         # Check the recursion depth
         if (
-            self.config.recursion_depth != -1
-            and current_depth > self.config.recursion_depth
+                self.config.recursion_depth != -1
+                and current_depth > self.config.recursion_depth
         ):
             return output
 
@@ -189,14 +189,14 @@ class Quine:
         current_os = platform.system()
         try:
             if current_os == "Windows":
-                os.startfile(self.config.content.output_file_path())
+                os.startfile(self.config.output_file_path())
             elif current_os == "Darwin":
                 subprocess.run(
-                    ("open", self.config.content.output_file_path()), check=True
+                    ("open", self.config.output_file_path()), check=True
                 )
             elif current_os == "Linux":
                 subprocess.run(
-                    ("xdg-open", self.config.content.output_file_path()), check=True
+                    ("xdg-open", self.config.output_file_path()), check=True
                 )
             else:
                 print(f"Unsupported operating system: {current_os}")
@@ -205,7 +205,7 @@ class Quine:
 
 
 if __name__ == "__main__":
-    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\docker"
+    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\models"
 
     quine_config = QuineConfig(
         print_mode="all",

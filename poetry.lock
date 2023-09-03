@@ -423,7 +423,7 @@ testing = ["pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)",
 name = "iniconfig"
 version = "2.0.0"
 description = "brain-dead simple config-ini parsing"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -478,7 +478,7 @@ text-helpers = ["chardet (>=5.1.0,<6.0.0)"]
 
 [[package]]
 name = "langsmith"
-version = "0.0.22"
+version = "0.0.33"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 category = "main"
 optional = false
@@ -806,7 +806,7 @@ test = ["appdirs (==1.4.4)", "covdefaults (>=2.3)", "pytest (>=7.4)", "pytest-co
 name = "pluggy"
 version = "1.2.0"
 description = "plugin and hook calling mechanisms for python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -988,9 +988,9 @@ python-versions = "*"
 
 [[package]]
 name = "pytest"
-version = "7.4.0"
+version = "7.4.1"
 description = "pytest: simple powerful testing with Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -1002,6 +1002,21 @@ pluggy = ">=0.12,<2.0"
 
 [package.extras]
 testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
+
+[[package]]
+name = "pytest-asyncio"
+version = "0.21.1"
+description = "Pytest support for asyncio"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+pytest = ">=7.0.0"
+
+[package.extras]
+docs = ["sphinx (>=5.3)", "sphinx-rtd-theme (>=1.0)"]
+testing = ["coverage (>=6.2)", "flaky (>=3.5.0)", "hypothesis (>=5.7.1)", "mypy (>=0.931)", "pytest-trio (>=0.7.0)"]
 
 [[package]]
 name = "python-dateutil"
@@ -1384,7 +1399,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.11"
-content-hash = "4a837fb8e8a5dcf1d8b0fef5b008171170c57c3dacaaadc2d7ee9a7ff4e62cdb"
+content-hash = "c48af32c88688f9dc7554c96c9bc4670481ba193ed4af8e245295c8956bc51c2"
 
 [metadata.files]
 aiofiles = [
@@ -1922,8 +1937,8 @@ langchain = [
     {file = "langchain-0.0.263.tar.gz", hash = "sha256:1c0d98962e1f0c5c938909f9fb24fde9fb7180a3bdf8aae9719c60cea36e9ef4"},
 ]
 langsmith = [
-    {file = "langsmith-0.0.22-py3-none-any.whl", hash = "sha256:1bc94a2e5bfa355ca15d9e658c2c2d04c8cc45c61892a1be08a7c3b40f2fd3f4"},
-    {file = "langsmith-0.0.22.tar.gz", hash = "sha256:5726c7841294db2a9e5863e20718878d16e28722bdaf3169a278ff3bda2f0be7"},
+    {file = "langsmith-0.0.33-py3-none-any.whl", hash = "sha256:cdff11a6272d3cba72c151960c0319b1d36e0770d37f05061d6c31ef1a2404a4"},
+    {file = "langsmith-0.0.33.tar.gz", hash = "sha256:c9c640ac238d4cabc8f9744e04346d3dfaf0ca6c9dc37bd2a25b8031eda35dc3"},
 ]
 lexid = [
     {file = "lexid-2021.1006-py2.py3-none-any.whl", hash = "sha256:5526bb5606fd74c7add23320da5f02805bddd7c77916f2dc1943e6bada8605ed"},
@@ -2434,8 +2449,12 @@ pyreadline3 = [
     {file = "pyreadline3-3.4.1.tar.gz", hash = "sha256:6f3d1f7b8a31ba32b73917cefc1f28cc660562f39aea8646d30bd6eff21f7bae"},
 ]
 pytest = [
-    {file = "pytest-7.4.0-py3-none-any.whl", hash = "sha256:78bf16451a2eb8c7a2ea98e32dc119fd2aa758f1d5d66dbf0a59d69a3969df32"},
-    {file = "pytest-7.4.0.tar.gz", hash = "sha256:b4bf8c45bd59934ed84001ad51e11b4ee40d40a1229d2c79f9c592b0a3f6bd8a"},
+    {file = "pytest-7.4.1-py3-none-any.whl", hash = "sha256:460c9a59b14e27c602eb5ece2e47bec99dc5fc5f6513cf924a7d03a578991b1f"},
+    {file = "pytest-7.4.1.tar.gz", hash = "sha256:2f2301e797521b23e4d2585a0a3d7b5e50fdddaaf7e7d6773ea26ddb17c213ab"},
+]
+pytest-asyncio = [
+    {file = "pytest-asyncio-0.21.1.tar.gz", hash = "sha256:40a7eae6dded22c7b604986855ea48400ab15b069ae38116e8c01238e9eeb64d"},
+    {file = "pytest_asyncio-0.21.1-py3-none-any.whl", hash = "sha256:8666c1c8ac02631d7c51ba282e0c69a8a452b211ffedf2599099845da5c5c37b"},
 ]
 python-dateutil = [
     {file = "python-dateutil-2.8.2.tar.gz", hash = "sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86"},

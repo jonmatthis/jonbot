@@ -108,9 +108,9 @@ class ContextRoute(BaseModel):
     @property
     def friendly_path(self):
         if self.thread:
-            return f"{self.frontend}/{self.server.name}/{self.channel.name}/threads/{self.thread.name}/messages/"
+            return f"{self.frontend.value}/{self.server.name}/{self.channel.name}/threads/{self.thread.name}/messages/"
         else:
-            return f"{self.frontend}/{self.server.name}/{self.channel.name}/messages/"
+            return f"{self.frontend.value}/{self.server.name}/{self.channel.name}/messages/"
 
     @property
     def full_path(self):

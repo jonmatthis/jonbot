@@ -1,5 +1,7 @@
 import asyncio
+import tempfile
 import time
+from pathlib import Path
 from typing import List
 
 import discord
@@ -20,6 +22,7 @@ class DiscordMessageResponder:
         self.message_content: str = self.message_prefix
         self._reply_message: discord.Message = None
         self._reply_messages: List[discord.Message] = []
+        self._full_message_content: str = ""
         self.max_message_length: int = 2000
         self.comfy_message_length: int = int(self.max_message_length * 0.9)
         self.done: bool = False
@@ -48,6 +51,7 @@ class DiscordMessageResponder:
         logger.trace(
             f"FRONTEND - adding token to queue: {repr(token)}, token_queue size: {self._token_queue.qsize()}"
         )
+        self._full_message_content += token
         await self._token_queue.put(token)
 
     async def _run_token_queue_loop(self, base_delay: float = 0.1, chunk_size: int = 10):
@@ -74,12 +78,14 @@ class DiscordMessageResponder:
                     logger.trace(
                         f"FRONTEND - de-queueing  token: {repr(token)} (token_queue size: {self._token_queue.qsize()})"
                     )
-                    if len(chunk) > chunk_size:
-                        await self.add_text_to_reply_message("".join(chunk))
-                        chunk = []
+                if len(chunk) > chunk_size:
+                    await self.add_text_to_reply_message("".join(chunk))
+                    chunk = []
 
         logger.trace(f"Appending final chunk to reply message {chunk}...")
         await self.add_text_to_reply_message("".join(chunk))
+        if len(self._reply_messages) > 0:
+            await self._send_full_text_as_attachment()
         logger.info(f"queue loop finished")
 
     async def add_text_to_reply_message(self, chunk: str, show_delta_t: bool = False):
@@ -107,22 +113,24 @@ class DiscordMessageResponder:
             logger.debug(f"Stopping stream (setting `self.done` to True)...")
             self.done = True
 
-    async def handle_message_length_overflow(self, chunk):
-        logger.trace(
-            f"message content (len: {len(self.message_content)}) is longer than comfy message length: {self.comfy_message_length} - continuing in next message..."
-        )
+    async def handle_message_length_overflow(self, chunk: str):
+        chunks = []
 
-        new_message_initial_content = f"{self.message_prefix}`continuing from previous message...`\n\n {chunk}"
-
-        new_message = await self._reply_message.reply(
-            new_message_initial_content, mention_author=False
-        )
-
-        self.message_content += "\n `continued in next message: {new_message.jump_url}`"
-        self._reply_message.edit(content=self.message_content)
-
-        await self._add_reply_message_to_list()
-        self._reply_message = new_message
+        for start_index in range(0, len(chunk), self.comfy_message_length):
+            chunks.append(chunk[start_index:start_index + self.comfy_message_length])
+        for chunk in chunks:
+            logger.trace(
+                f"message content (len: {len(chunk)}) is longer than comfy message length: {self.comfy_message_length} - continuing in next message..."
+            )
+            new_message_initial_content: str = f"{self.message_prefix}continuing from: \n\n > {chunk} \n\n"
+            new_message: discord.Message = await self._reply_message.reply(
+                new_message_initial_content, mention_author=False
+            )
+            self.message_content += f"\n\n `continued in next message:`\n {new_message.jump_url}"
+            await self._reply_message.edit(content=self.message_content)
+            self.message_content = new_message_initial_content
+            await self._add_reply_message_to_list()
+            self._reply_message = new_message
 
     def _add_delta_t_to_token(self, chunk: str):
         current_timestamp = time.perf_counter()
@@ -145,3 +153,32 @@ class DiscordMessageResponder:
         logger.debug(f"Message Responder shutting down...")
         if self.loop_task:
             await self.loop_task
+
+    async def _send_full_text_as_attachment(self):
+        logger.debug(f"Sending full text as attachment...")
+        temp_filepath = None  # initialize temp_filepath
+        try:
+            # create a temporary file
+            with tempfile.NamedTemporaryFile('w',
+                                             delete=False,
+                                             suffix='.md',
+                                             encoding='utf-8',
+                                             ) as tf:
+                tf.write(self._full_message_content)
+                temp_filepath = tf.name
+
+            # create a discord.File instance
+            file = discord.File(temp_filepath)
+
+            # send the file
+            await self._reply_message.edit(files=[file])
+
+        except Exception as e:
+            # Handle any error that might occur
+            logger.exception(f"An error occurred while sending the full text as an attachment: {str(e)}")
+            raise
+
+        finally:
+            # Make sure the file is deleted, even if an error occurs
+            if temp_filepath and Path(temp_filepath).exists():
+                Path(temp_filepath).unlink()

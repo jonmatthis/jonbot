@@ -17,7 +17,7 @@ class ApiClient:
     api_host_name = API_HOST_NAME
 
     async def send_request_to_api(
-        self, endpoint_name: str, data: dict = None, method: str = "POST"
+            self, endpoint_name: str, data: dict = None, method: str = "POST"
     ) -> dict:
         try:
             endpoint_url = ApiRoute.from_endpoint(
@@ -49,10 +49,10 @@ class ApiClient:
             raise
 
     async def send_request_to_api_streaming(
-        self,
-        endpoint_name: str,
-        data: dict = dict(),
-        callbacks: Union[Callable, Coroutine] = None,
+            self,
+            endpoint_name: str,
+            data: dict = dict(),
+            callbacks: Union[Callable, Coroutine] = None,
     ) -> List[str]:
         endpoint_url = ApiRoute.from_endpoint(
             host_name=self.api_host_name, endpoint=endpoint_name
@@ -70,6 +70,7 @@ class ApiClient:
                         async for line in response.content.iter_any():
                             await run_callbacks(callbacks, line)
                             response_tokens.append(line.decode("utf-8"))
+
                     else:
                         error_message = await error_message_from_response(response)
                         logger.error(error_message)

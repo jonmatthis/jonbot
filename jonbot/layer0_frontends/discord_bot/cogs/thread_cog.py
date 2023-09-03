@@ -60,6 +60,8 @@ class ThreadCog(discord.Cog):
 
         thread = await parent_message.create_thread(name=thread_title)
 
+        starting_message = await thread.send("Creating thread...")
+
         if initial_text_input is None:
             starting_text = f"User: {user_name} has requested to chat"
         else:
@@ -68,17 +70,16 @@ class ThreadCog(discord.Cog):
                 f" > {initial_text_input}"
             )
 
-        initial_message_embed = self._initial_message_embed(
-            message=parent_message,
-            initial_message=initial_text_input,
-        )
+        initial_message_embed = self._initial_message_embed(starting_message=starting_message)
         logger.debug(
             f"Sending initial message embed to thread: {thread.id} title: {thread_title}"
         )
-        await thread.send(embed=initial_message_embed)
+        await starting_message.edit(content=f"Thread title: {thread_title}",
+                                    embed=initial_message_embed)
 
         initial_message_text = f"{NEW_THREAD_MESSAGE_PREFIX_TEXT} \n" f"{starting_text}"
         logger.debug(f"Sending initial message to thread: {initial_message_text}")
+
         initial_message = await thread.send(initial_message_text)
         return initial_message
 
@@ -99,7 +100,9 @@ class ThreadCog(discord.Cog):
             color=0x25D790,
         )
 
-    def _initial_message_embed(self, message, initial_message):
+    def _initial_message_embed(self,
+                               starting_message: discord.Message
+                               ) -> discord.Embed:
         thread_intro = f"""                      
                    Source code: 
                    https://github.com/jonmatthis/jonbot
@@ -107,13 +110,7 @@ class ThreadCog(discord.Cog):
                    This bot's prompt: 
                    https://github.com/jonmatthis/jonbot/blob/main/jonbot/layer2_processing/ai/chatbot_llm_chain/components/prompt/prompt_strings.py
                     
-                    Context route: {ContextRoute.from_discord_message(message).friendly_path}
-                    
-                   ------------------
-                   Beginning chat with initial message: 
-
-                   > {initial_message}
-
+                    Context route: {ContextRoute.from_discord_message(starting_message).friendly_path}
                    """
         return discord.Embed(
             description=thread_intro,
