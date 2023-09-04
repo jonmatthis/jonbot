@@ -162,6 +162,6 @@ output/
 quine_output/
 
 # Ignore all TOML configs in the directory
-jonbot/bot_tomls/*.toml
+bot_tomls/*
 # Then, explicitly allow the sample environment_config (prefix with !)
 !jonbot/bot_tomls/_sample_config.toml
