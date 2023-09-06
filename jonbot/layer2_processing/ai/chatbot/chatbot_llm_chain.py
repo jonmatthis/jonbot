@@ -90,7 +90,6 @@ class ChatbotLLMChain:
         inputs = {"human_input": message_string}
         response_message = ""
         try:
-            f = 1 / 0
             async for token in self.chain.astream(inputs, {"tags": [self.frontend_bot_nickname]}):
                 logger.trace(f"Yielding token: {repr(token.content)}")
                 response_message += token.content
