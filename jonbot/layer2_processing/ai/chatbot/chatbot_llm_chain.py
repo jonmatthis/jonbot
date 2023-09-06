@@ -1,4 +1,6 @@
 import asyncio
+import inspect
+import traceback
 from typing import AsyncIterable
 
 from langchain.chat_models import ChatOpenAI
@@ -88,6 +90,7 @@ class ChatbotLLMChain:
         inputs = {"human_input": message_string}
         response_message = ""
         try:
+            f = 1 / 0
             async for token in self.chain.astream(inputs, {"tags": [self.frontend_bot_nickname]}):
                 logger.trace(f"Yielding token: {repr(token.content)}")
                 response_message += token.content
@@ -102,8 +105,18 @@ class ChatbotLLMChain:
             )
 
             logger.trace(f"Response message: {response_message}")
+
         except Exception as e:
             logger.exception(e)
+
+            # Extracting traceback details
+            tb = traceback.extract_tb(e.__traceback__)
+            file_name, line_number, func_name, text = tb[-1]  # Getting details of the last (most recent) call
+
+            class_name = self.__class__.__name__
+            current_frame = inspect.currentframe()
+            yield f"ERROR (from {class_name}.{func_name} at line {line_number}) - \n >  {str(e)}\n\n"
+            yield STOP_STREAMING_TOKEN
             raise
 
 # async def demo():
