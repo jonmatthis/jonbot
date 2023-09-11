@@ -85,7 +85,7 @@ def create_services(selected_services: str) -> List:
 def create_discord_services():
     bots = []
 
-    for bot_name in BOT_NICK_NAMES:
+    for bot_name in get_bot_nick_names():
         bots.append(
             {"func": run_discord_bot, "kwargs": {"bot_name_or_index": bot_name}}
         )
@@ -94,11 +94,19 @@ def create_discord_services():
 
 def create_telegram_services():
     bots = []
-    for bot_name in BOT_NICK_NAMES:
+    for bot_name in get_bot_nick_names():
         bots.append(
             {"func": run_telegram_bot_sync, "kwargs": {"bot_name_or_index": bot_name}}
         )
     return bots
+
+
+def get_bot_nick_names() -> List[str]:
+    if not os.getenv("IS_DOCKER"):
+        bot_nick_names = ["jonbot"]
+    else:
+        bot_nick_names = BOT_NICK_NAMES
+    return bot_nick_names
 
 
 def get_services_selection() -> Optional[str]:

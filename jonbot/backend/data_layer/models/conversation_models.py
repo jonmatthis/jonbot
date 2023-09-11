@@ -1,5 +1,5 @@
 import uuid
-from typing import Union, Optional, List, Literal
+from typing import Union, Optional, List, Literal, Dict, Any
 
 import discord
 from pydantic import BaseModel, Field
@@ -91,6 +91,15 @@ class ChatRequestConfig(BaseModel):
     dummy: str = "hi:D"
     vector_store_memory_config: VectorStoreMemoryConfig = VectorStoreMemoryConfig()
     limit_messages: Optional[int] = 20
+    extra_prompts: Optional[Dict[str, str]] = None
+
+    @classmethod
+    def from_kwargs(cls, kwargs: Dict[str, Any]):
+        build_dict = {}
+        for key, value in kwargs.items():
+            if key in ChatRequestConfig.__fields__:
+                build_dict[key] = value
+        return cls(**build_dict)
 
 
 class ChatRequest(BaseModel):
@@ -98,7 +107,7 @@ class ChatRequest(BaseModel):
     database_name: str
     context_route: ContextRoute
     conversation_context: ConversationContextDescription
-    config: ChatRequestConfig = ChatRequestConfig()
+    config: ChatRequestConfig
     uuid: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
     @classmethod
@@ -111,6 +120,8 @@ class ChatRequest(BaseModel):
             context_route: ContextRoute = ContextRoute.dummy(dummy_text="dummy"),
             **kwargs
     ):
+        config = ChatRequestConfig.from_kwargs(kwargs)
+
         return cls(
             chat_input=ChatInput(message=text),
             database_name=database_name,
@@ -119,12 +130,15 @@ class ChatRequest(BaseModel):
                 timestamp=timestamp,
                 context_description=context_description,
             ),
-            **kwargs
+            config=config,
         )
 
     @classmethod
     def from_discord_message(
-            cls, message: discord.Message, database_name: str, content: str, **kwargs
+            cls, message: discord.Message,
+            database_name: str,
+            content: str,
+            **kwargs
     ):
         return cls.from_text(
             text=content,

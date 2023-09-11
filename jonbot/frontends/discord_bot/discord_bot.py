@@ -11,10 +11,10 @@ from jonbot.api_interface.api_client.get_or_create_api_client import (
 )
 from jonbot.api_interface.api_routes import CHAT_ENDPOINT, VOICE_TO_TEXT_ENDPOINT
 from jonbot.backend.data_layer.models.conversation_models import ChatRequest
-from jonbot.backend.data_layer.models.voice_to_text_request import VoiceToTextRequest
 from jonbot.backend.data_layer.models.discord_stuff.environment_config.discord_environment import (
     DiscordEnvironmentConfig,
 )
+from jonbot.backend.data_layer.models.voice_to_text_request import VoiceToTextRequest
 from jonbot.frontends.discord_bot.cogs.memory_scraper_cog import MemoryScraperCog
 from jonbot.frontends.discord_bot.cogs.server_scraper_cog import ServerScraperCog
 from jonbot.frontends.discord_bot.cogs.thread_cog import ThreadCog
