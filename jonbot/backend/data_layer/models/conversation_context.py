@@ -23,20 +23,16 @@ class ConversationContextDescription(BaseModel):
         if message.channel.type.name == "private":
             context_description = DIRECT_MESSAGE_CHANNEL_DESCRIPTION
         else:
+            context_description = (f"This conversation is happening in a Discord with a user named: `{message.author}` "
+                                   f"in a server named `{message.guild.name}` \n")
             if "thread" in message.channel.type.name:
-                context_description = (
-                    f"This conversation is happening on Discord, "
-                    f"in a Thread named `{message.channel.name}` "
-                    f"in channel named `{message.channel.parent.name}`"
-                    f" in server name `{message.guild.name}`. The local time/date of the sender is"
-                    f"str({Timestamp.from_datetime(message.created_at)})"
-                )
-
-            elif message.channel.topic:
-                context_description = message.channel.topic
+                context_description += f"in a Thread named `{message.channel.name}` "
 
             else:
-                context_description = (
-                    f"Channel {message.channel.name} in server {message.guild.name}"
-                )
+                context_description += f"in channel named `{message.channel.name}`\n"
+                if message.channel.topic:
+                    context_description += f" with the topic description `{message.channel.topic}`\n"
+
+                context_description += f"The local time/date of the sender isstr({Timestamp.from_datetime(message.created_at)})"
+
         return context_description
