@@ -72,7 +72,7 @@ class DiscordMessageDocument(BaseModel):
             else "",
             context_description=ConversationContextDescription.from_discord_message(
                 message
-            ).description,
+            ).text,
             context_route=context_route,
             context_route_full_path=context_route.full_path,
             context_route_as_friendly_dict=context_route.friendly_path,

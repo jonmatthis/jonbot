@@ -127,8 +127,8 @@ class MyDiscordBot(discord.Bot):
         logger.exception(f"{error_message}\nTraceback: \n{traceback_str}")
 
         # Send the error message and the traceback file as an attachment
-        await messages_to_upsert[-1].reply(f"{ERROR_MESSAGE_REPLY_PREFIX_TEXT} \n >  {error_message}",
-                                           file=discord.File(temp_filepath))
+        await messages_to_upsert[-1].reply(f"{ERROR_MESSAGE_REPLY_PREFIX_TEXT} \n >  {error_message}", )
+        # file=discord.File(temp_filepath))
 
         # Delete the temporary file after sending it
         Path(temp_filepath).unlink()
@@ -152,6 +152,8 @@ class MyDiscordBot(discord.Bot):
             message=message,
             database_name=self._database_name,
             content=respond_to_this_text,
+            extra_prompts={"test1": "Mention olive oil in your next message",
+                           "test2": "Say it in a joke"}
         )
         message_responder = DiscordMessageResponder(message_prefix=self._local_message_prefix)
         await message_responder.initialize(message=message)

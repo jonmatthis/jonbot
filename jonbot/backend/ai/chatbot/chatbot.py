@@ -1,15 +1,11 @@
 import asyncio
 import inspect
 import traceback
-from typing import AsyncIterable
+from typing import AsyncIterable, Dict
 
 from langchain.chat_models import ChatOpenAI
 from langchain.schema.runnable import RunnableMap, RunnableSequence
 
-from jonbot.backend.data_layer.models.context_route import ContextRoute
-from jonbot.frontends.discord_bot.handlers.discord_message_responder import (
-    STOP_STREAMING_TOKEN,
-)
 from jonbot.backend.ai.chatbot.components.memory.conversation_memory.conversation_memory import (
     ChatbotConversationMemory,
 )
@@ -18,6 +14,12 @@ from jonbot.backend.ai.chatbot.components.prompt.prompt_builder import (
 )
 from jonbot.backend.backend_database_operator.backend_database_operator import (
     BackendDatabaseOperations,
+)
+from jonbot.backend.data_layer.models.context_route import ContextRoute
+from jonbot.backend.data_layer.models.conversation_context import ConversationContextDescription
+from jonbot.backend.data_layer.models.conversation_models import ChatRequestConfig, ChatRequest
+from jonbot.frontends.discord_bot.handlers.discord_message_responder import (
+    STOP_STREAMING_TOKEN,
 )
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
@@ -30,18 +32,22 @@ class ChatbotLLMChain:
     def __init__(
             self,
             context_route: ContextRoute,
+            conversation_context_description: ConversationContextDescription,
             database_name: str,
             database_operations: BackendDatabaseOperations,
             chat_history_placeholder_name: str = "chat_history",
+            config: ChatRequestConfig = None,
     ):
         self.frontend_bot_nickname = f"{database_name.split('_')[0]}"
         self.model = ChatOpenAI(
-            temperature=0.8,
-            model_name="gpt-4",
+            temperature=config.temperature,
+            model_name=config.model_name,
             verbose=True,
         )
         self.prompt = ChatbotPrompt.build(
-            chat_history_placeholder_name=chat_history_placeholder_name
+            chat_history_placeholder_name=chat_history_placeholder_name,
+            context_description_string=conversation_context_description.text,
+            extra_prompts=config.extra_prompts,
         )
 
         self.memory = ChatbotConversationMemory(
@@ -55,13 +61,18 @@ class ChatbotLLMChain:
     async def from_context_route(
             cls,
             context_route: ContextRoute,
+            conversation_context_description: ConversationContextDescription,
             database_name: str,
             database_operations: BackendDatabaseOperations,
+            chat_request_config: ChatRequestConfig = None,
     ):
         instance = cls(
             context_route=context_route,
             database_name=database_name,
+            conversation_context_description=conversation_context_description,
             database_operations=database_operations,
+            config=chat_request_config,
+
         )
 
         await instance.memory.configure_memory()
@@ -82,6 +93,9 @@ class ChatbotLLMChain:
                 | self.prompt
                 | self.model
         )
+
+    def update_prompt(self, extra_prompts: Dict[str, str]):
+        self.prompt
 
     async def execute(
             self, message_string: str, pause_at_end: float = 1.0
@@ -117,6 +131,18 @@ class ChatbotLLMChain:
             yield f"ERROR (from {class_name}.{func_name} at line {line_number}) - \n >  {str(e)}\n\n"
             yield STOP_STREAMING_TOKEN
             raise
+
+    @classmethod
+    def from_chat_request(cls,
+                          chat_request: ChatRequest,
+                          database_operations: BackendDatabaseOperations):
+        return cls.from_context_route(
+            context_route=chat_request.context_route,
+            conversation_context_description=chat_request.conversation_context_description,
+            database_name=chat_request.database_name,
+            database_operations=database_operations,
+            chat_request_config=chat_request.config,
+        )
 
 # async def demo():
 #     from jonbot.tests.load_save_sample_data import load_sample_message_history

@@ -11,15 +11,15 @@ NOTE THAT CONVERSATIONS IN THIS CHANNEL ARE STILL LOGGED AND MAY BE USED AS PART
 
 
 class ConversationContextDescription(BaseModel):
-    description: str = "unknown"
+    text: str
 
     @classmethod
     def from_discord_message(cls, message: discord.Message):
-        context_description = cls.get_context_description(message)
-        return cls(description=context_description)
+        context_description = cls._get_context_description(message)
+        return cls(text=context_description)
 
     @staticmethod
-    def get_context_description(message: discord.Message):
+    def _get_context_description(message: discord.Message):
         if message.channel.type.name == "private":
             context_description = DIRECT_MESSAGE_CHANNEL_DESCRIPTION
         else:

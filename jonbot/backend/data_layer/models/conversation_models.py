@@ -92,6 +92,8 @@ class ChatRequestConfig(BaseModel):
     vector_store_memory_config: VectorStoreMemoryConfig = VectorStoreMemoryConfig()
     limit_messages: Optional[int] = 20
     extra_prompts: Optional[Dict[str, str]] = None
+    temperature: Optional[float] = 0.9
+    model_name: Optional[str] = "gpt-4"
 
     @classmethod
     def from_kwargs(cls, kwargs: Dict[str, Any]):
@@ -106,7 +108,7 @@ class ChatRequest(BaseModel):
     chat_input: ChatInput
     database_name: str
     context_route: ContextRoute
-    conversation_context: ConversationContextDescription
+    conversation_context_description: ConversationContextDescription
     config: ChatRequestConfig
     uuid: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
@@ -114,9 +116,8 @@ class ChatRequest(BaseModel):
     def from_text(
             cls,
             text: str,
-            timestamp: Timestamp,
             database_name: str,
-            context_description: str = "unknown",
+            context_description_text: str,
             context_route: ContextRoute = ContextRoute.dummy(dummy_text="dummy"),
             **kwargs
     ):
@@ -126,10 +127,7 @@ class ChatRequest(BaseModel):
             chat_input=ChatInput(message=text),
             database_name=database_name,
             context_route=context_route,
-            conversation_context=ConversationContextDescription(
-                timestamp=timestamp,
-                context_description=context_description,
-            ),
+            conversation_context_description=ConversationContextDescription(text=context_description_text),
             config=config,
         )
 
@@ -145,9 +143,7 @@ class ChatRequest(BaseModel):
             timestamp=Timestamp.from_datetime(message.created_at),
             database_name=database_name,
             context_route=ContextRoute.from_discord_message(message),
-            context_description=ConversationContextDescription.get_context_description(
-                message
-            ),
+            context_description_text=ConversationContextDescription.from_discord_message(message).text,
             **kwargs
         )
 
@@ -159,7 +155,7 @@ class ChatRequest(BaseModel):
             text=message_document.content,
             timestamp=message_document.timestamp,
             database_name=database_name,
-            context_route=message_document.context_route_object,
+            context_route=message_document.context_route,
             context_description=message_document.context_description,
             **kwargs
         )
