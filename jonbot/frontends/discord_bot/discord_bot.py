@@ -286,7 +286,7 @@ class MyDiscordBot(discord.Bot):
                                                                                         emoji="🤖")
                     emoji_prompts = [message.content for message in bot_emoji_messages]
 
-            extra_prompts = set(pinned_messages + emoji_prompts)
+            extra_prompts = list(set(pinned_messages + emoji_prompts))
             logger.trace(f"Found prompts in bot-config-channel:\n {extra_prompts}\n")
             return extra_prompts
         except Exception as e:
