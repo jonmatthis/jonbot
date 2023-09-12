@@ -1,9 +1,11 @@
 import asyncio
 import inspect
 import traceback
-from typing import AsyncIterable, Dict
+from typing import AsyncIterable
 
 from langchain.chat_models import ChatOpenAI
+from langchain.chat_models.base import BaseChatModel
+from langchain.prompts import ChatPromptTemplate
 from langchain.schema.runnable import RunnableMap, RunnableSequence
 
 from jonbot.backend.ai.chatbot.components.memory.conversation_memory.conversation_memory import (
@@ -29,6 +31,11 @@ logger = get_jonbot_logger()
 
 
 class ChatbotLLMChain:
+    memory: ChatbotConversationMemory
+    model: BaseChatModel
+    prompt: ChatPromptTemplate
+    chain: RunnableSequence
+
     def __init__(
             self,
             context_route: ContextRoute,
@@ -39,21 +46,39 @@ class ChatbotLLMChain:
             config: ChatRequestConfig = None,
     ):
         self.frontend_bot_nickname = f"{database_name.split('_')[0]}"
+        self.chat_history_placeholder_name = chat_history_placeholder_name
+        self.context_route = context_route
+        self.conversation_context_description = conversation_context_description
+        self.config = config
+
+        self.configure_memory(database_name=database_name,
+                              database_operations=database_operations)
+        self.apply_config_and_build_chain(config=config)
+
+    def configure_memory(self,
+                         database_name: str,
+                         database_operations: BackendDatabaseOperations):
+        self.memory = ChatbotConversationMemory(
+            database_operations=database_operations,
+            database_name=database_name,
+            context_route=self.context_route,
+        )
+
+    def apply_config_and_build_chain(self, config: ChatRequestConfig):
+        logger.debug(f"Applying config: {config} to chatbot chain...")
+        if self.memory is None:
+            logger.error(f"Memory not configured!")
+            raise Exception("Memory not configured!")
+
         self.model = ChatOpenAI(
             temperature=config.temperature,
             model_name=config.model_name,
             verbose=True,
         )
         self.prompt = ChatbotPrompt.build(
-            chat_history_placeholder_name=chat_history_placeholder_name,
-            context_description_string=conversation_context_description.text,
+            chat_history_placeholder_name=self.chat_history_placeholder_name,
+            context_description_string=self.conversation_context_description.text,
             extra_prompts=config.extra_prompts,
-        )
-
-        self.memory = ChatbotConversationMemory(
-            database_operations=database_operations,
-            database_name=database_name,
-            context_route=context_route,
         )
         self.chain = self._build_chain()
 
@@ -93,9 +118,6 @@ class ChatbotLLMChain:
                 | self.prompt
                 | self.model
         )
-
-    def update_prompt(self, extra_prompts: Dict[str, str]):
-        self.prompt
 
     async def execute(
             self, message_string: str, pause_at_end: float = 1.0
@@ -143,6 +165,9 @@ class ChatbotLLMChain:
             database_operations=database_operations,
             chat_request_config=chat_request.config,
         )
+
+    def configure(self, config):
+        pass
 
 # async def demo():
 #     from jonbot.tests.load_save_sample_data import load_sample_message_history

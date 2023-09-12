@@ -44,6 +44,7 @@ class Controller:
             existing_chatbots=self.chatbots,
             database_operations=self.database_operations,
         )
+
         logger.debug(f"Grabbed chatbot: {chatbot}")
         async for response in chatbot.execute(
                 message_string=chat_request.chat_input.message
