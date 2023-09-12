@@ -54,12 +54,12 @@ class DiscordMessageResponder:
         self._full_message_content += token
         await self._token_queue.put(token)
 
-    async def _run_token_queue_loop(self, base_delay: float = 0.1, chunk_size: int = 10):
+    async def _run_token_queue_loop(self, base_delay: float = 0.5, chunk_size: int = 20):
         chunk = []
         delay = base_delay
         while True:
             await asyncio.sleep(delay)
-            delay *= 1.1
+            delay *= 1.2
             if self._token_queue.empty():
                 logger.trace(
                     f"FRONTEND - token_queue is empty, waiting {delay:.2f} seconds"
