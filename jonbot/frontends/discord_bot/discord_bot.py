@@ -15,10 +15,6 @@ from jonbot.backend.data_layer.models.discord_stuff.environment_config.discord_e
     DiscordEnvironmentConfig,
 )
 from jonbot.backend.data_layer.models.voice_to_text_request import VoiceToTextRequest
-from jonbot.frontends.discord_bot.cogs.memory_scraper_cog import MemoryScraperCog
-from jonbot.frontends.discord_bot.cogs.server_scraper_cog import ServerScraperCog
-from jonbot.frontends.discord_bot.cogs.thread_cog import ThreadCog
-from jonbot.frontends.discord_bot.cogs.voice_channel_cog import VoiceChannelCog
 from jonbot.frontends.discord_bot.handlers.discord_message_responder import (
     DiscordMessageResponder,
 )
@@ -57,12 +53,12 @@ class MyDiscordBot(discord.Bot):
         self._database_operations = DiscordDatabaseOperations(
             api_client=api_client, database_name=self._database_name
         )
-        self.add_cog(ServerScraperCog(database_operations=self._database_operations))
-        self.add_cog(VoiceChannelCog(bot=self))
-        self.add_cog(ThreadCog(bot=self))
-        self.add_cog(
-            MemoryScraperCog(database_name=self._database_name, api_client=api_client)
-        )
+        # self.add_cog(ServerScraperCog(database_operations=self._database_operations))
+        # self.add_cog(VoiceChannelCog(bot=self))
+        # self.add_cog(ThreadCog(bot=self))
+        # self.add_cog(
+        #     MemoryScraperCog(database_name=self._database_name, api_client=api_client)
+        # )
 
     @discord.Cog.listener()
     async def on_ready(self):
@@ -236,19 +232,31 @@ class MyDiscordBot(discord.Bot):
         # return transcriptions_messages + response_messages
 
     async def get_extra_prompts(self, message: discord.Message) -> List[str]:
+        logger.debug(f"Getting extra prompts for message: {message.content}")
 
-        prompts_from_pins = await self.get_pinned_message_content(message)
+        if message.channel:
+            prompts_from_pins = await self.get_pinned_message_content_from_channel(channel=message.channel)
+        else:
+            logger.error(f"Message has no channel: {message.content}")
+            prompts_from_pins = []
+
         prompts_from_bot_config_channel = await self.get_bot_config_channel_prompts(message)
         extra_prompts = prompts_from_pins + prompts_from_bot_config_channel
         logger.debug(f"Extra prompts: {extra_prompts}")
         return extra_prompts
 
-    async def get_pinned_message_content(self, message) -> List[str]:
-        pinned_messages = await message.channel.pins()
-
-        pinned_message_content = [msg.content for msg in pinned_messages if msg.content != ""]
-        logger.debug(f"Pinned messages: {pinned_message_content}")
-        return pinned_message_content
+    async def get_pinned_message_content_from_channel(self,
+                                                      channel: discord.channel) -> List[str]:
+        logger.debug(f"Getting pinned messages for channel: {channel.name}")
+        try:
+            pinned_messages = await channel.pins()
+            pinned_message_content = [msg.content for msg in pinned_messages if msg.content != ""]
+            logger.debug(f"Pinned messages: {pinned_message_content}")
+            return pinned_message_content
+        except Exception as e:
+            logger.error(f"Error getting pinned messages from channel: {channel.name}")
+            logger.exception(e)
+            raise
 
     async def get_bot_config_channel_prompts(self,
                                              message: discord.Message,
@@ -262,14 +270,19 @@ class MyDiscordBot(discord.Bot):
         """
         logger.debug(f"Getting extra prompts from bot-config channel")
         try:
+            emoji_prompts = []
+            pinned_messages = []
             for channel in message.guild.channels:
                 if bot_config_channel_name in channel.name.lower():
                     logger.debug(f"Found bot-config channel")
+                    pinned_messages = await self.get_pinned_message_content_from_channel(channel=channel)
                     bot_emoji_messages = await self._look_for_emoji_reaction_in_channel(channel,
                                                                                         emoji="🤖")
-                    extra_prompts = [message.content for message in bot_emoji_messages]
-                    logger.trace(f"Found prompts in bot-config-channel:\n {extra_prompts}\n")
-                    return extra_prompts
+                    emoji_prompts = [message.content for message in bot_emoji_messages]
+
+            extra_prompts = pinned_messages + emoji_prompts
+            logger.trace(f"Found prompts in bot-config-channel:\n {extra_prompts}\n")
+            return extra_prompts
         except Exception as e:
             logger.error(f"Error getting extra prompts from bot-config channel")
             logger.exception(e)

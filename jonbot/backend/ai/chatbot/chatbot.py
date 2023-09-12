@@ -1,7 +1,7 @@
 import asyncio
 import inspect
 import traceback
-from typing import AsyncIterable
+from typing import AsyncIterable, Union
 
 from langchain.chat_models import ChatOpenAI
 from langchain.chat_models.base import BaseChatModel
@@ -38,22 +38,80 @@ class ChatbotLLMChain:
 
     def __init__(
             self,
+            human_user_id: Union[str, int],
             context_route: ContextRoute,
             conversation_context_description: ConversationContextDescription,
             database_name: str,
             database_operations: BackendDatabaseOperations,
+            config: ChatRequestConfig,
             chat_history_placeholder_name: str = "chat_history",
-            config: ChatRequestConfig = None,
     ):
         self.frontend_bot_nickname = f"{database_name.split('_')[0]}"
         self.chat_history_placeholder_name = chat_history_placeholder_name
         self.context_route = context_route
         self.conversation_context_description = conversation_context_description
+        self.human_user_id = human_user_id
         self.config = config
+        self.tags = [self.frontend_bot_nickname,
+                     f"user: {self.human_user_id}",
+                     *[f"{key} : {value}" for key, value in self.context_route.as_flat_dict.items()],
+                     ]
 
         self.configure_memory(database_name=database_name,
                               database_operations=database_operations)
         self.apply_config_and_build_chain(config=config)
+
+    @classmethod
+    async def from_context_route(
+            cls,
+            human_user_id: Union[str, int],
+            context_route: ContextRoute,
+            conversation_context_description: ConversationContextDescription,
+            database_name: str,
+            database_operations: BackendDatabaseOperations,
+            chat_request_config: ChatRequestConfig = None,
+    ):
+        instance = cls(
+            human_user_id=human_user_id,
+            context_route=context_route,
+            database_name=database_name,
+            conversation_context_description=conversation_context_description,
+            database_operations=database_operations,
+            config=chat_request_config,
+
+        )
+
+        await instance.memory.configure_memory()
+        return instance
+
+    @classmethod
+    def from_chat_request(cls,
+                          chat_request: ChatRequest,
+                          database_operations: BackendDatabaseOperations):
+        return cls.from_context_route(
+            human_user_id=chat_request.user_id,
+            context_route=chat_request.context_route,
+            conversation_context_description=chat_request.conversation_context_description,
+            database_name=chat_request.database_name,
+            database_operations=database_operations,
+            chat_request_config=chat_request.config,
+        )
+
+    def _build_chain(self) -> RunnableSequence:
+        return (
+                RunnableMap(
+                    {
+                        "human_input": lambda x: x["human_input"],
+                        "memory": self.memory.load_memory_variables,
+                    }
+                )
+                | {
+                    "human_input": lambda x: x["human_input"],
+                    "chat_history": lambda x: x["memory"]["chat_memory"],
+                }
+                | self.prompt
+                | self.model
+        )
 
     def configure_memory(self,
                          database_name: str,
@@ -82,51 +140,17 @@ class ChatbotLLMChain:
         )
         self.chain = self._build_chain()
 
-    @classmethod
-    async def from_context_route(
-            cls,
-            context_route: ContextRoute,
-            conversation_context_description: ConversationContextDescription,
-            database_name: str,
-            database_operations: BackendDatabaseOperations,
-            chat_request_config: ChatRequestConfig = None,
-    ):
-        instance = cls(
-            context_route=context_route,
-            database_name=database_name,
-            conversation_context_description=conversation_context_description,
-            database_operations=database_operations,
-            config=chat_request_config,
-
-        )
-
-        await instance.memory.configure_memory()
-        return instance
-
-    def _build_chain(self) -> RunnableSequence:
-        return (
-                RunnableMap(
-                    {
-                        "human_input": lambda x: x["human_input"],
-                        "memory": self.memory.load_memory_variables,
-                    }
-                )
-                | {
-                    "human_input": lambda x: x["human_input"],
-                    "chat_history": lambda x: x["memory"]["chat_memory"],
-                }
-                | self.prompt
-                | self.model
-        )
-
     async def execute(
-            self, message_string: str, pause_at_end: float = 1.0
+            self,
+            message_string: str,
+            pause_at_end: float = 1.0
+
     ) -> AsyncIterable[str]:
 
         inputs = {"human_input": message_string}
         response_message = ""
         try:
-            async for token in self.chain.astream(inputs, {"tags": [self.frontend_bot_nickname]}):
+            async for token in self.chain.astream(inputs, {"tags": self.tags}):
                 logger.trace(f"Yielding token: {repr(token.content)}")
                 response_message += token.content
                 yield token.content
@@ -153,18 +177,6 @@ class ChatbotLLMChain:
             yield f"ERROR (from {class_name}.{func_name} at line {line_number}) - \n >  {str(e)}\n\n"
             yield STOP_STREAMING_TOKEN
             raise
-
-    @classmethod
-    def from_chat_request(cls,
-                          chat_request: ChatRequest,
-                          database_operations: BackendDatabaseOperations):
-        return cls.from_context_route(
-            context_route=chat_request.context_route,
-            conversation_context_description=chat_request.conversation_context_description,
-            database_name=chat_request.database_name,
-            database_operations=database_operations,
-            chat_request_config=chat_request.config,
-        )
 
     def configure(self, config):
         pass

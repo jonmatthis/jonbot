@@ -104,6 +104,7 @@ class ChatRequestConfig(BaseModel):
 
 
 class ChatRequest(BaseModel):
+    user_id: Union[int, str]
     chat_input: ChatInput
     database_name: str
     context_route: ContextRoute
@@ -114,6 +115,7 @@ class ChatRequest(BaseModel):
     @classmethod
     def from_text(
             cls,
+            user_id: Union[int, str],
             text: str,
             database_name: str,
             context_description_text: str,
@@ -123,6 +125,7 @@ class ChatRequest(BaseModel):
         config = ChatRequestConfig.from_kwargs(kwargs)
 
         return cls(
+            user_id=user_id,
             chat_input=ChatInput(message=text),
             database_name=database_name,
             context_route=context_route,
@@ -139,6 +142,7 @@ class ChatRequest(BaseModel):
             **kwargs
     ):
         return cls.from_text(
+            user_id=message.author.id,
             text=content,
             timestamp=Timestamp.from_datetime(message.created_at),
             database_name=database_name,
