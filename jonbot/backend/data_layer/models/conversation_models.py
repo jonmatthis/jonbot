@@ -88,10 +88,9 @@ class MessageHistory(BaseModel):
 
 
 class ChatRequestConfig(BaseModel):
-    dummy: str = "hi:D"
     vector_store_memory_config: VectorStoreMemoryConfig = VectorStoreMemoryConfig()
     limit_messages: Optional[int] = 20
-    extra_prompts: Optional[Dict[str, str]] = None
+    extra_prompts: Optional[List[str]] = None
     temperature: Optional[float] = 0.9
     model_name: Optional[str] = "gpt-4"
 
@@ -133,7 +132,8 @@ class ChatRequest(BaseModel):
 
     @classmethod
     def from_discord_message(
-            cls, message: discord.Message,
+            cls,
+            message: discord.Message,
             database_name: str,
             content: str,
             **kwargs

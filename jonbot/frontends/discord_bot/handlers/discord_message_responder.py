@@ -104,7 +104,7 @@ class DiscordMessageResponder:
             self.message_content += chunk
 
             if len(self.message_content) > self.comfy_message_length:
-                await self.handle_message_length_overflow(chunk)
+                await self.handle_message_length_overflow(input_chunk=chunk)
 
             else:
                 await self._reply_message.edit(content=self.message_content)
@@ -113,24 +113,29 @@ class DiscordMessageResponder:
             logger.debug(f"Stopping stream (setting `self.done` to True)...")
             self.done = True
 
-    async def handle_message_length_overflow(self, chunk: str):
+    async def handle_message_length_overflow(self, input_chunk: str):
         chunks = []
+        logger.debug(
+            f"message content (len: {len(input_chunk)}) is longer than comfy message length: {self.comfy_message_length} - continuing in next message..."
+        )
+        try:
+            for start_index in range(0, len(input_chunk), self.comfy_message_length):
+                chunks.append(input_chunk[start_index:start_index + self.comfy_message_length])
 
-        for start_index in range(0, len(chunk), self.comfy_message_length):
-            chunks.append(chunk[start_index:start_index + self.comfy_message_length])
-        for chunk in chunks:
-            logger.trace(
-                f"message content (len: {len(chunk)}) is longer than comfy message length: {self.comfy_message_length} - continuing in next message..."
-            )
-            new_message_initial_content: str = f"{self.message_prefix}continuing from: \n\n > {chunk} \n\n"
-            new_message: discord.Message = await self._reply_message.reply(
-                new_message_initial_content, mention_author=False
-            )
-            self.message_content += f"\n\n `continued in next message:`\n {new_message.jump_url}"
-            await self._reply_message.edit(content=self.message_content)
-            self.message_content = new_message_initial_content
-            await self._add_reply_message_to_list()
-            self._reply_message = new_message
+            for chunk in chunks:
+                new_message_initial_content: str = f"{self.message_prefix}continuing from: \n\n > {chunk} \n\n"
+                new_message: discord.Message = await self._reply_message.reply(
+                    new_message_initial_content, mention_author=False
+                )
+                self.message_content += f"\n\n `continued in next message:`\n {new_message.jump_url}"
+                await self._reply_message.edit(content=self.message_content)
+                self.message_content = new_message_initial_content
+                await self._add_reply_message_to_list()
+                self._reply_message = new_message
+        except Exception as e:
+            logger.error(f"Error occurred while handling message length overflow")
+            logger.exception(e)
+            raise
 
     def _add_delta_t_to_token(self, chunk: str):
         current_timestamp = time.perf_counter()

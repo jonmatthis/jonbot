@@ -152,8 +152,7 @@ class MyDiscordBot(discord.Bot):
             message=message,
             database_name=self._database_name,
             content=respond_to_this_text,
-            extra_prompts={"test1": "Mention olive oil in your next message",
-                           "test2": "Say it in a joke"}
+            extra_prompts=await self.get_extra_prompts(message=message),
         )
         message_responder = DiscordMessageResponder(message_prefix=self._local_message_prefix)
         await message_responder.initialize(message=message)
@@ -184,7 +183,7 @@ class MyDiscordBot(discord.Bot):
         logger.info(f"Received voice memo from user: {message.author}")
         try:
             reply_message_content = (
-                f"Transcribing audio from user `{message.author}`...\n\n"
+                f"Transcribing audio from user `{message.author}`\n"
             )
             responder = DiscordMessageResponder(message_prefix=self._local_message_prefix)
             await responder.initialize(
@@ -192,6 +191,10 @@ class MyDiscordBot(discord.Bot):
             )
             for attachment in message.attachments:
                 if attachment.content_type.startswith("audio"):
+                    logger.debug(f"Found audio attachment: {attachment.url}")
+                    reply_message_content += f"File URL: {attachment.url}\n\n"
+                    await responder.add_text_to_reply_message(reply_message_content)
+
                     voice_to_text_request = VoiceToTextRequest(
                         audio_file_url=attachment.url
                     )
@@ -201,14 +204,13 @@ class MyDiscordBot(discord.Bot):
                         data=voice_to_text_request.dict(),
                     )
 
-                    reply_message_content += (
+                    transcribed_text = (
                         f"Transcribed Text:\n"
                         f"> {response['text']}\n\n"
-                        f"File URL:{attachment.url}\n\n"
                     )
 
                     await responder.add_text_to_reply_message(
-                        chunk=reply_message_content
+                        chunk=transcribed_text,
                     )
                     await responder.shutdown()
 
@@ -233,9 +235,55 @@ class MyDiscordBot(discord.Bot):
         #
         # return transcriptions_messages + response_messages
 
-    def get_text_to_reply_to(self, message: discord.Message) -> str:
-        text_to_reply_to = ""
-        if message.content:
-            text_to_reply_to += f"{message.author.name}: {message.content}\n"
+    async def get_extra_prompts(self, message: discord.Message) -> List[str]:
 
-        text_from_attachments = self.handle_message_attachments()
+        prompts_from_pins = await self.get_pinned_message_content(message)
+        prompts_from_bot_config_channel = await self.get_bot_config_channel_prompts(message)
+        extra_prompts = prompts_from_pins + prompts_from_bot_config_channel
+        logger.debug(f"Extra prompts: {extra_prompts}")
+        return extra_prompts
+
+    async def get_pinned_message_content(self, message) -> List[str]:
+        pinned_messages = await message.channel.pins()
+
+        pinned_message_content = [msg.content for msg in pinned_messages if msg.content != ""]
+        logger.debug(f"Pinned messages: {pinned_message_content}")
+        return pinned_message_content
+
+    async def get_bot_config_channel_prompts(self,
+                                             message: discord.Message,
+                                             bot_config_channel_name: str = "bot-config",
+                                             ) -> List[str]:
+        """
+        Get messages from the `bot-config` channel in the server, if it exists
+        :param message:
+        :return: List[str]
+        """
+        logger.debug(f"Getting extra prompts from bot-config channel")
+        extra_prompts = {}
+        try:
+            for channel in message.guild.channels:
+                if bot_config_channel_name in channel.name.lower():
+                    logger.debug(f"Found bot-config channel")
+                    bot_emoji_messages = await self._look_for_emoji_reaction_in_channel(channel,
+                                                                                        emoji="🤖")
+                    extra_prompts = [message.content for message in bot_emoji_messages]
+                    logger.trace(f"Found prompts in bot-config-channel:\n {extra_prompts}\n")
+                    return extra_prompts
+        except Exception as e:
+            logger.error(f"Error getting extra prompts from bot-config channel")
+            logger.exception(e)
+            raise
+
+    async def _look_for_emoji_reaction_in_channel(self,
+                                                  channel: discord.TextChannel,
+                                                  emoji: str) -> List[discord.Message]:
+        messages = []
+        async for msg in channel.history(limit=100):
+            # use messages with `bot` emoji reactions as prompts
+            if msg.reactions:
+                for reaction in msg.reactions:
+                    if str(reaction.emoji) == emoji:
+                        messages.append(msg)
+            logger.trace(f"Found {len(messages)} messages with {emoji} emoji reaction")
+        return messages
