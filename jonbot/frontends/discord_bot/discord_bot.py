@@ -257,10 +257,10 @@ class MyDiscordBot(discord.Bot):
         """
         Get messages from the `bot-config` channel in the server, if it exists
         :param message:
+        :param bot_config_channel_name:
         :return: List[str]
         """
         logger.debug(f"Getting extra prompts from bot-config channel")
-        extra_prompts = {}
         try:
             for channel in message.guild.channels:
                 if bot_config_channel_name in channel.name.lower():
