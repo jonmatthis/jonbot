@@ -237,28 +237,30 @@ class MyDiscordBot(discord.Bot):
 
     async def get_extra_prompts(self, message: discord.Message) -> List[str]:
         logger.debug(f"Getting extra prompts for message: {message.content}")
-
+        prompts_from_pins = []
+        prompts_from_bot_config_channel = []
         if message.channel:
             prompts_from_pins = await self.get_pinned_message_content_from_channel(channel=message.channel)
         else:
             logger.error(f"Message has no channel: {message.content}")
-            prompts_from_pins = []
 
-        prompts_from_bot_config_channel = await self.get_bot_config_channel_prompts(message)
+        if message.guild:
+            prompts_from_bot_config_channel = await self.get_bot_config_channel_prompts(message)
+
         extra_prompts = prompts_from_pins + prompts_from_bot_config_channel
         logger.debug(f"Extra prompts: {extra_prompts}")
         return extra_prompts
 
     async def get_pinned_message_content_from_channel(self,
                                                       channel: discord.channel) -> List[str]:
-        logger.debug(f"Getting pinned messages for channel: {channel.name}")
+        logger.debug(f"Getting pinned messages for channel: {channel}")
         try:
             pinned_messages = await channel.pins()
             pinned_message_content = [msg.content for msg in pinned_messages if msg.content != ""]
             logger.debug(f"Pinned messages: {pinned_message_content}")
             return pinned_message_content
         except Exception as e:
-            logger.error(f"Error getting pinned messages from channel: {channel.name}")
+            logger.error(f"Error getting pinned messages from channel: {channel}")
             logger.exception(e)
             raise
 
@@ -284,7 +286,7 @@ class MyDiscordBot(discord.Bot):
                                                                                         emoji="🤖")
                     emoji_prompts = [message.content for message in bot_emoji_messages]
 
-            extra_prompts = pinned_messages + emoji_prompts
+            extra_prompts = set(pinned_messages + emoji_prompts)
             logger.trace(f"Found prompts in bot-config-channel:\n {extra_prompts}\n")
             return extra_prompts
         except Exception as e:
