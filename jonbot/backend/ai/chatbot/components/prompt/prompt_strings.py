@@ -1,4 +1,3 @@
-# TODO - Make this more compositional by pulling out the 'rules' and 'vibe' stuff.
 # TODO - Also, build the 'architecture' parts of this from the `/docs` and `README`
 
 DEFAULT_RULES_FOR_LIVING = """
@@ -26,7 +25,6 @@ You're just here to be curious, help out, and have fun!
 DEFAULT_CHATBOT_SYSTEM_PROMPT_TEMPLATE = """
 
 {main_task}
-
 
 REMEMBER -  
 +++

@@ -160,7 +160,8 @@ class ChatbotLLMChain:
             logger.debug(f"Successfully executed chain! - Saving context to memory...")
 
             await self.memory.update(
-                inputs=inputs, outputs={"output": response_message}
+                inputs=inputs,
+                outputs={"output": response_message}
             )
 
             logger.trace(f"Response message: {response_message}")
