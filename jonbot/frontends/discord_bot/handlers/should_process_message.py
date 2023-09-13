@@ -106,6 +106,12 @@ def allowed_to_reply(message: discord.Message) -> bool:
             )
             return False
 
+        excluded_categories = server_data.get("EXCLUDED_CATEGORIES_IDS", [])
+        if channel_id in excluded_categories:
+            logger.debug(
+                f"Message `{message.content}` is not allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: excluded category)"
+            )
+            return False
         excluded_channels = server_data.get("EXCLUDED_CHANNEL_IDS", [])
         if channel_id in excluded_channels:
             logger.debug(
