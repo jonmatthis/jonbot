@@ -103,7 +103,7 @@ def create_telegram_services():
 
 def get_bot_nick_names() -> List[str]:
     if not os.getenv("IS_DOCKER"):
-        bot_nick_names = ["jonbot"]
+        bot_nick_names = [BOT_NICK_NAMES[0]]
     else:
         bot_nick_names = BOT_NICK_NAMES
     return bot_nick_names

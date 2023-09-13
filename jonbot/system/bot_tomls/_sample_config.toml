@@ -4,7 +4,7 @@ bot_nick_name = "<your bot nick name>"
 # Your discord bot token.
 discord_token = "<your discord bot token>"
 
-OWNER_IDS = [362711467104927744]
+OWNER_IDS = ["your discord user ids"]
 
 # Names can be anything you want, the actual IDs and details are provided below.
 ALLOWED_SERVERS = ["server1_nick_name", "server2_nick_name"]
