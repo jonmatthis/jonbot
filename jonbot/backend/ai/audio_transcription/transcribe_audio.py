@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import aiofiles
 import aiohttp
@@ -6,6 +7,7 @@ import openai
 from pydub import AudioSegment
 
 from jonbot.backend.data_layer.models.voice_to_text_request import VoiceToTextResponse
+from jonbot.system.path_getters import get_temp_folder
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
@@ -18,13 +20,15 @@ async def transcribe_audio_function(
         temperature: float = None,
         language: str = None,
 ) -> VoiceToTextResponse:
-    TEMP_FILE_PATH = f"/tmp/voice-message"
-
+    file_name = "voice-message"
     file_extension = audio_file_url.split(".")[
         -1
     ]  # Get the audio file extension from the URL
-    original_file_path = f"{TEMP_FILE_PATH}.{file_extension}"
-    mp3_file_path = f"{TEMP_FILE_PATH}.mp3"
+    original_file_name = f"{file_name}.{file_extension}"
+    original_file_path = Path(get_temp_folder()) / original_file_name
+
+    mp3_file_name = f"{file_name}.mp3"
+    mp3_file_path = Path(get_temp_folder()) / mp3_file_name
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(audio_file_url) as response:
@@ -73,7 +77,7 @@ async def transcribe_audio_function(
             text=transcription_response.text,
             success=True,
             response_time_ms=transcription_response.response_ms,
-            mp3_file_path=mp3_file_path,
+            mp3_file_path=str(mp3_file_path),
         )
     except Exception as e:
         logger.exception(f"An error occurred while transcribing: {str(e)}")
