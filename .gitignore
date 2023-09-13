@@ -161,6 +161,6 @@ cython_debug/
 output/
 quine_output/
 
-/jonbot/system/bot_tomls/
+/jonbot/system/bot_tomls/*.toml
 !jonbot/system/bot_tomls/_sample_config.toml
 
