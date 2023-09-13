@@ -1,8 +1,8 @@
 # A nickname for the bot, doesn't need to match the actual bot name.
-bot_nick_name = "<your bot nick name>"
+BOT_NICK_NAME = "<your bot nick name>"
 
 # Your discord bot token.
-discord_token = "<your discord bot token>"
+DISCORD_TOKEN = "<your discord bot token>"
 
 OWNER_IDS = ["your discord user ids"]
 
