@@ -4,29 +4,26 @@ bot_nick_name = "<your bot nick name>"
 # Your discord bot token.
 discord_token = "<your discord bot token>"
 
+OWNER_IDS = [362711467104927744]
+
 # Names can be anything you want, the actual IDs and details are provided below.
 ALLOWED_SERVERS = ["server1_nick_name", "server2_nick_name"]
 
 # Set to true if you want the bot to respond to direct messages.
 DIRECT_MESSAGES_ALLOWED = true
 
+
 # Configuration for server1_nick_name
-[server1_nick_name]
-# The ID of the server that the bot will be active in. (turn on `developer mode in `Settings>Advanced`, right click the server name and click copy ID)
-SERVER_ID = "<server1_id>"
-
-# The bot will have access to all channels in these categories
-allowed_categories = ["<category1_id>", "<category2_id>"]
-
-# These are the channels that the bot will respond to commands.
-ALLOWED_CHANNEL_IDS = ["<channel1_id>", "<channel2_id>"]
-
-# These are the users that can use the admin commands.
-admin_user_ids = ["<user1_id>", "<user2_id>"]
+["server1_nick_name"]
+SERVER_ID = 'your server id'
+ALLOWED_CATEGORY_IDS = ["ALL"]
+ALLOWED_CHANNEL_IDS = ["ALL"]
+EXCLUDED_CHANNEL_IDS = []
 
 # Configuration for server2_nick_name
-[server2_nick_name]
-SERVER_ID = "<server1_id>"
-ALLOWED_CATEGORY_IDS = ["<category1_id>", "<category2_id>"]
-ALLOWED_CHANNEL_IDS = ["<channel1_id>", "<channel2_id>"]
-EXCLUDED_CHANNEL_IDS = ["<channel3_id>"]
+["server2_nick_name"]
+SERVER_ID = 'your server id'
+ALLOWED_CATEGORY_IDS = ["ALL"]
+ALLOWED_CHANNEL_IDS = ["ALL"]
+EXCLUDED_CHANNEL_IDS = []
+
