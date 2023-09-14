@@ -54,13 +54,11 @@ pip install -e .
 
 ```mermaid
 graph TD
-
-    classDef actor fill:#9E9E9E,stroke:#757575,stroke-width:2px,color:#000,rounding:5px;
-    classDef interface fill:#90A4AE,stroke:#757575,stroke-width:2px,color:#000,rounding:5px;
-    classDef api fill:#A5D6A7,stroke:#757575,stroke-width:2px,color:#000,rounding:5px;
-    classDef core fill:#FFE082,stroke:#757575,stroke-width:2px,color:#000,rounding:5px;
-    classDef data fill:#FFAB91,stroke:#757575,stroke-width:2px,color:#000,rounding:5px;
-
+    classDef actor fill: #9E9E9E, stroke: #757575, stroke-width: 2px, color: #000, rounding: 5px;
+    classDef interface fill: #90A4AE, stroke: #757575, stroke-width: 2px, color: #000, rounding: 5px;
+    classDef api fill: #A5D6A7, stroke: #757575, stroke-width: 2px, color: #000, rounding: 5px;
+    classDef core fill: #FFE082, stroke: #757575, stroke-width: 2px, color: #000, rounding: 5px;
+    classDef data fill: #FFAB91, stroke: #757575, stroke-width: 2px, color: #000, rounding: 5px;
     A(["External User"]):::actor
 
     subgraph JonBot
@@ -69,28 +67,28 @@ graph TD
             B2["Frontend: Slack (planned)"]:::interface
             B3["Frontend: Telegram (planned)"]:::interface
         end
-    
+
         subgraph Backend
             subgraph RESTful API
                 C["API Interface (FastAPI)"]:::api
             end
             subgraph Controller
-                D ["Controller"]:::core
-                E ["BackendDatabaseOperations"]:::core
+                D["Controller"]:::core
+                E["BackendDatabaseOperations"]:::core
             end
-    
+
             subgraph Processes
                 F["Chatbot\nLangChain/OpenAI/Anthropic\nVoiceTranscription - Whisper"]:::core
             end
-        
+
             subgraph Data Layer
                 G["Database MongoDB"]:::data
             end
         end
 
         H(["Pydantic Data Models"]):::data
-
-    
+        H --> G
+        H --> C
     end
     A --> B1
     A --> B2
@@ -102,8 +100,6 @@ graph TD
     D --> E
     D --> F
     E --> G
-    H --> G
-    H --> C
 ```
 
 **Layer 0 - Frontends**
