@@ -63,42 +63,35 @@ graph TD
 
     subgraph JonBot
         subgraph Frontend User Interfaces
-            B1["Frontend: Discord"]:::interface
-            B2["Frontend: Slack (planned)"]:::interface
-            B3["Frontend: Telegram (planned)"]:::interface
+            B1["Current:\nDiscord"]:::interface
+            B2["Planned:\nSlack, WebApp, Android, etc"]:::interface
         end
 
         subgraph Backend
-            subgraph RESTful API
-                C["API Interface (FastAPI)"]:::api
-            end
+            C["API Interface (FastAPI)"]:::api
+
             subgraph Controller
                 D["Controller"]:::core
                 E["BackendDatabaseOperations"]:::core
-            end
-
-            subgraph Processes
-                F["Chatbot\nLangChain/OpenAI/Anthropic\nVoiceTranscription - Whisper"]:::core
+                F["Core Processes:\n(Chatbot, etc)"]:::core
             end
 
             subgraph Data Layer
                 G["Database MongoDB"]:::data
+                H(["Pydantic Data Models"]):::data
             end
         end
 
-        H(["Pydantic Data Models"]):::data
-        H --> G
-        H --> C
     end
     A --> B1
     A --> B2
-    A --> B3
     B1 --> C
     B2 --> C
-    B3 --> C
     C --> D
     D --> E
+    E --> D
     D --> F
+    F --> D
     E --> G
 ```
 
