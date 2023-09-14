@@ -63,29 +63,47 @@ graph TD
 
     A(["External User"]):::actor
 
-    subgraph Layer 0 - Interface
-        B1["Frontend: Discord"]:::interface
-        B2["Frontend: Telegram"]:::interface
-    end
+    subgraph JonBot
+        subgraph Frontend User Interfaces
+            B1["Frontend: Discord"]:::interface
+            B2["Frontend: Slack (planned)"]:::interface
+            B3["Frontend: Telegram (planned)"]:::interface
+        end
+    
+        subgraph Backend
+            subgraph RESTful API
+                C["API Interface (FastAPI)"]:::api
+            end
+            subgraph Controller
+                D ["Controller"]:::core
+                E ["BackendDatabaseOperations"]:::core
+            end
+    
+            subgraph Processes
+                F["Chatbot\nLangChain/OpenAI/Anthropic\nVoiceTranscription - Whisper"]:::core
+            end
+        
+            subgraph Data Layer
+                G["Database MongoDB"]:::data
+            end
+        end
 
-    subgraph Layer1 - API
-        C["API Interface (FastAPI)"]:::api
-    end
+        H(["Pydantic Data Models"]):::data
 
-    subgraph Layer2 - Core Processes
-        D["Chatbot\nLangChain/OpenAI/Anthropic\nVoiceTranscription - Whisper"]:::core
+    
     end
-
-    subgraph Layer3 - Data Layer
-        E["Database - MongoDB\nDataModels - Pydantic"]:::data
-    end
-
     A --> B1
     A --> B2
+    A --> B3
     B1 --> C
     B2 --> C
+    B3 --> C
     C --> D
     D --> E
+    D --> F
+    E --> G
+    H --> G
+    H --> C
 ```
 
 **Layer 0 - Frontends**
