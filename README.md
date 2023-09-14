@@ -93,6 +93,7 @@ graph TD
     D --> F
     F --> D
     E --> G
+    G --> E
 ```
 
 **Layer 0 - Frontends**
