@@ -83,17 +83,17 @@ graph TD
         end
 
     end
-    A --> B1
-    A --> B2
-    B1 --> C
-    B2 --> C
-    C --> D
-    D --> E
-    E --> D
-    D --> F
-    F --> D
-    E --> G
-    G --> E
+    A <--> B1
+    A <--> B2
+    B1 <--> C
+    B2 <--> C
+    C <--> D
+    D <--> E
+    E <--> D
+    D <--> F
+    F <--> D
+    E <--> G
+    G <--> E
 ```
 
 **Layer 0 - Frontends**
