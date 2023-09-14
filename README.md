@@ -89,11 +89,9 @@ graph TD
     B2 <--> C
     C <--> D
     D <--> E
-    E <--> D
     D <--> F
-    F <--> D
     E <--> G
-    G <--> E
+
 ```
 
 **Layer 0 - Frontends**
