@@ -1,37 +1,39 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from "react";
 
-class App extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      data: null
+function App() {
+  const [selectedFile, setSelectedFile] = useState();
+  const [fileContents, setFileContents] = useState();
+
+  const fileSelectedHandler = event => {
+    console.log("File selection event triggered");
+    setSelectedFile(event.target.files[0]);
+
+    const reader = new FileReader();
+
+    reader.onloadstart = function(event) {
+      console.log("File reading started");
     };
-  }
 
-  componentDidMount() {
-    fetch('manifest.json', {
-      headers : {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-       }
-    })
-    .then(response => response.json())
-    .then(jsonData => this.setState({ data: jsonData }));
-  }
+    reader.onload = function(event) {
+      console.log("File reading completed");
+      setFileContents(JSON.parse(event.target.result));
+      console.log("File contents set to state");
+    };
 
-  render() {
-    return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1>Data from JSON file:</h1>
-          <pre>{JSON.stringify(this.state.data, null, 2)}</pre>
-        </header>
-      </div>
-    );
-  }
+    reader.onerror = function(event) {
+      console.error("Error reading file");
+    };
+
+    console.log("Starting to read file");
+    reader.readAsText(event.target.files[0]);
+  };
+
+  return (
+    <div>
+      <input type="file" onChange={fileSelectedHandler} />
+      {fileContents && <div>{JSON.stringify(fileContents, null, 2)}</div>}
+    </div>
+  );
 }
 
 export default App;
