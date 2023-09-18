@@ -83,17 +83,14 @@ class MyDiscordBot(discord.Bot):
         text_to_reply_to = f"{message.author}: {message.content}"
         try:
             async with message.channel.typing():
+                if message.reference:
+                    logger.debug(
+                        f"Message has reference (i.e. this is a reply to another message): {message.reference}")
+                    text_to_reply_to += await self.get_replied_message_content(message=message)
                 if len(message.attachments) > 0:
                     logger.debug(f"Message has attachments: {message.attachments}")
-                    for attachment in message.attachments:
-                        if "audio" in attachment.content_type:
-                            audio_response_dict = await self.handle_audio_message(message=message)
-                            messages_to_upsert.extend(audio_response_dict["transcriptions_messages"])
-                            new_text_to_reply_to = audio_response_dict["transcription_text"]
-                            text_to_reply_to += f"\n\n{new_text_to_reply_to}"
-                        else:
-                            new_text_to_reply_to = await self.handle_text_attachments(attachment=attachment)
-                            text_to_reply_to += f"\n\n{new_text_to_reply_to}"
+                    text_to_reply_to += await self.handle_attachments(message=message,
+                                                                      messages_to_upsert=messages_to_upsert)
 
             response_messages = await self.handle_text_message(
                 message=message,
@@ -107,6 +104,34 @@ class MyDiscordBot(discord.Bot):
             return
 
         await self._database_operations.upsert_messages(messages=messages_to_upsert)
+
+    async def handle_attachments(self,
+                                 message: discord.Message,
+                                 messages_to_upsert: List[discord.Message] = None, ) -> str:
+        attachment_text = ""
+        for attachment in message.attachments:
+            if "audio" in attachment.content_type:
+                audio_response_dict = await self.handle_audio_message(message=message)
+
+                if messages_to_upsert is not None:
+                    messages_to_upsert.extend(audio_response_dict["transcriptions_messages"])
+
+                new_text_to_reply_to = audio_response_dict["transcription_text"]
+                attachment_text += f"\n\n{new_text_to_reply_to}"
+            else:
+                new_text_to_reply_to = await self.handle_text_attachments(attachment=attachment)
+                attachment_text += f"\n\n{new_text_to_reply_to}"
+        return attachment_text
+
+    async def get_replied_message_content(self, message: discord.Message, include_attachments=True) -> str:
+        logger.debug(f"Message has reference: {message.reference}")
+        reply_message = await message.channel.fetch_message(message.reference.message_id)
+        message_text = f"In reply to message from {reply_message.author}, with content:\n ```{reply_message.content}```\n"
+
+        if include_attachments and len(reply_message.attachments) > 0:
+            message_text += self.handle_attachments(message=reply_message)
+
+        return message_text
 
     async def _send_error_response(self, e: Exception, messages_to_upsert):
 
