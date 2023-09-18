@@ -3,12 +3,12 @@ from datetime import datetime
 import discord
 
 from jonbot.backend.data_layer.models.context_route import ContextRoute
-from jonbot.backend.data_layer.models.timestamp_model import Timestamp
 from jonbot.frontends.discord_bot.handlers.should_process_message import (
     NEW_THREAD_MESSAGE_PREFIX_TEXT,
 )
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
+MAX_FORUM_TITLE_LENGTH = 100
 logger = get_jonbot_logger()
 
 
@@ -36,25 +36,27 @@ class ChatCog(discord.Cog):
         parent_message_embed = await self._create_parent_message_embed(ctx=ctx, chat_title=chat_title)
         in_existing_chat = False
 
-        if ctx.channel.parent is not None and "forum" in str(ctx.channel.parent.type):
+        if hasattr(ctx.channel, "parent") and "forum" in str(ctx.channel.parent.type):
             logger.debug(
                 f"Create chat called from forum, creating thread in parent channel: {ctx.channel.parent.name}")
-            reply_message = await ctx.channel.parent.create_thread(name=chat_title, content=initial_message_text)
-            in_existing_chat = True
-        elif "thread" in str(ctx.channel.type):
-            logger.debug(
-                f"Create chat called from thread, creating thread in parent channel: {ctx.channel.parent.name}")
-            reply_message = await ctx.channel.parent.send(embed=parent_message_embed)
+            reply_post = await ctx.channel.parent.create_thread(name=chat_title, content=initial_message_text)
+            reply_message = await reply_post.send(embed=parent_message_embed)
             in_existing_chat = True
         else:
-            logger.debug(f"Creating chat in {ctx.channel.name}")
-            reply_message = await ctx.channel.send(embed=parent_message_embed)
+            if "thread" in str(ctx.channel.type):
+                logger.debug(
+                    f"Create chat called from thread, creating thread in parent channel: {ctx.channel.parent.name}")
+                reply_message = await ctx.channel.parent.send(embed=parent_message_embed)
+                in_existing_chat = True
+            else:
+                logger.debug(f"Creating chat in {ctx.channel.name}")
+                reply_message = await ctx.channel.send(embed=parent_message_embed)
 
-        initial_message = await self._spawn_thread(
-            parent_message=reply_message,
-            user_name=str(ctx.user),
-            initial_text_input=initial_message_text,
-        )
+            initial_message = await self._spawn_thread(
+                parent_message=reply_message,
+                user_name=str(ctx.user),
+                initial_text_input=initial_message_text,
+            )
 
         if in_existing_chat:
             await ctx.send(
@@ -67,7 +69,8 @@ class ChatCog(discord.Cog):
             initial_text_input: str = None,
     ) -> discord.Message:
         logger.debug(f"Spawning chat for {user_name}")
-        thread_title = self._create_chat_title_string(user_name=user_name)
+        thread_title = self._create_chat_title_string(user_name=user_name,
+                                                      initial_text_input=initial_text_input)
 
         thread = await parent_message.create_thread(name=thread_title)
 
@@ -94,8 +97,13 @@ class ChatCog(discord.Cog):
         initial_message = await thread.send(initial_message_text)
         return initial_message
 
-    def _create_chat_title_string(self, user_name: str) -> str:
-        return f"{user_name}'s thread {Timestamp.now().human_friendly_local}"
+    def _create_chat_title_string(self, user_name: str,
+                                  initial_text_input: str = None) -> str:
+
+        if initial_text_input is not None:
+            return initial_text_input[:MAX_FORUM_TITLE_LENGTH]
+
+        return f"{user_name}'s chat"
 
     async def _create_parent_message_embed(self,
                                            ctx: discord.ApplicationContext,
