@@ -1,3 +1,5 @@
+import traceback
+from pathlib import Path
 from typing import List, Union, Dict
 
 import discord
@@ -107,19 +109,11 @@ class MyDiscordBot(discord.Bot):
         await self._database_operations.upsert_messages(messages=messages_to_upsert)
 
     async def _send_error_response(self, e: Exception, messages_to_upsert):
-        traceback_obj = e.__traceback__
-        while traceback_obj.tb_next:
-            traceback_obj = traceback_obj.tb_next
 
-        frame = traceback_obj.tb_frame
-        line_number = traceback_obj.tb_lineno
-        filename = frame.f_code.co_filename
-
-        error_message = f"Error message: \n {str(e)}"
-
-        traceback_str = f"{filename}:{line_number}: \n ```\n{error_message}\n```"
-
-        error_message = f"Error message: \n {str(traceback_str)}"
+        home_path_str = str(Path().home())
+        traceback_string = traceback.format_exc()
+        traceback_string.replace(home_path_str, "~")
+        error_message = f"Error message: \n\n ```\n {str(e)} \n``` \n\n Traceback: \n\n ```\n {traceback_string} \n```"
 
         # Log the error message and traceback
         logger.exception(f"Send error response:\n---\n  {error_message} \n---")

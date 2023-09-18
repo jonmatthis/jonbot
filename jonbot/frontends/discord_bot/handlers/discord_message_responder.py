@@ -24,7 +24,7 @@ class DiscordMessageResponder:
         self._reply_messages: List[discord.Message] = []
         self._full_message_content: str = ""
         self.max_message_length: int = 2000
-        self.comfy_message_length: int = int(self.max_message_length * 0.9)
+        self.comfy_message_length: int = int(self.max_message_length * 0.8)
         self.done: bool = False
 
         self._token_queue = asyncio.Queue()
@@ -51,7 +51,6 @@ class DiscordMessageResponder:
         logger.trace(
             f"FRONTEND - adding token to queue: {repr(token)}, token_queue size: {self._token_queue.qsize()}"
         )
-        self._full_message_content += token
         await self._token_queue.put(token)
 
     async def _run_token_queue_loop(self, base_delay: float = 0.5, chunk_size: int = 20):
@@ -89,6 +88,7 @@ class DiscordMessageResponder:
         logger.info(f"queue loop finished")
 
     async def add_text_to_reply_message(self, chunk: str, show_delta_t: bool = False):
+        self._full_message_content += chunk
         stop_now = False
         if STOP_STREAMING_TOKEN in chunk:
             logger.debug(f"Recieved `{STOP_STREAMING_TOKEN}`, stopping stream...")
@@ -101,12 +101,10 @@ class DiscordMessageResponder:
             if show_delta_t:  # append delta_t to chunk, useful for debugging
                 chunk = self._add_delta_t_to_token(chunk)
 
-            self.message_content += chunk
-
-            if len(self.message_content) > self.comfy_message_length:
+            if (len(self.message_content) + len(chunk)) > self.comfy_message_length:
                 await self.handle_message_length_overflow(input_chunk=chunk)
-
             else:
+                self.message_content += chunk
                 await self._reply_message.edit(content=self.message_content)
 
         if stop_now:
