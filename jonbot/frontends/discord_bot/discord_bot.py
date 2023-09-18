@@ -70,7 +70,9 @@ class MyDiscordBot(discord.Bot):
             logger.debug(f"Message is a system message: {message.content}")
             return
 
-        if not should_reply(message=message, bot_user_name=self.user.name, bot_id=self.user.id):
+        if not should_reply(message=message,
+                            bot_user_name=self.user.name,
+                            bot_id=self.user.id):
             logger.debug(
                 f"Message `{message.content}` was not handled by the bot: {self.user.name}"
             )
@@ -80,13 +82,15 @@ class MyDiscordBot(discord.Bot):
 
     async def handle_message(self, message: discord.Message):
         messages_to_upsert = [message]
-        text_to_reply_to = f"{message.author}: {message.content}"
+        text_to_reply_to = ""
         try:
             async with message.channel.typing():
                 if message.reference:
                     logger.debug(
                         f"Message has reference (i.e. this is a reply to another message): {message.reference}")
                     text_to_reply_to += await self.get_replied_message_content(message=message)
+                text_to_reply_to += f"{message.author} said: \n {message.content}"
+
                 if len(message.attachments) > 0:
                     logger.debug(f"Message has attachments: {message.attachments}")
                     text_to_reply_to += await self.handle_attachments(message=message,
@@ -128,7 +132,7 @@ class MyDiscordBot(discord.Bot):
         reply_message = await message.channel.fetch_message(message.reference.message_id)
         reply_content = reply_message.content
         reply_content.replace("@", "[at]")
-        message_text = f"In reply to message from {reply_message.author}, with content:\n ```{reply_message.content}```\n"
+        message_text = f"In reply to message from {reply_message.author}, with content:\n ```\n{reply_message.content}\n```\n"
 
         if include_attachments and len(reply_message.attachments) > 0:
             message_text += self.handle_attachments(message=reply_message)
