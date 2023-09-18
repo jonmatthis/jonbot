@@ -37,16 +37,41 @@ def message_starts_with_ignore_prefix(message: discord.Message) -> bool:
     return message.content.startswith(IGNORE_PREFIX)
 
 
-def should_reply(message: discord.Message, bot_user_name: str) -> bool:
-    if not allowed_to_reply(message):
-        logger.debug(
-            f"Message `{message.content}` was not handled by the bot {bot_user_name} (reason: not allowed to reply)"
-        )
-        return False
+def bot_mentioned_in_message(message: discord.Message,
+                             bot_id: int,
+                             bot_user_name: str) -> bool:
+    if bot_id in [user.id for user in message.mentions]:
+        return True
+    return False
 
+
+def should_reply(message: discord.Message,
+                 bot_user_name: str,
+                 bot_id: int) -> bool:
     if message_starts_with_ignore_prefix(message):
         logger.debug(
             f"Message `{message.content}` was not handled by the bot {bot_user_name} (reason: starts with ignore prefix{IGNORE_PREFIX})"
+        )
+        return False
+
+    if bot_mentioned_in_message(message=message, bot_user_name=bot_user_name, bot_id=bot_id):
+        logger.debug(
+            f"Message `{message.content}` was handled by the bot {bot_user_name} (id: {bot_id})(reason: bot mentioned in message)"
+        )
+
+        # Handle DMs
+        if message.channel.type == discord.ChannelType.private:
+            discord_config = get_or_create_discord_environment_config()
+            logger.trace(
+                f"Message `{message.content}` is allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: DM)"
+            )
+            return allowed_to_reply_to_direct_message(message)
+        else:
+            return True
+
+    if not allowed_to_reply(message):
+        logger.debug(
+            f"Message `{message.content}` was not handled by the bot {bot_user_name} (reason: not allowed to reply)"
         )
         return False
 
@@ -75,6 +100,24 @@ def should_reply(message: discord.Message, bot_user_name: str) -> bool:
 
 
 def allowed_to_reply(message: discord.Message) -> bool:
+    return allowed_to_reply_to_direct_message(message) and allowed_to_reply_to_server_message(message)
+
+
+def allowed_to_reply_to_direct_message(message: discord.Message) -> bool:
+    try:
+        discord_config = get_or_create_discord_environment_config()
+        logger.trace(
+            f"Checking if message `{message.content}` is allowed to be handled by the bot {discord_config.BOT_NICK_NAME}"
+        )
+        return discord_config.DIRECT_MESSAGES_ALLOWED
+
+    except Exception as e:
+        logger.error(f"Error while checking if message is allowed to be handled: {e}")
+        logger.exception(e)
+        raise e
+
+
+def allowed_to_reply_to_server_message(message: discord.Message) -> bool:
     try:
         discord_config = get_or_create_discord_environment_config()
         logger.trace(

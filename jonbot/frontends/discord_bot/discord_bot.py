@@ -1,6 +1,3 @@
-import tempfile
-import traceback
-from pathlib import Path
 from typing import List, Union, Dict
 
 import discord
@@ -21,10 +18,8 @@ from jonbot.frontends.discord_bot.handlers.discord_message_responder import (
     DiscordMessageResponder,
 )
 from jonbot.frontends.discord_bot.handlers.should_process_message import (
-    allowed_to_reply,
     should_reply,
-    ERROR_MESSAGE_REPLY_PREFIX_TEXT,
-)
+    ERROR_MESSAGE_REPLY_PREFIX_TEXT, )
 from jonbot.frontends.discord_bot.operations.discord_database_operations import (
     DiscordDatabaseOperations,
 )
@@ -73,10 +68,7 @@ class MyDiscordBot(discord.Bot):
             logger.debug(f"Message is a system message: {message.content}")
             return
 
-        if not allowed_to_reply(message):
-            return
-
-        if not should_reply(message=message, bot_user_name=self.user.name):
+        if not should_reply(message=message, bot_user_name=self.user.name, bot_id=self.user.id):
             logger.debug(
                 f"Message `{message.content}` was not handled by the bot: {self.user.name}"
             )
@@ -115,25 +107,25 @@ class MyDiscordBot(discord.Bot):
         await self._database_operations.upsert_messages(messages=messages_to_upsert)
 
     async def _send_error_response(self, e: Exception, messages_to_upsert):
-        # Create traceback string
-        traceback_str = traceback.format_exc(limit=None)
-        traceback_str = traceback_str.replace(str(Path.home()), "~")
+        traceback_obj = e.__traceback__
+        while traceback_obj.tb_next:
+            traceback_obj = traceback_obj.tb_next
+
+        frame = traceback_obj.tb_frame
+        line_number = traceback_obj.tb_lineno
+        filename = frame.f_code.co_filename
+
         error_message = f"Error message: \n {str(e)}"
 
-        # Write traceback to a temporary text file
-        with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as temp_file:
-            temp_file.write(traceback_str.encode())
-            temp_filepath = temp_file.name
+        traceback_str = f"{filename}:{line_number}: \n ```\n{error_message}\n```"
+
+        error_message = f"Error message: \n {str(traceback_str)}"
 
         # Log the error message and traceback
-        logger.exception(f"{error_message}\nTraceback: \n{traceback_str}")
+        logger.exception(f"Send error response:\n---\n  {error_message} \n---")
 
-        # Send the error message and the traceback file as an attachment
+        # Send the error message and
         await messages_to_upsert[-1].reply(f"{ERROR_MESSAGE_REPLY_PREFIX_TEXT} \n >  {error_message}", )
-        # file=discord.File(temp_filepath))
-
-        # Delete the temporary file after sending it
-        Path(temp_filepath).unlink()
 
     async def handle_text_attachments(self, attachment: discord.Attachment) -> str:
         try:
