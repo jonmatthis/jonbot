@@ -105,7 +105,7 @@ class ChatbotConversationMemory(ConversationSummaryBufferMemory):
                     message.additional_kwargs["message_id"] = outputs["message_id"]
 
             await self.context_memory_handler.update(
-                message_buffer=self.buffer,
+                message_buffer=buffer,
                 summary=self.moving_summary_buffer,
                 token_count=self.token_count,
             )

@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from typing import Union, List, Dict, Optional
 
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -81,10 +82,12 @@ class MongoDatabaseManager:
     async def upsert_discord_messages(
             self, request: UpsertDiscordMessagesRequest
     ) -> bool:
-        entries = [
-            {"data": document.dict(), "query": query}
-            for document, query in zip(request.data, request.query)
-        ]
+
+        entries = []
+        for document, query in zip(request.data, request.query):
+            data = document.dict()
+            data["last_updated"] = datetime.now()
+            entries.append({"data": data, "query": query})
 
         return await self._upsert_many(
             database_name=request.database_name,
@@ -95,7 +98,9 @@ class MongoDatabaseManager:
     async def upsert_context_memory(
             self, request: ContextMemoryDocumentRequest
     ) -> bool:
-        entries = [{"data": request.data.dict(), "query": request.query}]
+        data = request.data.dict()
+        data["last_updated"] = datetime.now()
+        entries = [{"data": data, "query": request.query}]
 
         return await self._upsert_many(
             database_name=request.database_name,
