@@ -126,6 +126,8 @@ class MyDiscordBot(discord.Bot):
     async def get_replied_message_content(self, message: discord.Message, include_attachments=True) -> str:
         logger.debug(f"Message has reference: {message.reference}")
         reply_message = await message.channel.fetch_message(message.reference.message_id)
+        reply_content = reply_message.content
+        reply_content.replace("@", "[at]")
         message_text = f"In reply to message from {reply_message.author}, with content:\n ```{reply_message.content}```\n"
 
         if include_attachments and len(reply_message.attachments) > 0:
