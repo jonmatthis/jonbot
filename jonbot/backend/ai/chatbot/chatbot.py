@@ -1,4 +1,3 @@
-import asyncio
 import inspect
 import traceback
 from typing import AsyncIterable, Union
@@ -143,8 +142,7 @@ class ChatbotLLMChain:
     async def execute(
             self,
             message_string: str,
-            pause_at_end: float = 1.0
-
+            metadata: dict = None,
     ) -> AsyncIterable[str]:
 
         inputs = {"human_input": message_string}
@@ -155,7 +153,6 @@ class ChatbotLLMChain:
                 response_message += token.content
                 yield token.content
             yield STOP_STREAMING_TOKEN
-            await asyncio.sleep(pause_at_end)  # give it a sec to clear the buffer
 
             logger.debug(f"Successfully executed chain! - Saving context to memory...")
 
