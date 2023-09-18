@@ -13,7 +13,8 @@ logger = get_jonbot_logger()
 
 
 class ChatCog(discord.Cog):
-    @discord.slash_command(name="chat", description="Open a chat at this location")
+    @discord.slash_command(name="chat",
+                           description="Open new thread if in a thread or channel, new post if in a forum) ")
     @discord.option(
         name="initial_message",
         description="The initial message to send to the bot",
@@ -28,14 +29,23 @@ class ChatCog(discord.Cog):
         logger.info(
             f"Received chat request from {ctx.user.name} with initial message: {initial_message_text}"
         )
-        parent_message_embed = await self._create_parent_message_embed(ctx)
-        in_thread = False
-        in_forum = False
-        if "thread" in ctx.channel.name:
+        chat_title = self._create_chat_title_string(user_name=str(ctx.user))
+        if initial_message_text is None:
+            initial_message_text = f"{NEW_THREAD_MESSAGE_PREFIX_TEXT} \n" f"User: {ctx.user.name} has requested to chat"
+
+        parent_message_embed = await self._create_parent_message_embed(ctx=ctx, chat_title=chat_title)
+        in_existing_chat = False
+
+        if ctx.channel.parent is not None and "forum" in str(ctx.channel.parent.type):
             logger.debug(
-                f"Create chat called from chat, creating chat in parent channel: {ctx.channel.parent.name}")
+                f"Create chat called from forum, creating thread in parent channel: {ctx.channel.parent.name}")
+            reply_message = await ctx.channel.parent.create_thread(name=chat_title, content=initial_message_text)
+            in_existing_chat = True
+        elif "thread" in str(ctx.channel.type):
+            logger.debug(
+                f"Create chat called from thread, creating thread in parent channel: {ctx.channel.parent.name}")
             reply_message = await ctx.channel.parent.send(embed=parent_message_embed)
-            in_thread = True
+            in_existing_chat = True
         else:
             logger.debug(f"Creating chat in {ctx.channel.name}")
             reply_message = await ctx.channel.send(embed=parent_message_embed)
@@ -46,7 +56,7 @@ class ChatCog(discord.Cog):
             initial_text_input=initial_message_text,
         )
 
-        if in_thread:
+        if in_existing_chat:
             await ctx.send(
                 f"Created chat in parent channel: {ctx.channel.parent.name}:\n\n {initial_message.jump_url}")
 
@@ -87,9 +97,10 @@ class ChatCog(discord.Cog):
     def _create_chat_title_string(self, user_name: str) -> str:
         return f"{user_name}'s thread {Timestamp.now().human_friendly_local}"
 
-    async def _create_parent_message_embed(self, ctx: discord.ApplicationContext) -> discord.Embed:
+    async def _create_parent_message_embed(self,
+                                           ctx: discord.ApplicationContext,
+                                           chat_title: str) -> discord.Embed:
         logger.debug(f"Sending title card as reply message to {ctx.user.name}")
-        chat_title = self._create_chat_title_string(user_name=str(ctx.user))
         return await self._make_thread_title_embed(
             str(ctx.user), chat_title
         )
