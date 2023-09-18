@@ -17,8 +17,9 @@ STOP_STREAMING_TOKEN = "STOP_STREAMING"
 
 
 class DiscordMessageResponder:
-    def __init__(self, message_prefix: str = ""):
+    def __init__(self, message_prefix: str = "", bot_name: str = None):
         self.message_prefix: str = message_prefix
+        self._bot_name = bot_name
         self.message_content: str = self.message_prefix
         self._reply_message: discord.Message = None
         self._reply_messages: List[discord.Message] = []
@@ -56,6 +57,7 @@ class DiscordMessageResponder:
     async def _run_token_queue_loop(self, base_delay: float = 0.5, chunk_size: int = 20):
         chunk = []
         delay = base_delay
+
         while True:
             await asyncio.sleep(delay)
             delay *= 1.2
@@ -83,11 +85,16 @@ class DiscordMessageResponder:
 
         logger.trace(f"Appending final chunk to reply message {chunk}...")
         await self.add_text_to_reply_message("".join(chunk))
-        if len(self._reply_messages) > 0:
+        if len(self._reply_messages) > 1:
             await self._send_full_text_as_attachment()
         logger.info(f"queue loop finished")
 
     async def add_text_to_reply_message(self, chunk: str, show_delta_t: bool = False):
+        start_string_to_remove = f"{self._bot_name}:"
+        if chunk.startswith(start_string_to_remove):
+            logger.trace(f"Removing bot name (`{self._bot_name}`) from chunk")
+            chunk = chunk.replace(f"{self._bot_name}:", "")
+
         self._full_message_content += chunk
         stop_now = False
         if STOP_STREAMING_TOKEN in chunk:

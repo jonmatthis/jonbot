@@ -3,15 +3,15 @@ from typing import List, Union, Any, Dict
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.schema import HumanMessage, AIMessage
 
-from jonbot.backend.data_layer.models.context_memory_document import ContextMemoryDocument
-from jonbot.backend.data_layer.models.context_route import ContextRoute
-from jonbot.backend.data_layer.models.memory_config import ChatbotConversationMemoryConfig
 from jonbot.backend.ai.chatbot.components.memory.conversation_memory.context_memory_handler import (
     ContextMemoryHandler,
 )
 from jonbot.backend.backend_database_operator.backend_database_operator import (
     BackendDatabaseOperations,
 )
+from jonbot.backend.data_layer.models.context_memory_document import ContextMemoryDocument
+from jonbot.backend.data_layer.models.context_route import ContextRoute
+from jonbot.backend.data_layer.models.memory_config import ChatbotConversationMemoryConfig
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
@@ -94,9 +94,22 @@ class ChatbotConversationMemory(ConversationSummaryBufferMemory):
             raise
 
     async def update(self, inputs: Dict[str, Any], outputs: Dict[str, Any]):
-        self.save_context(inputs=inputs, outputs=outputs)
-        await self.context_memory_handler.update(
-            message_buffer=self.buffer,
-            summary=self.moving_summary_buffer,
-            token_count=self.token_count,
-        )
+        try:
+            self.save_context(inputs={"human_input": inputs["human_input"]},
+                              outputs={"output": outputs["output"]})
+            buffer = self.buffer
+            for message in buffer:
+                if message.content == inputs["human_input"]:
+                    message.additional_kwargs["message_id"] = inputs["message_id"]
+                elif message.content == outputs["output"]:
+                    message.additional_kwargs["message_id"] = outputs["message_id"]
+
+            await self.context_memory_handler.update(
+                message_buffer=self.buffer,
+                summary=self.moving_summary_buffer,
+                token_count=self.token_count,
+            )
+        except Exception as e:
+            logger.error(f"Failed to update context memory: {e}")
+            logger.exception(e)
+            raise

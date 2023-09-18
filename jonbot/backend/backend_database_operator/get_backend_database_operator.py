@@ -1,7 +1,7 @@
-from jonbot.backend.data_layer.database.mongo_database import MongoDatabaseManager
 from jonbot.backend.backend_database_operator.backend_database_operator import (
     BackendDatabaseOperations,
 )
+from jonbot.backend.data_layer.database.mongo_database import MongoDatabaseManager
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()

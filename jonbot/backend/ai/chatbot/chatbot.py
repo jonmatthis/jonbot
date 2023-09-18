@@ -142,12 +142,16 @@ class ChatbotLLMChain:
     async def execute(
             self,
             message_string: str,
-            metadata: dict = None,
+            message_id: int,
+            reply_message_id: int,
     ) -> AsyncIterable[str]:
 
-        inputs = {"human_input": message_string}
+        inputs = {"human_input": message_string,
+                  "message_id": message_id,
+                  }
         response_message = ""
         try:
+
             async for token in self.chain.astream(inputs, {"tags": self.tags}):
                 logger.trace(f"Yielding token: {repr(token.content)}")
                 response_message += token.content
@@ -156,12 +160,12 @@ class ChatbotLLMChain:
 
             logger.debug(f"Successfully executed chain! - Saving context to memory...")
 
+            logger.trace(f"Response message: {response_message}")
             await self.memory.update(
                 inputs=inputs,
-                outputs={"output": response_message}
+                outputs={"output": response_message,
+                         "message_id": reply_message_id},
             )
-
-            logger.trace(f"Response message: {response_message}")
 
         except Exception as e:
             logger.exception(e)

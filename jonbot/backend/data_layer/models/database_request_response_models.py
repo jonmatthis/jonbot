@@ -59,11 +59,12 @@ class ContextMemoryDocumentRequest(BaseModel):
             cls,
             context_route: ContextRoute,
             database_name: str,
-            summary_prompt: PromptTemplate,
+            summary_prompt: PromptTemplate = None,
     ):
         return cls(
             data=ContextMemoryDocument.build_empty(
-                context_route=context_route, summary_prompt=summary_prompt
+                context_route=context_route,
+                summary_prompt=summary_prompt
             ),
             database_name=database_name,
             query=context_route.as_query,

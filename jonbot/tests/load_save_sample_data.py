@@ -3,10 +3,8 @@ from typing import Union
 
 import discord
 
-from jonbot.backend.data_layer.models.conversation_models import ChatRequest, MessageHistory
-from jonbot.backend.data_layer.models.database_request_response_models import MessageHistoryRequest
+from jonbot.backend.data_layer.models.conversation_models import ChatRequest
 from jonbot.backend.data_layer.models.discord_stuff.discord_message import DiscordMessageDocument
-
 from jonbot.system.path_getters import get_sample_discord_message_json_path
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 

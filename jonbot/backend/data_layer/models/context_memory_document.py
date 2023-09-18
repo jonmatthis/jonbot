@@ -11,7 +11,7 @@ class ContextMemoryDocument(BaseModel):
     context_route: ContextRoute
     context_route_full_path: str
     context_route_friendly_path: str
-    summary_prompt: PromptTemplate
+    summary_prompt: Optional[PromptTemplate]
 
     query: dict
     server_name: str
@@ -27,7 +27,9 @@ class ContextMemoryDocument(BaseModel):
     tokens_count: int = 0
 
     @classmethod
-    def build_empty(cls, context_route: ContextRoute, summary_prompt: PromptTemplate):
+    def build_empty(cls,
+                    context_route: ContextRoute,
+                    summary_prompt: Optional[PromptTemplate]):
         return cls(
             context_route=context_route,
             context_route_full_path=context_route.full_path,

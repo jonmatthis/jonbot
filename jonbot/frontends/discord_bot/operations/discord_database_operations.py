@@ -3,8 +3,10 @@ from typing import List
 import discord
 
 from jonbot.api_interface.api_client.api_client import ApiClient
-from jonbot.api_interface.api_routes import UPSERT_MESSAGES_ENDPOINT
-from jonbot.backend.data_layer.models.database_request_response_models import UpsertDiscordMessagesRequest
+from jonbot.api_interface.api_routes import UPSERT_MESSAGES_ENDPOINT, GET_CONTEXT_MEMORY_ENDPOINT
+from jonbot.backend.data_layer.models.context_route import ContextRoute
+from jonbot.backend.data_layer.models.database_request_response_models import UpsertDiscordMessagesRequest, \
+    ContextMemoryDocumentRequest
 from jonbot.backend.data_layer.models.discord_stuff.discord_message import DiscordMessageDocument
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
@@ -48,3 +50,30 @@ class DiscordDatabaseOperations:
             f"Successfully sent {len(request.data)} messages to database: {request.database_name}"
         )
         return response["success"]
+
+    async def get_context_memory_document(self, message: discord.Message):
+        try:
+            context_route = ContextRoute.from_discord_message(message=message)
+            get_request = ContextMemoryDocumentRequest.build_get_request(
+                context_route=context_route,
+                database_name=self._database_name,
+            )
+            logger.info(
+                f"Getting context memory document for context route: {context_route.dict()}"
+            )
+            response = await self._api_client.send_request_to_api(endpoint_name=GET_CONTEXT_MEMORY_ENDPOINT,
+                                                                  data=get_request.dict(),
+                                                                  method="GET")
+
+            if not response:
+                logger.warning(
+                    f"Could not load context memory from database for context route: {context_route.dict()}"
+                )
+                return
+
+            return response
+        except Exception as e:
+            logger.error(
+                f"Error occurred while getting context memory document - Error: `{e}`")
+            logger.exception(e)
+            raise

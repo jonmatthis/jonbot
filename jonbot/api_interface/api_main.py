@@ -4,13 +4,13 @@ from fastapi import FastAPI
 from uvicorn import Config, Server
 
 from jonbot.api_interface.api_routes import register_api_routes
-from jonbot.backend.data_layer.database.get_or_create_mongo_database_manager import (
-    get_mongo_database_manager,
-)
 from jonbot.backend.backend_database_operator.get_backend_database_operator import (
     get_backend_database_operator,
 )
 from jonbot.backend.controller.get_controller import get_controller
+from jonbot.backend.data_layer.database.get_or_create_mongo_database_manager import (
+    get_mongo_database_manager,
+)
 from jonbot.system.environment_variables import HOST_NAME, PORT_NUMBER
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 

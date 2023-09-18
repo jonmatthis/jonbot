@@ -105,6 +105,8 @@ class ChatRequestConfig(BaseModel):
 
 class ChatRequest(BaseModel):
     user_id: Union[int, str]
+    message_id: int
+    reply_message_id: int
     chat_input: ChatInput
     database_name: str
     context_route: ContextRoute
@@ -116,6 +118,8 @@ class ChatRequest(BaseModel):
     def from_text(
             cls,
             user_id: Union[int, str],
+            message_id: int,
+            reply_message_id: int,
             text: str,
             database_name: str,
             context_description_text: str,
@@ -126,6 +130,8 @@ class ChatRequest(BaseModel):
 
         return cls(
             user_id=user_id,
+            message_id=message_id,
+            reply_message_id=reply_message_id,
             chat_input=ChatInput(message=text),
             database_name=database_name,
             context_route=context_route,
@@ -137,12 +143,15 @@ class ChatRequest(BaseModel):
     def from_discord_message(
             cls,
             message: discord.Message,
+            reply_message: discord.Message,
             database_name: str,
             content: str,
             **kwargs
     ):
         return cls.from_text(
             user_id=message.author.id,
+            message_id=message.id,
+            reply_message_id=reply_message.id,
             text=content,
             timestamp=Timestamp.from_datetime(message.created_at),
             database_name=database_name,

@@ -3,13 +3,12 @@ from typing import Optional
 from langchain import PromptTemplate
 from pydantic import BaseModel
 
-from jonbot.backend.data_layer.models.database_request_response_models import ContextMemoryDocumentRequest
-
-from jonbot.backend.data_layer.models.context_memory_document import ContextMemoryDocument
-from jonbot.backend.data_layer.models.context_route import ContextRoute
 from jonbot.backend.backend_database_operator.backend_database_operator import (
     BackendDatabaseOperations,
 )
+from jonbot.backend.data_layer.models.context_memory_document import ContextMemoryDocument
+from jonbot.backend.data_layer.models.context_route import ContextRoute
+from jonbot.backend.data_layer.models.database_request_response_models import ContextMemoryDocumentRequest
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
@@ -84,6 +83,8 @@ class ContextMemoryHandler(BaseModel):
         )
         document = await self.context_memory_document
         document.update(
-            message_buffer=message_buffer, summary=summary, tokens_count=token_count
+            message_buffer=message_buffer,
+            summary=summary,
+            tokens_count=token_count
         )
         await self._upsert_context_memory()

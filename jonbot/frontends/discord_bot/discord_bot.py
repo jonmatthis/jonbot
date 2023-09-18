@@ -1,3 +1,4 @@
+import asyncio
 import traceback
 from pathlib import Path
 from typing import List, Union, Dict
@@ -9,6 +10,7 @@ from jonbot.api_interface.api_client.get_or_create_api_client import (
     get_or_create_api_client,
 )
 from jonbot.api_interface.api_routes import CHAT_ENDPOINT, VOICE_TO_TEXT_ENDPOINT
+from jonbot.backend.data_layer.models.context_memory_document import ContextMemoryDocument
 from jonbot.backend.data_layer.models.conversation_models import ChatRequest
 from jonbot.backend.data_layer.models.discord_stuff.environment_config.discord_environment import (
     DiscordEnvironmentConfig,
@@ -78,9 +80,10 @@ class MyDiscordBot(discord.Bot):
             )
             return
 
-        return await self.handle_message(message=message)
+        await self.handle_message(message=message)
 
     async def handle_message(self, message: discord.Message):
+        logger.debug(f"Handling message: {message.content}")
         messages_to_upsert = [message]
         text_to_reply_to = ""
         try:
@@ -105,9 +108,10 @@ class MyDiscordBot(discord.Bot):
 
         except Exception as e:
             await self._send_error_response(e, messages_to_upsert)
-            return
 
-        await self._database_operations.upsert_messages(messages=messages_to_upsert)
+        await asyncio.gather(
+            self._database_operations.upsert_messages(messages=messages_to_upsert),
+            self._update_memory_emojis(message=message))
 
     async def handle_attachments(self,
                                  message: discord.Message,
@@ -144,7 +148,7 @@ class MyDiscordBot(discord.Bot):
         home_path_str = str(Path().home())
         traceback_string = traceback.format_exc()
         traceback_string.replace(home_path_str, "~")
-        error_message = f"Error message: \n\n ```\n {str(e)} \n``` \n\n Traceback: \n\n ```\n {traceback_string} \n```"
+        error_message = f"Error message: \n\n ```\n {str(e)} \n``` "
 
         # Log the error message and traceback
         logger.exception(f"Send error response:\n---\n  {error_message} \n---")
@@ -167,14 +171,19 @@ class MyDiscordBot(discord.Bot):
             message: discord.Message,
             respond_to_this_text: str,
     ) -> List[discord.Message]:
+
+        message_responder = DiscordMessageResponder(message_prefix=self._local_message_prefix,
+                                                    bot_name=self.user.name, )
+        await message_responder.initialize(message=message)
+        reply_messages = await message_responder.get_reply_messages()
+
         chat_request = ChatRequest.from_discord_message(
             message=message,
+            reply_message=reply_messages[-1],
             database_name=self._database_name,
             content=respond_to_this_text,
             extra_prompts=await self.get_extra_prompts(message=message),
         )
-        message_responder = DiscordMessageResponder(message_prefix=self._local_message_prefix)
-        await message_responder.initialize(message=message)
 
         async def callback(
                 token: str, responder: DiscordMessageResponder = message_responder
@@ -204,7 +213,8 @@ class MyDiscordBot(discord.Bot):
             reply_message_content = (
                 f"Transcribing audio from user `{message.author}`\n"
             )
-            responder = DiscordMessageResponder(message_prefix=self._local_message_prefix)
+            responder = DiscordMessageResponder(message_prefix=self._local_message_prefix,
+                                                bot_name=self.user.name, )
             await responder.initialize(
                 message=message, initial_message_content=reply_message_content
             )
@@ -325,3 +335,33 @@ class MyDiscordBot(discord.Bot):
                         messages.append(msg)
             logger.trace(f"Found {len(messages)} messages with {emoji} emoji reaction")
         return messages
+
+    async def _update_memory_emojis(self, message):
+        try:
+            logger.debug(f"Updating memory emojis for message: {message.content}")
+            response = await self._database_operations.get_context_memory_document(message=message)
+            context_memory_document = ContextMemoryDocument(**response)
+
+            memory_message_ids = []
+            for memory_message in context_memory_document.message_buffer:
+                if "message_id" in memory_message.additional_kwargs:
+                    memory_message_ids.append(memory_message.additional_kwargs["message_id"])
+
+            emoji_tasks = []
+            for memory_message_id in memory_message_ids:
+                message = await message.channel.fetch_message(memory_message_id)
+                if "💭" not in message.reactions:
+                    logger.trace(f"Adding memory emoji to message id: {message.id}")
+                    emoji_tasks.append(message.add_reaction("💭"))
+
+            async for msg in message.channel.history():
+                if "💭" in msg.reactions:
+                    if msg.id not in memory_message_ids:
+                        logger.trace(f"Removing memory emoji from message id: {msg.id}")
+                        emoji_tasks.append(msg.remove_reaction("💭", self.user))
+
+            await asyncio.gather(*emoji_tasks)
+        except Exception as e:
+            logger.error(f"Error updating memory emojis for message: {message.content}")
+            logger.exception(e)
+            raise

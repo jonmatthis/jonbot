@@ -1,17 +1,19 @@
+from typing import Optional
+
 from fastapi import FastAPI
 from starlette.responses import StreamingResponse
 
-from jonbot.backend.data_layer.models.calculate_memory_request import CalculateMemoryRequest
-from jonbot.backend.data_layer.models.context_memory_document import ContextMemoryDocument
-from jonbot.backend.data_layer.models.conversation_models import ChatRequest
-from jonbot.backend.data_layer.models.database_request_response_models import UpsertDiscordMessagesRequest, \
-    UpsertDiscordMessagesResponse
-from jonbot.backend.data_layer.models.health_check_status import HealthCheckResponse
-from jonbot.backend.data_layer.models.voice_to_text_request import VoiceToTextRequest, VoiceToTextResponse
 from jonbot.backend.backend_database_operator.backend_database_operator import (
     BackendDatabaseOperations,
 )
 from jonbot.backend.controller.controller import Controller
+from jonbot.backend.data_layer.models.calculate_memory_request import CalculateMemoryRequest
+from jonbot.backend.data_layer.models.context_memory_document import ContextMemoryDocument
+from jonbot.backend.data_layer.models.conversation_models import ChatRequest
+from jonbot.backend.data_layer.models.database_request_response_models import UpsertDiscordMessagesRequest, \
+    UpsertDiscordMessagesResponse, ContextMemoryDocumentRequest
+from jonbot.backend.data_layer.models.health_check_status import HealthCheckResponse
+from jonbot.backend.data_layer.models.voice_to_text_request import VoiceToTextRequest, VoiceToTextResponse
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
@@ -24,13 +26,33 @@ VOICE_TO_TEXT_ENDPOINT = "/voice_to_text"
 UPSERT_MESSAGES_ENDPOINT = "/upsert_message"
 CALCULATE_MEMORY_ENDPOINT = "/calculate_memory"
 
+GET_CONTEXT_MEMORY_ENDPOINT = "/get_context_memory"
+
 
 def register_api_routes(
-        app: FastAPI, database_operations: BackendDatabaseOperations, controller: Controller
+        app: FastAPI,
+        database_operations: BackendDatabaseOperations,
+        controller: Controller
 ):
     @app.get(HEALTH_ENDPOINT, response_model=HealthCheckResponse)
     async def health_check_endpoint():
         return HealthCheckResponse(status="alive")
+
+    @app.get(GET_CONTEXT_MEMORY_ENDPOINT, response_model=Optional[ContextMemoryDocument])
+    async def get_context_memory_endpoint(
+            get_request: ContextMemoryDocumentRequest,
+    ) -> ContextMemoryDocument:
+        response = await database_operations.get_context_memory_document(
+            request=get_request
+        )
+
+        if not response.success:
+            logger.warning(
+                f"Could not load context memory from database for context route: {get_request.query}"
+            )
+            return
+
+        return response.data
 
     @app.post(VOICE_TO_TEXT_ENDPOINT, response_model=VoiceToTextResponse)
     async def voice_to_text_endpoint(
