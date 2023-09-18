@@ -15,6 +15,8 @@ from jonbot.backend.data_layer.models.discord_stuff.environment_config.discord_e
     DiscordEnvironmentConfig,
 )
 from jonbot.backend.data_layer.models.voice_to_text_request import VoiceToTextRequest
+from jonbot.frontends.discord_bot.cogs.chat_cog import ChatCog
+from jonbot.frontends.discord_bot.cogs.server_scraper_cog import ServerScraperCog
 from jonbot.frontends.discord_bot.handlers.discord_message_responder import (
     DiscordMessageResponder,
 )
@@ -53,9 +55,9 @@ class MyDiscordBot(discord.Bot):
         self._database_operations = DiscordDatabaseOperations(
             api_client=api_client, database_name=self._database_name
         )
-        # self.add_cog(ServerScraperCog(database_operations=self._database_operations))
+        self.add_cog(ServerScraperCog(database_operations=self._database_operations))
         # self.add_cog(VoiceChannelCog(bot=self))
-        # self.add_cog(ThreadCog(bot=self))
+        self.add_cog(ChatCog(bot=self))
         # self.add_cog(
         #     MemoryScraperCog(database_name=self._database_name, api_client=api_client)
         # )

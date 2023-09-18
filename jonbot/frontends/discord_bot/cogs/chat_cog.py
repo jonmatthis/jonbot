@@ -2,8 +2,8 @@ from datetime import datetime
 
 import discord
 
-from jonbot.backend.data_layer.models.timestamp_model import Timestamp
 from jonbot.backend.data_layer.models.context_route import ContextRoute
+from jonbot.backend.data_layer.models.timestamp_model import Timestamp
 from jonbot.frontends.discord_bot.handlers.should_process_message import (
     NEW_THREAD_MESSAGE_PREFIX_TEXT,
 )
@@ -12,31 +12,32 @@ from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 logger = get_jonbot_logger()
 
 
-class ThreadCog(discord.Cog):
-    @discord.slash_command(name="thread", description="Open a thread at this location")
+class ChatCog(discord.Cog):
+    @discord.slash_command(name="chat", description="Open a chat at this location")
     @discord.option(
         name="initial_message",
         description="The initial message to send to the bot",
         input_type=str,
         required=False,
     )
-    async def create_thread(
+    async def create_chat(
             self,
             ctx: discord.ApplicationContext,
             initial_message_text: str = None,
     ):
         logger.info(
-            f"Received thread request from {ctx.user.name} with initial message: {initial_message_text}"
+            f"Received chat request from {ctx.user.name} with initial message: {initial_message_text}"
         )
         parent_message_embed = await self._create_parent_message_embed(ctx)
         in_thread = False
+        in_forum = False
         if "thread" in ctx.channel.name:
             logger.debug(
-                f"Create thread called from thread, creating thread in parent channel: {ctx.channel.parent.name}")
+                f"Create chat called from chat, creating chat in parent channel: {ctx.channel.parent.name}")
             reply_message = await ctx.channel.parent.send(embed=parent_message_embed)
             in_thread = True
         else:
-            logger.debug(f"Creating thread in {ctx.channel.name}")
+            logger.debug(f"Creating chat in {ctx.channel.name}")
             reply_message = await ctx.channel.send(embed=parent_message_embed)
 
         initial_message = await self._spawn_thread(
@@ -47,7 +48,7 @@ class ThreadCog(discord.Cog):
 
         if in_thread:
             await ctx.send(
-                f"Created thread in parent channel: {ctx.channel.parent.name}:\n\n {initial_message.jump_url}")
+                f"Created chat in parent channel: {ctx.channel.parent.name}:\n\n {initial_message.jump_url}")
 
     async def _spawn_thread(
             self,
@@ -55,7 +56,7 @@ class ThreadCog(discord.Cog):
             user_name: str,
             initial_text_input: str = None,
     ) -> discord.Message:
-        logger.debug(f"Spawning thread for {user_name}")
+        logger.debug(f"Spawning chat for {user_name}")
         thread_title = self._create_chat_title_string(user_name=user_name)
 
         thread = await parent_message.create_thread(name=thread_title)
