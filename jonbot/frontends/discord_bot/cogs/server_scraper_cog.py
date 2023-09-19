@@ -137,7 +137,7 @@ class ServerScraperCog(commands.Cog):
                                           total_server_messages_count: int,
                                           done: bool) -> str:
         total_server_messages_string = "======================\nTotal Server Messages:"
-        scraping_next_channel_string = "\nScraping next channel..."
+        scraping_next_channel_string = "\n\nScraping next channel..."
         new_embed_description = embed_message.split(total_server_messages_string)[0]
         new_embed_description += channel_message_count_string
 
@@ -145,7 +145,7 @@ class ServerScraperCog(commands.Cog):
         if not done:
             new_embed_description += scraping_next_channel_string
         else:
-            new_embed_description += "Done!"
+            new_embed_description += "\n\nDone!"
 
         await reply_message.edit(embed=discord.Embed(
             title=embed_title,
