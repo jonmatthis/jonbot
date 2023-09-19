@@ -38,11 +38,13 @@ async def save_chats(database_name: str,
         markdown_output = ""
 
         for chat_document in chat_documents:
-            if chat_document['author_id'] in ignored_users:
-                logger.debug(f"Ignoring chat from user: {chat_document['author']} (id: {chat_document['author_id']})")
+            if chat_document['owner_id'] in ignored_users:
+                logger.debug(
+                    f"Ignoring chat from user: {chat_document['owner_name']} (id: {chat_document['owner_id']})")
                 continue
 
             chat_title_string = f"## Chat: {chat_document['thread_name']} (id: {chat_document['thread_id']})\n"
+            chat_title_string += f"### Chat Owner: {chat_document['owner_name']} (id: {chat_document['owner_id']})\n\n"
             markdown_output += chat_title_string
             markdown_output += f"### Context: {chat_document['context_description']}\n"
             messages_string = ""
