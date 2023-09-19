@@ -54,9 +54,14 @@ class MyDiscordBot(discord.Bot):
         self._database_operations = DiscordDatabaseOperations(
             api_client=api_client, database_name=self._database_name
         )
-        self.add_cog(ServerScraperCog(database_operations=self._database_operations))
+        self._server_scraping_cog = ServerScraperCog(database_operations=self._database_operations)
+        self._chat_cog = ChatCog(bot=self)
+
+        self.add_cog(self._server_scraping_cog)
+        self.add_cog(self._chat_cog)
+
         # self.add_cog(VoiceChannelCog(bot=self))
-        self.add_cog(ChatCog(bot=self))
+
         # self.add_cog(
         #     MemoryScraperCog(database_name=self._database_name, api_client=api_client)
         # )
@@ -84,6 +89,7 @@ class MyDiscordBot(discord.Bot):
 
     async def handle_message(self, message: discord.Message):
         logger.debug(f"Handling message: {message.content}")
+
         messages_to_upsert = [message]
         text_to_reply_to = ""
         try:
@@ -99,19 +105,25 @@ class MyDiscordBot(discord.Bot):
                     text_to_reply_to += await self.handle_attachments(message=message,
                                                                       messages_to_upsert=messages_to_upsert)
 
-            response_messages = await self.handle_text_message(
-                message=message,
-                respond_to_this_text=text_to_reply_to
-            )
-
-            messages_to_upsert.extend(response_messages)
+            if "thread" not in str(message.channel.type).lower():
+                logger.info("Message is not in a thread (or forum post) - "
+                            "creating a under this message (bot will process top-level message created in that thread)")
+                await self._chat_cog.create_chat(ctx=await self.get_application_context(message),
+                                                 parent_message=message,
+                                                 initial_message_text=text_to_reply_to)
+            else:
+                response_messages = await self.handle_text_message(
+                    message=message,
+                    respond_to_this_text=text_to_reply_to
+                )
+                messages_to_upsert.extend(response_messages)
 
         except Exception as e:
             await self._send_error_response(e, messages_to_upsert)
-
-        await asyncio.gather(
-            self._database_operations.upsert_messages(messages=messages_to_upsert),
-            self._update_memory_emojis(message=message))
+        finally:
+            await asyncio.gather(
+                self._database_operations.upsert_messages(messages=messages_to_upsert),
+                self._update_memory_emojis(message=message))
 
     async def handle_attachments(self,
                                  message: discord.Message,
@@ -213,16 +225,24 @@ class MyDiscordBot(discord.Bot):
             reply_message_content = (
                 f"Transcribing audio from user `{message.author}`\n"
             )
-            responder = DiscordMessageResponder(message_prefix=self._local_message_prefix,
-                                                bot_name=self.user.name, )
-            await responder.initialize(
-                message=message, initial_message_content=reply_message_content
-            )
+
+            in_thread = False
+            if "thread" in str(message.channel.type).lower():
+                in_thread = True
+                logger.debug(f"Message is in thread, will reply in thread")
+                responder = DiscordMessageResponder(message_prefix=self._local_message_prefix,
+                                                    bot_name=self.user.name, )
+                await responder.initialize(
+                    message=message, initial_message_content=reply_message_content
+                )
+
             for attachment in message.attachments:
                 if attachment.content_type.startswith("audio"):
                     logger.debug(f"Found audio attachment: {attachment.url}")
                     reply_message_content += f"File URL: {attachment.url}\n\n"
-                    await responder.add_text_to_reply_message(reply_message_content)
+
+                    if in_thread:
+                        await responder.add_text_to_reply_message(reply_message_content)
 
                     voice_to_text_request = VoiceToTextRequest(
                         audio_file_url=attachment.url
@@ -238,10 +258,13 @@ class MyDiscordBot(discord.Bot):
                         f"> {response['text']}\n\n"
                     )
 
-                    await responder.add_text_to_reply_message(
-                        chunk=transcribed_text,
-                    )
-                    await responder.shutdown()
+                    if in_thread:
+                        await responder.add_text_to_reply_message(
+                            chunk=transcribed_text,
+                        )
+                        await responder.shutdown()
+                    else:
+                        reply_message_content += transcribed_text
 
                     logger.success(
                         f"VoiceToTextResponse payload received: \n {response}\n"
@@ -251,18 +274,17 @@ class MyDiscordBot(discord.Bot):
             logger.exception(f"Error occurred while handling voice recording: {str(e)}")
             raise
 
-        await responder.shutdown()
-        transcriptions_messages = await responder.get_reply_messages()
-        transcription_text = ""
-        for message in transcriptions_messages:
-            transcription_text += message.content
+        if in_thread:
+            await responder.shutdown()
+            transcriptions_messages = await responder.get_reply_messages()
+            transcription_text = ""
+            for message in transcriptions_messages:
+                transcription_text += message.content
+        else:
+            transcription_text = reply_message_content
+            transcriptions_messages = []
+
         return {"transcription_text": transcription_text, "transcriptions_messages": transcriptions_messages}
-        # response_messages = await self.handle_text_message(
-        #     message=transcriptions_messages[-1],
-        #     respond_to_this_text=transcription_text,
-        # )
-        #
-        # return transcriptions_messages + response_messages
 
     async def get_extra_prompts(self, message: discord.Message) -> List[str]:
         logger.debug(f"Getting extra prompts for message: {message.content}")

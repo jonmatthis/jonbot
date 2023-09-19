@@ -13,7 +13,7 @@ RESPONSE_INCOMING_TEXT = "response incoming..."
 ERROR_MESSAGE_REPLY_PREFIX_TEXT = (
     f"Sorry, an error occurred while processing your request"
 )
-NEW_THREAD_MESSAGE_PREFIX_TEXT = "A new thread has been created! \n"
+NEW_CHAT_MESSAGE_PREFIX_TEXT = "CHAT STARTING TEXT: "
 
 IGNORE_PREFIX = "~"  # If a message starts with this, the bot will ignore it
 
@@ -30,7 +30,7 @@ def this_message_is_from_a_bot(message: discord.Message) -> bool:
 
 
 def check_if_new_thread_message(message: discord.Message) -> bool:
-    return message.content.startswith(NEW_THREAD_MESSAGE_PREFIX_TEXT)
+    return message.content.startswith(NEW_CHAT_MESSAGE_PREFIX_TEXT)
 
 
 def message_starts_with_ignore_prefix(message: discord.Message) -> bool:
