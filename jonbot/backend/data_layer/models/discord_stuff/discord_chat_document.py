@@ -17,6 +17,8 @@ class DiscordChatDocument(BaseModel):
     messages: List[DiscordMessageDocument]
     created_at: Timestamp
     last_accessed: Timestamp
+    owner_id: int
+    owner_name: str
     server_name: str
     server_id: int
     channel_name: str
@@ -52,6 +54,8 @@ class DiscordChatDocument(BaseModel):
             messages=message_documents,
             created_at=Timestamp.from_datetime(parent_message.created_at),
             last_accessed=Timestamp.now(),
+            owner_id=parent_message.author.id,
+            owner_name=parent_message.author.name,
             jump_url=parent_message.jump_url,
             parent_message_id=parent_message.id,
             speakers=speakers,
