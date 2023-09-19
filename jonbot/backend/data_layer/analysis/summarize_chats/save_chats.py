@@ -46,7 +46,6 @@ async def save_chats(database_name: str,
             chat_title_string = f"## Chat: {chat_document['thread_name']} (id: {chat_document['thread_id']})\n"
             chat_title_string += f"### Chat Owner: {chat_document['owner_name']} (id: {chat_document['owner_id']})\n\n"
             markdown_output += chat_title_string
-            markdown_output += f"### Context: {chat_document['context_description']}\n"
             messages_string = ""
             for message in chat_document['messages']:
                 messages_string += f"- **{message['author']} (id: {message['author_id']})**:"
