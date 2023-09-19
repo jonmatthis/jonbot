@@ -49,52 +49,60 @@ class ServerScraperCog(commands.Cog):
         await self._scrape(channels=channels, ctx=ctx)
 
     async def _scrape(self, channels: List[discord.abc.Messageable], ctx: discord.ApplicationContext):
-        total_messages = 0
-        channel_message_counts = []
-        chat_message_counts = []
+        reply_embed_title = f"Scraping server: {ctx.guild.name}"
+        reply_embed_description = ""
+        reply_embed = discord.Embed(
+            title=f"Scraping server: {ctx.guild.name}",
+            description=reply_embed_description
+        )
+        reply_message = await ctx.send(
+            embed=reply_embed
+        )
+
+        total_server_messages = 0
+        tasks = []
         try:
-            for channel in channels:
+            for channel in filter(lambda ch: isinstance(ch, discord.TextChannel), channels):
                 logger.info(f"Scraping channel:  {ctx.channel.name}")
+                channel_message_count_string = ""
+                total_channel_messages = 0
+                channel_thread_message_count = 0
 
                 channel_messages = await self._get_message_list_from_channel(
                     channel=channel
                 )
+                total_channel_messages += len(channel_messages)
 
                 chat_documents = []
                 for message in channel_messages:
                     if message.thread is not None:
                         thread_messages = await self._get_message_list_from_channel(channel=message.thread)
+                        channel_thread_message_count += len(thread_messages)
                         chat_documents.append(await DiscordChatDocument.build(chat_id=message.thread.id,
                                                                               parent_message=message,
                                                                               messages=thread_messages))
-                total_messages += len(channel_messages)
+                total_channel_messages += channel_thread_message_count
+                total_server_messages += total_channel_messages
 
-                channel_message_counts.append(f"{channel}: {len(channel_messages)} messages")
-
-                if len(chat_documents) > 0:
-                    for document in chat_documents:
-                        total_messages += len(document.messages)
-                        chat_message_counts.append(f"{channel}:{document.thread_name}: "
-                                                   f"{len(document.messages)} messages")
-
+                channel_message_count_string += (f"Channel: {channel}\n"
+                                                 f"{len(channel_messages)} top level messages\n"
+                                                 f"{len(chat_documents)} chats with {channel_thread_message_count} messages\n"
+                                                 f"Total: {len(channel_messages) + channel_thread_message_count}\n"
+                                                 f"-----------------------------\n")
+                reply_embed_description = await self._update_reply_message_embed(
+                    channel_message_count_string=channel_message_count_string,
+                    total_server_messages_count=total_server_messages,
+                    embed_title=reply_embed_title,
+                    embed_message=reply_embed_description,
+                    reply_message=reply_message,
+                    done=False)
                 logger.info(
                     f"Upserting {len(channel_messages)} channel messages and {len(chat_documents)} chat documents to database...")
 
-                await asyncio.gather(self._send_messages_to_database(messages_to_upsert=channel_messages),
-                                     self._send_chats_to_database(chat_documents=chat_documents))
+                tasks.append(asyncio.create_task(self._send_messages_to_database(messages_to_upsert=channel_messages)))
+                tasks.append(asyncio.create_task(self._send_chats_to_database(chat_documents=chat_documents)))
                 logger.info(f"Finished upserting messages from channel: {channel} to database.")
 
-            channel_info_string = "\n".join(channel_message_counts)
-            chat_info_string = "\n".join(chat_message_counts)
-
-            await ctx.send(
-                embed=discord.Embed(
-                    title=f"Scraping successful!",
-                    description=f"Channel messages:\n {channel_info_string} \n\n"
-                                f" Chat messages:\n {chat_info_string} \n\n "
-                                f"Total messages: {total_messages}"
-                )
-            )
         except Exception as e:
             await ctx.send(
                 embed=discord.Embed(
@@ -105,6 +113,43 @@ class ServerScraperCog(commands.Cog):
             logger.error(f"Error occurred while scraping channel: {ctx.channel.name}: \n > {e}")
             logger.exception(e)
             raise e
+        finally:
+            logger.info(f"Waiting for {len(tasks)} tasks to finish...")
+            await asyncio.gather(*tasks)
+            logger.info(f"Tasks finished!")
+
+        reply_embed_description = await self._update_reply_message_embed(
+            channel_message_count_string="",
+            total_server_messages_count=total_server_messages,
+            embed_title=reply_embed_title,
+            embed_message=reply_embed_description,
+            reply_message=reply_message,
+            done=True)
+        logger.success(f"Finished scraping server: {ctx.guild.name}!\n "
+                       f"{reply_embed_description}"
+                       )
+
+    async def _update_reply_message_embed(self,
+                                          embed_title: str,
+                                          embed_message: str,
+                                          reply_message: discord.Message,
+                                          channel_message_count_string: str,
+                                          total_server_messages_count: int,
+                                          done: bool) -> str:
+        total_server_messages_string = "======================\nTotal Server Messages:"
+
+        new_embed_description = embed_message.split(total_server_messages_string)[0]
+        new_embed_description += channel_message_count_string
+
+        new_embed_description += f"{total_server_messages_string} {total_server_messages_count}"
+        if not done:
+            new_embed_description += "\n scraping next channel..."
+
+        await reply_message.edit(embed=discord.Embed(
+            title=embed_title,
+            description=new_embed_description
+        ))
+        return new_embed_description
 
     async def _send_messages_to_database(
             self, messages_to_upsert: List[discord.Message]
