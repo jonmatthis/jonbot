@@ -20,7 +20,7 @@ async def test_mongo_database(
 
     try:
         logger.debug(f"Creating test collection: {test_collection_name}")
-        test_collection = manager._get_collection(database_name, test_collection_name)
+        test_collection = manager.get_collection(database_name, test_collection_name)
         if test_collection is not None:
             logger.debug(f"Successfully created test collection.")
         else:

@@ -4,12 +4,12 @@ from pydantic import BaseModel
 
 from jonbot.backend.data_layer.database.mongo_database import MongoDatabaseManager
 from jonbot.backend.data_layer.models.database_request_response_models import (
-    UpsertDiscordMessagesResponse,
+    UpsertResponse,
     MessageHistoryRequest,
     ContextMemoryDocumentRequest,
     UpsertDiscordMessagesRequest,
     ContextMemoryDocumentResponse,
-    MessageHistoryResponse,
+    MessageHistoryResponse, UpsertDiscordChatsRequest,
 )
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
@@ -22,18 +22,31 @@ class BackendDatabaseOperations(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
+    async def upsert_discord_chats(
+            self, request: UpsertDiscordChatsRequest
+    ) -> UpsertResponse:
+        logger.info(
+            f"Upserting {len(request.data)} chats to database: {request.database_name} with query: {request.query}"
+        )
+
+        success = await self.mongo_database.upsert_discord_chats(request=request)
+        if success:
+            return UpsertResponse(success=True)
+        else:
+            return UpsertResponse(success=False)
+
     async def upsert_discord_messages(
             self, request: UpsertDiscordMessagesRequest
-    ) -> UpsertDiscordMessagesResponse:
+    ) -> UpsertResponse:
         logger.info(
             f"Upserting {len(request.data)} messages to database: {request.database_name} with query: {request.query}"
         )
 
         success = await self.mongo_database.upsert_discord_messages(request=request)
         if success:
-            return UpsertDiscordMessagesResponse(success=True)
+            return UpsertResponse(success=True)
         else:
-            return UpsertDiscordMessagesResponse(success=False)
+            return UpsertResponse(success=False)
 
     async def get_message_history_document(
             self, request: MessageHistoryRequest

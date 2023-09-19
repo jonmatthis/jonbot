@@ -8,15 +8,15 @@ from pymongo import UpdateOne, DESCENDING
 from jonbot.backend.data_layer.models.context_memory_document import ContextMemoryDocument
 from jonbot.backend.data_layer.models.conversation_models import MessageHistory, ChatMessage
 from jonbot.backend.data_layer.models.database_request_response_models import UpsertDiscordMessagesRequest, \
-    ContextMemoryDocumentRequest, MessageHistoryRequest
+    ContextMemoryDocumentRequest, MessageHistoryRequest, UpsertDiscordChatsRequest
 from jonbot.backend.data_layer.models.discord_stuff.discord_id import DiscordUserID
-from jonbot.backend.data_layer.models.discord_stuff.discord_message import DiscordMessageDocument
+from jonbot.backend.data_layer.models.discord_stuff.discord_message_document import DiscordMessageDocument
 from jonbot.backend.data_layer.models.user_stuff.user_ids import TelegramUserID, UserID
 from jonbot.system.environment_variables import (
     MONGO_URI,
     USERS_COLLECTION_NAME,
     RAW_MESSAGES_COLLECTION_NAME,
-    CONTEXT_MEMORIES_COLLECTION_NAME,
+    CONTEXT_MEMORIES_COLLECTION_NAME, CHATS_COLLECTION_NAME,
 )
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
@@ -28,21 +28,21 @@ class MongoDatabaseManager:
         logger.info(f"Initializing MongoDatabaseManager...")
         self._client = AsyncIOMotorClient(MONGO_URI)
 
-    def _get_database(self, database_name: str):
+    def get_database(self, database_name: str):
         return self._client[database_name]
 
-    def _get_collection(self, database_name: str, collection_name: str):
-        database = self._get_database(database_name)
+    def get_collection(self, database_name: str, collection_name: str):
+        database = self.get_database(database_name)
         return database[collection_name]
 
-    async def _upsert_many(
+    async def upsert_many(
             self, database_name: str, entries: List[Dict[str, dict]], collection_name: str
     ) -> bool:
         operations = [
             UpdateOne(entry["query"], {"$set": entry["data"]}, upsert=True)
             for entry in entries
         ]
-        collection = self._get_collection(
+        collection = self.get_collection(
             database_name=database_name, collection_name=collection_name
         )
         try:
@@ -52,20 +52,23 @@ class MongoDatabaseManager:
             logger.error(f"Error occurred while upserting. Error: {e}")
             return False
 
-    async def _get_sorted_documents(
+    async def get_sorted_documents(
             self,
             database_name: str,
             collection_name: str,
             query: dict,
-            sort_field: str,
+            sort_field: str = None,
             limit: int = None,
             sort_order: int = DESCENDING,
     ) -> list:
         try:
-            collection = self._get_collection(
+            collection = self.get_collection(
                 database_name=database_name, collection_name=collection_name
             )
-            cursor = collection.find(query).sort(sort_field, sort_order)
+            if sort_field is not None:
+                cursor = collection.find(query).sort(sort_field, sort_order)
+            else:
+                cursor = collection.find(query)
 
             # Apply the limit if specified
             if limit is not None:
@@ -79,6 +82,22 @@ class MongoDatabaseManager:
             )
             return []
 
+    async def upsert_discord_chats(
+            self, request: UpsertDiscordChatsRequest
+    ) -> bool:
+
+        entries = []
+        for document, query in zip(request.data, request.query):
+            data = document.dict()
+            data["last_updated"] = datetime.now()
+            entries.append({"data": data, "query": query})
+
+        return await self.upsert_many(
+            database_name=request.database_name,
+            entries=entries,
+            collection_name=CHATS_COLLECTION_NAME,
+        )
+
     async def upsert_discord_messages(
             self, request: UpsertDiscordMessagesRequest
     ) -> bool:
@@ -89,7 +108,7 @@ class MongoDatabaseManager:
             data["last_updated"] = datetime.now()
             entries.append({"data": data, "query": query})
 
-        return await self._upsert_many(
+        return await self.upsert_many(
             database_name=request.database_name,
             entries=entries,
             collection_name=RAW_MESSAGES_COLLECTION_NAME,
@@ -102,7 +121,7 @@ class MongoDatabaseManager:
         data["last_updated"] = datetime.now()
         entries = [{"data": data, "query": request.query}]
 
-        return await self._upsert_many(
+        return await self.upsert_many(
             database_name=request.database_name,
             entries=entries,
             collection_name=CONTEXT_MEMORIES_COLLECTION_NAME,
@@ -111,7 +130,7 @@ class MongoDatabaseManager:
     async def get_message_history(
             self, request: MessageHistoryRequest
     ) -> MessageHistory:
-        documents = await self._get_sorted_documents(
+        documents = await self.get_sorted_documents(
             database_name=request.database_name,
             collection_name=RAW_MESSAGES_COLLECTION_NAME,
             query=request.query,
@@ -132,7 +151,7 @@ class MongoDatabaseManager:
     async def get_context_memory(
             self, request: ContextMemoryDocumentRequest
     ) -> Optional[ContextMemoryDocument]:
-        messages_collection = self._get_collection(
+        messages_collection = self.get_collection(
             request.database_name, CONTEXT_MEMORIES_COLLECTION_NAME
         )
         query = {**request.query}
@@ -170,7 +189,7 @@ class MongoDatabaseManager:
             discord_id: DiscordUserID = None,
             telegram_id: TelegramUserID = None,
     ) -> Union[None, UserID]:
-        users_collection = self._get_collection(database_name, USERS_COLLECTION_NAME)
+        users_collection = self.get_collection(database_name, USERS_COLLECTION_NAME)
 
         query = {}
         if discord_id is not None:
@@ -188,7 +207,7 @@ class MongoDatabaseManager:
             discord_id: DiscordUserID = None,
             telegram_id: TelegramUserID = None,
     ) -> Union[None, UserID]:
-        users_collection = self._get_collection(database_name, USERS_COLLECTION_NAME)
+        users_collection = self.get_collection(database_name, USERS_COLLECTION_NAME)
 
         user_id = UserID(
             uuid=str(uuid.uuid4()), discord_id=discord_id, telegram_id=telegram_id

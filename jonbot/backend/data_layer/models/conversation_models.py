@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from jonbot.backend.data_layer.models.ai_chatbot_models import VectorStoreMemoryConfig
 from jonbot.backend.data_layer.models.context_route import ContextRoute
 from jonbot.backend.data_layer.models.conversation_context import ConversationContextDescription
-from jonbot.backend.data_layer.models.discord_stuff.discord_message import DiscordMessageDocument
+from jonbot.backend.data_layer.models.discord_stuff.discord_message_document import DiscordMessageDocument
 from jonbot.backend.data_layer.models.timestamp_model import Timestamp
 
 

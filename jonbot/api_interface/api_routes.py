@@ -11,7 +11,7 @@ from jonbot.backend.data_layer.models.calculate_memory_request import CalculateM
 from jonbot.backend.data_layer.models.context_memory_document import ContextMemoryDocument
 from jonbot.backend.data_layer.models.conversation_models import ChatRequest
 from jonbot.backend.data_layer.models.database_request_response_models import UpsertDiscordMessagesRequest, \
-    UpsertDiscordMessagesResponse, ContextMemoryDocumentRequest
+    UpsertResponse, ContextMemoryDocumentRequest, UpsertDiscordChatsRequest
 from jonbot.backend.data_layer.models.health_check_status import HealthCheckResponse
 from jonbot.backend.data_layer.models.voice_to_text_request import VoiceToTextRequest, VoiceToTextResponse
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
@@ -23,7 +23,9 @@ HEALTH_ENDPOINT = "/health"
 CHAT_ENDPOINT = "/chat"
 VOICE_TO_TEXT_ENDPOINT = "/voice_to_text"
 
-UPSERT_MESSAGES_ENDPOINT = "/upsert_message"
+UPSERT_MESSAGES_ENDPOINT = "/upsert_messages"
+UPSERT_CHATS_ENDPOINT = "/upsert_chats"
+
 CALCULATE_MEMORY_ENDPOINT = "/calculate_memory"
 
 GET_CONTEXT_MEMORY_ENDPOINT = "/get_context_memory"
@@ -83,5 +85,11 @@ def register_api_routes(
     @app.post(UPSERT_MESSAGES_ENDPOINT)
     async def upsert_messages_endpoint(
             request: UpsertDiscordMessagesRequest,
-    ) -> UpsertDiscordMessagesResponse:
+    ) -> UpsertResponse:
         return await database_operations.upsert_discord_messages(request=request)
+
+    @app.post(UPSERT_CHATS_ENDPOINT)
+    async def upsert_chats_endpoint(
+            request: UpsertDiscordChatsRequest,
+    ) -> UpsertResponse:
+        return await database_operations.upsert_discord_chats(request=request)

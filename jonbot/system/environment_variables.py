@@ -19,6 +19,7 @@ DATABASE_BACKUP = "database_backup"
 # Database stuff
 MONGO_URI = os.getenv("MONGO_URI")
 RAW_MESSAGES_COLLECTION_NAME = "raw_messages"
+CHATS_COLLECTION_NAME = "chats"
 USERS_COLLECTION_NAME = f"users"
 CONTEXT_MEMORIES_COLLECTION_NAME = "context_memories"
 
