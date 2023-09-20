@@ -11,7 +11,7 @@ from jonbot.backend.data_layer.models.database_request_response_models import Up
     ContextMemoryDocumentRequest, MessageHistoryRequest, UpsertDiscordChatsRequest
 from jonbot.backend.data_layer.models.discord_stuff.discord_id import DiscordUserID
 from jonbot.backend.data_layer.models.discord_stuff.discord_message_document import DiscordMessageDocument
-from jonbot.backend.data_layer.models.user_stuff.user_ids import TelegramUserID, UserID
+from jonbot.backend.data_layer.models.user_stuff.user_ids import UserID
 from jonbot.system.environment_variables import (
     MONGO_URI,
     USERS_COLLECTION_NAME,
@@ -210,7 +210,7 @@ class MongoDatabaseManager:
         users_collection = self.get_collection(database_name, USERS_COLLECTION_NAME)
 
         user_id = UserID(
-            uuid=str(uuid.uuid4()), discord_id=discord_id, telegram_id=telegram_id
+            uuid=str(uuid.uuid4()), discord_id=discord_id
         )
         await users_collection.insert_one(user_id.dict())
         return user_id

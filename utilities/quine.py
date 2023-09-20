@@ -29,7 +29,9 @@ class StructureFetcherConfig(BaseModel):
     excluded_directories: List[str]
     included_extensions: List[str]
     excluded_file_names: List[str]
-    content: ContentFetcherConfig  # Add ContentFetcherConfig to StructureFetcherConfig
+
+    fetch_structure_for: List[str]
+
     indent: int = 0
 
 
@@ -52,9 +54,9 @@ class StructureFetcher:
 
     def _parse_file(self, file_path: str) -> dict:
         # Check if the file is in the list of files/folders to fetch content for
-        if file_path not in self.config.content.fetch_content_for and not any(
-                os.path.commonpath([file_path, content_path]) == content_path
-                for content_path in self.config.content.fetch_content_for
+        if file_path not in self.config.fetch_structure_for and not any(
+                os.path.commonpath([file_path, path]) == path
+                for path in self.config.fetch_structure_for
         ):
             return {"functions": [], "classes": [], "constants": []}
 
@@ -205,20 +207,21 @@ class Quine:
 
 
 if __name__ == "__main__":
-    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\models"
+    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\docker"
 
     quine_config = QuineConfig(
         print_mode="all",
+
+        # STRUCTURE (i.e. the file/folder structure with function/class/method definitions, but no other content    )
         structure=StructureFetcherConfig(
-            content=ContentFetcherConfig(
-                fetch_content_for=[],
-                recursion_depth=0,
-            ),
+            fetch_structure_for=[],
             base_directory=base_directory_in,
             excluded_directories=["__pycache__", ".git", "legacy"],
             included_extensions=[".py", "yaml", "api", "discord"],
             excluded_file_names=["poetry.lock", ".gitignore", "LICENSE", "*.env"],
         ),
+
+        # CONTENT (i.e. the actual text/code in the files)
         content=ContentFetcherConfig(
             fetch_content_for=[base_directory_in],
             recursion_depth=1,

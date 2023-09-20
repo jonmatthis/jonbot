@@ -9,7 +9,6 @@ BOT_NICK_NAMES = os.getenv("BOT_NICK_NAMES").split(",")
 
 # API Keys and tokens
 OPENAI_API_KEY = os.getenv("OPEN_AI_API_KEY")
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 # Local path stuff
 LOG_FILE_FOLDER_NAME = "logs"

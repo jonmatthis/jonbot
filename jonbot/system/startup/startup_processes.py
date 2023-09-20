@@ -2,22 +2,22 @@ import os
 from typing import Optional, List, Dict, Any
 
 from dotenv import load_dotenv
+from jonbot.frontends.telegram_bot.telegram_bot import run_telegram_bot_sync
 
 from jonbot.api_interface.api_main import run_api_sync
 from jonbot.frontends.discord_bot.discord_main import run_discord_bot
-from jonbot.frontends.telegram_bot.telegram_bot import run_telegram_bot_sync
-from jonbot.system.environment_variables import BOT_NICK_NAMES
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 from jonbot.system.startup.named_process import NamedProcess
 
 logger = get_jonbot_logger()
 
 
-def startup():
+def startup(bot_nick_names: List[str]):
     logger.info("Starting services...")
     selection = get_services_selection()
     logger.info(f"Selected services: {selection}")
-    services = create_services(selected_services=selection)
+    services = create_services(selected_services=selection,
+                               bot_nick_names=bot_nick_names)
     logger.info(f"Services to run: {services}")
     run_services(services)
 
@@ -54,21 +54,17 @@ def run_services(services: List[Dict[str, Any]]):
                 other_process.terminate()
 
 
-def create_services(selected_services: str) -> List:
+def create_services(selected_services: str,
+                    bot_nick_names: List[str]) -> List:
     selected_services = selected_services.lower()
     logger.trace(f"Creating services for `selected_services.lower()`: {selected_services}")
     services = []
 
     # Creating services based on selection
     if selected_services in ["discord", "all"]:
-        services.extend(create_discord_services())
+        services.extend(create_discord_services(bot_nick_names=bot_nick_names))
     else:
         logger.debug(f"selected_services: {selected_services} not in ['discord', 'all']")
-
-    # if selection in ["telegram", "all"]:
-    #     services.extend(create_telegram_services()) # Uncomment when create_telegram_services is defined
-    # else:
-    #     logger.debug(f"selected_services: {selected_services} not in ['telegram', 'all']")
 
     if selected_services in ["api", "all"]:
         services.append({"func": run_api_sync})
@@ -82,30 +78,21 @@ def create_services(selected_services: str) -> List:
     return services
 
 
-def create_discord_services():
+def create_discord_services(bot_nick_names: List[str]):
     bots = []
 
-    for bot_name in get_bot_nick_names():
+    for bot_name in bot_nick_names:
         bots.append(
             {"func": run_discord_bot, "kwargs": {"bot_name_or_index": bot_name}}
         )
     return bots
 
 
-def create_telegram_services():
-    bots = []
-    for bot_name in get_bot_nick_names():
-        bots.append(
-            {"func": run_telegram_bot_sync, "kwargs": {"bot_name_or_index": bot_name}}
-        )
-    return bots
-
-
-def get_bot_nick_names() -> List[str]:
+def filter_bot_nick_names(bot_nick_names: List[str]) -> List[str]:
     if not os.getenv("IS_DOCKER"):
-        bot_nick_names = BOT_NICK_NAMES[:2]
-    else:
-        bot_nick_names = BOT_NICK_NAMES
+        if len(bot_nick_names) > 2:
+            return bot_nick_names[:2]  # when running locally, only run the first two bots
+
     return bot_nick_names
 
 
