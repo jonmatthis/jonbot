@@ -11,11 +11,11 @@ from jonbot.api_interface.api_client.get_or_create_api_client import (
     get_or_create_api_client,
 )
 from jonbot.api_interface.api_routes import CHAT_ENDPOINT, VOICE_TO_TEXT_ENDPOINT
-from jonbot.backend.data_layer.models.context_memory_document import ContextMemoryDocument
 from jonbot.backend.data_layer.models.conversation_models import ChatRequest, ChatRequestConfig
 from jonbot.backend.data_layer.models.discord_stuff.environment_config.discord_environment import (
     DiscordEnvironmentConfig,
 )
+from jonbot.backend.data_layer.models.user_stuff.memory.context_memory_document import ContextMemoryDocument
 from jonbot.backend.data_layer.models.voice_to_text_request import VoiceToTextRequest
 from jonbot.frontends.discord_bot.cogs.bot_config_cog.bot_config_cog import BotConfigCog
 from jonbot.frontends.discord_bot.cogs.chat_cog import ChatCog
@@ -186,8 +186,7 @@ class MyDiscordBot(commands.Bot):
             respond_to_this_text: str,
     ) -> List[discord.Message]:
         try:
-            gather_config_prompts_task = asyncio.create_task(
-                self._bot_config_cog.gather_config_messages(channel=message.channel))
+            await self._bot_config_cog.gather_config_messages(channel=message.channel)
 
             message_responder = DiscordMessageResponder(message_prefix=self.local_message_prefix,
                                                         bot_name=self.user.name, )
@@ -232,8 +231,6 @@ class MyDiscordBot(commands.Bot):
         except Exception as e:
             logger.exception(f"Error occurred while handling text message: {str(e)}")
             raise
-        finally:
-            await gather_config_prompts_task
 
     async def handle_audio_message(self, message: discord.Message) -> Dict[str, Union[str, List[discord.Message]]]:
         logger.info(f"Received voice memo from user: {message.author}")
@@ -300,9 +297,10 @@ class MyDiscordBot(commands.Bot):
             transcription_text = reply_message_content
             transcriptions_messages = []
 
-        return {"transcription_text": transcription_text, "transcriptions_messages": transcriptions_messages}
+        return {"transcription_text": transcription_text,
+                "transcriptions_messages": transcriptions_messages}
 
-    async def _update_memory_emojis(self, message):
+    async def _update_memory_emojis(self, message: discord.Message):
         try:
             logger.debug(f"Updating memory emojis for message: {message.content}")
             response = await self._database_operations.get_context_memory_document(message=message)

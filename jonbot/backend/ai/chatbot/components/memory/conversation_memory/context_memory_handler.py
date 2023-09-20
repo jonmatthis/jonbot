@@ -1,24 +1,23 @@
-from typing import Optional, List
+from typing import Optional
 
 from langchain import PromptTemplate
 from pydantic import BaseModel
 
-from jonbot.backend.backend_database_operator.backend_database_operator import (
-    BackendDatabaseOperations,
-)
-from jonbot.backend.data_layer.models.context_memory_document import ContextMemoryDocument
 from jonbot.backend.data_layer.models.context_route import ContextRoute
 from jonbot.backend.data_layer.models.database_request_response_models import ContextMemoryDocumentRequest
-from jonbot.backend.data_layer.models.discord_stuff.discord_message_document import DiscordMessageDocument
+from jonbot.backend.data_layer.models.user_stuff.memory.chat_memory_message_buffer import ChatMemoryMessageBuffer
+from jonbot.backend.data_layer.models.user_stuff.memory.context_memory_document import ContextMemoryDocument
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
+
+from jonbot.backend.backend_database_operator.backend_database_operator import BackendDatabaseOperations
 
 
 class ContextMemoryHandler(BaseModel):
     context_route: ContextRoute
     current_context_memory_document: ContextMemoryDocument = None
-    database_operations: BackendDatabaseOperations
+    database_operations: "BackendDatabaseOperations"
     database_name: str
     summary_prompt: PromptTemplate
 
@@ -78,17 +77,24 @@ class ContextMemoryHandler(BaseModel):
             logger.exception(e)
             raise
 
-    async def update(self, message_buffer: list, summary: str, token_count: int):
+    async def update(self,
+                     chat_memory_message_buffer: ChatMemoryMessageBuffer = None,
+                     summary: str = None,
+                     token_count: int = None):
         logger.debug(
             f"Updating context memory for context route: {self.context_route.dict()} - summary: {summary}"
         )
+        if chat_memory_message_buffer is None:
+            chat_memory_message_buffer = self.current_context_memory_document.chat_memory_message_buffer
+        if summary is None:
+            summary = self.current_context_memory_document.summary
+        if token_count is None:
+            token_count = self.current_context_memory_document.tokens_count
+
         document = await self.context_memory_document
         document.update(
-            message_buffer=message_buffer,
+            chat_memory_message_buffer=chat_memory_message_buffer,
             summary=summary,
             tokens_count=token_count
         )
         await self._upsert_context_memory()
-
-    def set_memory_messages(self, memory_messages: List[DiscordMessageDocument]):
-        pass

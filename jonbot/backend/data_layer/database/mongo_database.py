@@ -5,12 +5,12 @@ from typing import Union, List, Dict, Optional
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import UpdateOne, DESCENDING
 
-from jonbot.backend.data_layer.models.context_memory_document import ContextMemoryDocument
 from jonbot.backend.data_layer.models.conversation_models import MessageHistory, ChatMessage
 from jonbot.backend.data_layer.models.database_request_response_models import UpsertDiscordMessagesRequest, \
     ContextMemoryDocumentRequest, MessageHistoryRequest, UpsertDiscordChatsRequest
 from jonbot.backend.data_layer.models.discord_stuff.discord_id import DiscordUserID
 from jonbot.backend.data_layer.models.discord_stuff.discord_message_document import DiscordMessageDocument
+from jonbot.backend.data_layer.models.user_stuff.memory.context_memory_document import ContextMemoryDocument
 from jonbot.backend.data_layer.models.user_stuff.user_ids import UserID
 from jonbot.system.environment_variables import (
     MONGO_URI,

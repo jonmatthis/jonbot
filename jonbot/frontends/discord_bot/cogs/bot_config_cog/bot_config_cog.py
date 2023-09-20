@@ -4,8 +4,8 @@ from typing import List, TYPE_CHECKING
 
 import discord
 
-from jonbot.backend.data_layer.models.context_memory_document import ContextMemoryDocument
 from jonbot.backend.data_layer.models.discord_stuff.discord_message_document import DiscordMessageDocument
+from jonbot.backend.data_layer.models.user_stuff.memory.context_memory_document import ContextMemoryDocument
 from jonbot.frontends.discord_bot.cogs.bot_config_cog.helpers.get_pinned_messages_in_channel import get_pinned_messages
 from jonbot.frontends.discord_bot.handlers.should_process_message import allowed_to_reply_to_message
 
@@ -102,8 +102,9 @@ class BotConfigCog(discord.Cog):
         try:
             logger.info(f"Getting config messages")
 
-            self.bot.config_messages_by_guild_id[channel.id] = await self.get_bot_config_channel_prompts(
-                guild=channel.guild)
+            if channel.guild is not None:
+                self.bot.config_messages_by_guild_id[channel.guild.id] = await self.get_bot_config_channel_prompts(
+                    guild=channel.guild)
             self.bot.pinned_messages_by_channel_id[channel.id] = await get_pinned_messages(channel=channel)
             self.bot.memory_messages_by_channel_id[channel.id] = await self.get_memory_messages(channel=channel)
 
@@ -121,6 +122,7 @@ class BotConfigCog(discord.Cog):
         Get messages from the `bot-config` channel in the server, if it exists
         :param message:
         :param bot_config_channel_name:
+        :param selected_emoji:
         :return: List[str]
         """
         logger.debug(f"Getting extra prompts from bot-config channel")
@@ -150,24 +152,24 @@ class BotConfigCog(discord.Cog):
                                    context_memory_document: ContextMemoryDocument,
                                    message: discord.Message):
         memory_message_ids = []
-        for memory_message in context_memory_document.message_buffer:
-            if "message_id" in memory_message.additional_kwargs:
+        for memory_message in context_memory_document.chat_memory_message_buffer.message_buffer:
+            if "message_id" in memory_message.additional_kwargs.keys():
                 memory_message_ids.append(memory_message.additional_kwargs["message_id"])
 
         emoji_tasks = []
-        for memory_message_id in memory_message_ids:
-            message = await message.channel.fetch_message(memory_message_id)
+
+        async def update_message(channel: discord.TextChannel, message_id: int):
+
+            message = await channel.fetch_message(message_id)
             if "💭" not in message.reactions:
                 logger.trace(f"Adding memory emoji to message id: {message.id}")
-                emoji_tasks.append(message.add_reaction("💭"))
+                await message.add_reaction("💭")
 
-        async for msg in message.channel.history():
-            if "💭" in msg.reactions:
-                if msg.id not in memory_message_ids:
-                    logger.trace(f"Removing memory emoji from message id: {msg.id}")
-                    emoji_tasks.append(msg.remove_reaction("💭", self.bot.user))
+        for memory_message_id in memory_message_ids:
+            emoji_tasks.append(update_message(channel=message.channel, message_id=memory_message_id))
 
         await asyncio.gather(*emoji_tasks)
+        logger.success(f"Finished updating memory emojis")
 
     async def look_for_emoji_reaction_in_channel(self,
                                                  channel: discord.TextChannel,

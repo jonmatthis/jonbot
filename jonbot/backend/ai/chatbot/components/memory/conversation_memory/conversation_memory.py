@@ -6,16 +6,18 @@ from langchain.schema import HumanMessage, AIMessage
 from jonbot.backend.ai.chatbot.components.memory.conversation_memory.context_memory_handler import (
     ContextMemoryHandler,
 )
-from jonbot.backend.backend_database_operator.backend_database_operator import (
-    BackendDatabaseOperations,
-)
-from jonbot.backend.data_layer.models.context_memory_document import ContextMemoryDocument
-from jonbot.backend.data_layer.models.context_route import ContextRoute
 from jonbot.backend.data_layer.models.discord_stuff.discord_message_document import DiscordMessageDocument
-from jonbot.backend.data_layer.models.memory_config import ChatbotConversationMemoryConfig
+from jonbot.backend.data_layer.models.user_stuff.memory.chat_memory_message_buffer import ChatMemoryMessageBuffer
+from jonbot.backend.data_layer.models.user_stuff.memory.context_memory_document import ContextMemoryDocument
+from jonbot.backend.data_layer.models.user_stuff.memory.memory_config import ChatbotConversationMemoryConfig
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
+
+from jonbot.backend.backend_database_operator.backend_database_operator import (
+    BackendDatabaseOperations,
+)
+from jonbot.backend.data_layer.models.context_route import ContextRoute
 
 
 class ChatbotConversationMemory(ConversationSummaryBufferMemory):
@@ -23,9 +25,9 @@ class ChatbotConversationMemory(ConversationSummaryBufferMemory):
 
     def __init__(
             self,
-            context_route: ContextRoute,
+            context_route: "ContextRoute",
             database_name: str,
-            database_operations: BackendDatabaseOperations,
+            database_operations: "BackendDatabaseOperations",
             config: ChatbotConversationMemoryConfig = None,
     ):
         if config is None:
@@ -65,7 +67,7 @@ class ChatbotConversationMemory(ConversationSummaryBufferMemory):
     def _build_memory_from_context_memory_document(
             self, document: ContextMemoryDocument
     ):
-        self._load_messages_from_message_buffer(buffer=document.message_buffer)
+        self._load_messages_from_message_buffer(buffer=document.chat_memory_message_buffer)
 
         # # self.message_uuids = [message["additional_kwargs"]["uuid"] for message in self.message_buffer],
         self.moving_summary_buffer = document.summary
@@ -94,7 +96,9 @@ class ChatbotConversationMemory(ConversationSummaryBufferMemory):
             logger.exception(e)
             raise
 
-    async def update(self, inputs: Dict[str, Any], outputs: Dict[str, Any]):
+    async def update(self,
+                     inputs: Dict[str, Any],
+                     outputs: Dict[str, Any]):
         try:
             self.save_context(inputs={"human_input": inputs["human_input"]},
                               outputs={"output": outputs["output"]})
@@ -106,7 +110,7 @@ class ChatbotConversationMemory(ConversationSummaryBufferMemory):
                     message.additional_kwargs["message_id"] = outputs["message_id"]
 
             await self.context_memory_handler.update(
-                message_buffer=buffer,
+                chat_memory_message_buffer=ChatMemoryMessageBuffer(message_buffer=buffer),
                 summary=self.moving_summary_buffer,
                 token_count=self.token_count,
             )
@@ -116,26 +120,8 @@ class ChatbotConversationMemory(ConversationSummaryBufferMemory):
             raise
 
     def set_memory_messages(self, memory_messages: List[DiscordMessageDocument]):
-        self.chat_memory.messages = []
+        chat_history_message_buffer = ChatMemoryMessageBuffer.from_discord_message_documents(
+            discord_message_documents=memory_messages)
 
-        for message in memory_messages:
-            if message.is_bot:
-                self.chat_memory.messages.append(
-                    AIMessage(
-                        content=message.content,
-                        additional_kwargs={
-                            "message_id": message.message_id,
-                            "type": "ai",
-                        },
-                    )
-                )
-            else:
-                self.chat_memory.messages.append(
-                    HumanMessage(
-                        content=message.content,
-                        additional_kwargs={
-                            "message_id": message.message_id,
-                            "type": "human",
-                        },
-                    )
-                )
+        self.chat_memory.messages = chat_history_message_buffer.message_buffer
+        self.context_memory_handler.update(chat_memory_message_buffer=chat_history_message_buffer)

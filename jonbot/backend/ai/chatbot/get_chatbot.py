@@ -19,16 +19,13 @@ async def get_chatbot(
 ) -> ChatbotLLMChain:
     context_path = str(chat_request.context_route.as_flat_dict)
 
-    if not context_path in existing_chatbots:
-        existing_chatbots[
-            context_path
-        ] = await ChatbotLLMChain.from_chat_request(
+    if not context_path in existing_chatbots.keys():
+        existing_chatbots[context_path] = await ChatbotLLMChain.from_chat_request(
             chat_request=chat_request,
             database_operations=database_operations,
         )
 
     chatbot = existing_chatbots[context_path]
-
     chatbot.apply_config_and_build_chain(config=chat_request.config)
 
     return chatbot

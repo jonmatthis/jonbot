@@ -1,5 +1,5 @@
 import React, {useState} from "react";
-import { JSONTree } from 'react-json-tree';
+import {JSONTree} from 'react-json-tree';
 
 function App() {
     const [selectedFile, setSelectedFile] = useState();
@@ -37,8 +37,8 @@ function App() {
     return (
         <div>
             <input type="file" onChange={fileSelectedHandler}/>
-            {fileContents && <JSONTree data={fileContents} />}
-       </div>
+            {fileContents && <JSONTree data={fileContents}/>}
+        </div>
     );
 }
 

@@ -1,10 +1,10 @@
-from typing import List, Optional, Union
+from typing import Optional
 
 from langchain import PromptTemplate
-from langchain.schema import HumanMessage, AIMessage
 from pydantic import BaseModel
 
 from jonbot.backend.data_layer.models.context_route import ContextRoute
+from jonbot.backend.data_layer.models.user_stuff.memory.chat_memory_message_buffer import ChatMemoryMessageBuffer
 
 
 class ContextMemoryDocument(BaseModel):
@@ -21,7 +21,7 @@ class ContextMemoryDocument(BaseModel):
     thread_name: Optional[str]
     thread_id: Optional[int]
 
-    message_buffer: List[Union[HumanMessage, AIMessage]] = None
+    chat_memory_message_buffer: Optional[ChatMemoryMessageBuffer]
     # message_uuids: List[str] = None
     summary: str = ""
     tokens_count: int = 0
@@ -34,7 +34,6 @@ class ContextMemoryDocument(BaseModel):
             context_route=context_route,
             context_route_full_path=context_route.full_path,
             context_route_friendly_path=context_route.friendly_path,
-            message_buffer=[],
             summary="",
             summary_prompt=summary_prompt,
             tokens_count=0,
@@ -44,17 +43,10 @@ class ContextMemoryDocument(BaseModel):
 
     def update(
             self,
-            message_buffer: List[Union[HumanMessage, AIMessage]],
+            chat_memory_message_buffer: ChatMemoryMessageBuffer,
             summary: str,
             tokens_count: int,
     ):
-        for message in message_buffer:
-            if isinstance(message, HumanMessage):
-                message.additional_kwargs["type"] = "human"
-            elif isinstance(message, AIMessage):
-                message.additional_kwargs["type"] = "ai"
-            else:
-                raise ValueError(f"Message type not recognized: {message}")
-        self.message_buffer = message_buffer
+        self.chat_memory_message_buffer = chat_memory_message_buffer
         self.summary = summary
         self.tokens_count = tokens_count

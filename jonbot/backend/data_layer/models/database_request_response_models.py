@@ -3,11 +3,11 @@ from typing import Literal, List, Dict, Any
 from langchain import PromptTemplate
 from pydantic import BaseModel
 
-from jonbot.backend.data_layer.models.context_memory_document import ContextMemoryDocument
 from jonbot.backend.data_layer.models.context_route import ContextRoute
 from jonbot.backend.data_layer.models.conversation_models import ChatRequest
 from jonbot.backend.data_layer.models.discord_stuff.discord_chat_document import DiscordChatDocument
 from jonbot.backend.data_layer.models.discord_stuff.discord_message_document import DiscordMessageDocument
+from jonbot.backend.data_layer.models.user_stuff.memory.context_memory_document import ContextMemoryDocument
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
@@ -52,7 +52,7 @@ class ContextMemoryDocumentRequest(BaseModel):
             data=document,
             database_name=database_name,
             query=document.query,
-            request_type="upsert" if document.message_buffer is None else "get",
+            request_type="upsert" if document.chat_memory_message_buffer is None else "get",
         )
 
     @classmethod

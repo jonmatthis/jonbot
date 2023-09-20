@@ -1,5 +1,4 @@
 import argparse
-import os
 from typing import List
 
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger

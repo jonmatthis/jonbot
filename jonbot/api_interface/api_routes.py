@@ -1,19 +1,21 @@
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from fastapi import FastAPI
 from starlette.responses import StreamingResponse
 
-from jonbot.backend.backend_database_operator.backend_database_operator import (
-    BackendDatabaseOperations,
-)
 from jonbot.backend.controller.controller import Controller
-from jonbot.backend.data_layer.models.context_memory_document import ContextMemoryDocument
 from jonbot.backend.data_layer.models.conversation_models import ChatRequest
 from jonbot.backend.data_layer.models.database_request_response_models import UpsertDiscordMessagesRequest, \
     UpsertResponse, ContextMemoryDocumentRequest, UpsertDiscordChatsRequest
 from jonbot.backend.data_layer.models.health_check_status import HealthCheckResponse
+from jonbot.backend.data_layer.models.user_stuff.memory.context_memory_document import ContextMemoryDocument
 from jonbot.backend.data_layer.models.voice_to_text_request import VoiceToTextRequest, VoiceToTextResponse
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
+
+if TYPE_CHECKING:
+    from jonbot.backend.backend_database_operator.backend_database_operator import (
+        BackendDatabaseOperations,
+    )
 
 logger = get_jonbot_logger()
 
@@ -30,7 +32,7 @@ GET_CONTEXT_MEMORY_ENDPOINT = "/get_context_memory"
 
 def register_api_routes(
         app: FastAPI,
-        database_operations: BackendDatabaseOperations,
+        database_operations: "BackendDatabaseOperations",
         controller: Controller
 ):
     @app.get(HEALTH_ENDPOINT, response_model=HealthCheckResponse)
