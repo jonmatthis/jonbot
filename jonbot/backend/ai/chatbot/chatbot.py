@@ -55,9 +55,12 @@ class ChatbotLLMChain:
                      f"user: {self.human_user_id}",
                      *[f"{key} : {value}" for key, value in self.context_route.as_flat_dict.items()],
                      ]
+        self.memory = ChatbotConversationMemory(
+            database_operations=database_operations,
+            database_name=database_name,
+            context_route=self.context_route,
+        )
 
-        self.configure_memory(database_name=database_name,
-                              database_operations=database_operations)
         self.apply_config_and_build_chain(config=config)
 
     @classmethod
@@ -80,7 +83,7 @@ class ChatbotLLMChain:
 
         )
 
-        await instance.memory.configure_memory()
+        # await instance.memory.configure_memory()
         return instance
 
     @classmethod
@@ -112,15 +115,6 @@ class ChatbotLLMChain:
                 | self.model
         )
 
-    def configure_memory(self,
-                         database_name: str,
-                         database_operations: BackendDatabaseOperations):
-        self.memory = ChatbotConversationMemory(
-            database_operations=database_operations,
-            database_name=database_name,
-            context_route=self.context_route,
-        )
-
     def apply_config_and_build_chain(self, config: ChatRequestConfig):
         logger.debug(f"Applying config: {config} to chatbot chain...")
         if self.memory is None:
@@ -137,6 +131,9 @@ class ChatbotLLMChain:
             context_description_string=self.conversation_context_description.text,
             extra_prompts=config.extra_prompts,
         )
+
+        self.memory.set_memory_messages(config.memory_messages)
+
         self.chain = self._build_chain()
 
     async def execute(

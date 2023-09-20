@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import List, Union, Dict
 
 import discord
+from discord.ext import commands
 
 from jonbot.api_interface.api_client.api_client import ApiClient
 from jonbot.api_interface.api_client.get_or_create_api_client import (
@@ -11,19 +12,21 @@ from jonbot.api_interface.api_client.get_or_create_api_client import (
 )
 from jonbot.api_interface.api_routes import CHAT_ENDPOINT, VOICE_TO_TEXT_ENDPOINT
 from jonbot.backend.data_layer.models.context_memory_document import ContextMemoryDocument
-from jonbot.backend.data_layer.models.conversation_models import ChatRequest
+from jonbot.backend.data_layer.models.conversation_models import ChatRequest, ChatRequestConfig
 from jonbot.backend.data_layer.models.discord_stuff.environment_config.discord_environment import (
     DiscordEnvironmentConfig,
 )
 from jonbot.backend.data_layer.models.voice_to_text_request import VoiceToTextRequest
+from jonbot.frontends.discord_bot.cogs.bot_config_cog.bot_config_cog import BotConfigCog
 from jonbot.frontends.discord_bot.cogs.chat_cog import ChatCog
+from jonbot.frontends.discord_bot.cogs.experimental.pycord_pages_example_cog import PageTestCog
 from jonbot.frontends.discord_bot.cogs.server_scraper_cog import ServerScraperCog
 from jonbot.frontends.discord_bot.handlers.discord_message_responder import (
     DiscordMessageResponder,
 )
 from jonbot.frontends.discord_bot.handlers.should_process_message import (
-    should_reply,
-    ERROR_MESSAGE_REPLY_PREFIX_TEXT, )
+    should_reply, ERROR_MESSAGE_REPLY_PREFIX_TEXT,
+)
 from jonbot.frontends.discord_bot.operations.discord_database_operations import (
     DiscordDatabaseOperations,
 )
@@ -35,7 +38,7 @@ from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 logger = get_jonbot_logger()
 
 
-class MyDiscordBot(discord.Bot):
+class MyDiscordBot(commands.Bot):
     def __init__(
             self,
             environment_config: DiscordEnvironmentConfig,
@@ -43,9 +46,12 @@ class MyDiscordBot(discord.Bot):
             **kwargs,
     ):
         super().__init__(**kwargs)
-        self._local_message_prefix = ""
+        self.config_messages_by_guild_id = {}
+        self.pinned_messages_by_channel_id = {}
+        self.memory_messages_by_channel_id = {}
+        self.local_message_prefix = ""
         if environment_config.IS_LOCAL:
-            self._local_message_prefix = (
+            self.local_message_prefix = (
                 f"(local - `{environment_config.BOT_NICK_NAME}`)\n"
             )
 
@@ -54,11 +60,15 @@ class MyDiscordBot(discord.Bot):
         self._database_operations = DiscordDatabaseOperations(
             api_client=api_client, database_name=self._database_name
         )
-        self._server_scraping_cog = ServerScraperCog(database_operations=self._database_operations)
-        self._chat_cog = ChatCog(bot=self)
 
-        self.add_cog(self._server_scraping_cog)
+        self._chat_cog = ChatCog(bot=self)
+        self._server_scraping_cog = ServerScraperCog(database_operations=self._database_operations)
+        self._bot_config_cog = BotConfigCog(bot=self)
+        self._pages_test_cog = PageTestCog(bot=self)
         self.add_cog(self._chat_cog)
+        self.add_cog(self._server_scraping_cog)
+        self.add_cog(self._bot_config_cog)
+        self.add_cog(self._pages_test_cog)
 
         # self.add_cog(VoiceChannelCog(bot=self))
 
@@ -69,6 +79,10 @@ class MyDiscordBot(discord.Bot):
     @discord.Cog.listener()
     async def on_ready(self):
         logger.success(f"Logged in as {self.user.name} ({self.user.id})")
+        asyncio.create_task(self._bot_config_cog.gather_config_messages())
+        for server in self.guilds:
+            logger.info(f"{self.user}: Connected to server: {server.name}")
+
         print_pretty_startup_message_in_terminal(self.user.name)
 
     @discord.Cog.listener()
@@ -119,7 +133,7 @@ class MyDiscordBot(discord.Bot):
                 messages_to_upsert.extend(response_messages)
 
         except Exception as e:
-            await self._send_error_response(e, messages_to_upsert)
+            await self.send_error_response(exception=e, message=messages_to_upsert[-1])
         finally:
             await asyncio.gather(
                 self._database_operations.upsert_messages(messages=messages_to_upsert),
@@ -155,19 +169,6 @@ class MyDiscordBot(discord.Bot):
 
         return message_text
 
-    async def _send_error_response(self, e: Exception, messages_to_upsert):
-
-        home_path_str = str(Path().home())
-        traceback_string = traceback.format_exc()
-        traceback_string.replace(home_path_str, "~")
-        error_message = f"Error message: \n\n ```\n {str(e)} \n``` "
-
-        # Log the error message and traceback
-        logger.exception(f"Send error response:\n---\n  {error_message} \n---")
-
-        # Send the error message and
-        await messages_to_upsert[-1].reply(f"{ERROR_MESSAGE_REPLY_PREFIX_TEXT} \n >  {error_message}", )
-
     async def handle_text_attachments(self, attachment: discord.Attachment) -> str:
         try:
             # Try to convert to text
@@ -176,7 +177,8 @@ class MyDiscordBot(discord.Bot):
             return f"\n\n{attachment.filename}:\n\n++++++\n{text}\n++++++\n"
         except UnicodeDecodeError:
             logger.warning(f"Attachment type not supported: {attachment.content_type}")
-            return f"\n\n{attachment.filename}:\n\n++++++\n{attachment.url}\n++++++(Note: Could not convert this file to text)\n"
+            return (f"\n\n{attachment.filename}:\n\n++++++\n{attachment.url}\n"
+                    f"++++++(Note: Could not convert this file to text)\n")
 
     async def handle_text_message(
             self,
@@ -184,17 +186,20 @@ class MyDiscordBot(discord.Bot):
             respond_to_this_text: str,
     ) -> List[discord.Message]:
 
-        message_responder = DiscordMessageResponder(message_prefix=self._local_message_prefix,
+        message_responder = DiscordMessageResponder(message_prefix=self.local_message_prefix,
                                                     bot_name=self.user.name, )
         await message_responder.initialize(message=message)
         reply_messages = await message_responder.get_reply_messages()
+
+        config = ChatRequestConfig(extra_prompts=self.config_messages_by_guild_id.get(message.guild.id, []),
+                                   memory_messages=self.memory_messages_by_channel_id.get(message.channel.id, []))
 
         chat_request = ChatRequest.from_discord_message(
             message=message,
             reply_message=reply_messages[-1],
             database_name=self._database_name,
             content=respond_to_this_text,
-            extra_prompts=await self.get_extra_prompts(message=message),
+            config=config,
         )
 
         async def callback(
@@ -204,7 +209,7 @@ class MyDiscordBot(discord.Bot):
             await responder.add_token_to_queue(token=token)
 
         try:
-            await self._api_client.send_request_to_api_streaming(
+            response_tokens = await self._api_client.send_request_to_api_streaming(
                 endpoint_name=CHAT_ENDPOINT,
                 data=chat_request.dict(),
                 callbacks=[callback],
@@ -230,7 +235,7 @@ class MyDiscordBot(discord.Bot):
             if "thread" in str(message.channel.type).lower():
                 in_thread = True
                 logger.debug(f"Message is in thread, will reply in thread")
-                responder = DiscordMessageResponder(message_prefix=self._local_message_prefix,
+                responder = DiscordMessageResponder(message_prefix=self.local_message_prefix,
                                                     bot_name=self.user.name, )
                 await responder.initialize(
                     message=message, initial_message_content=reply_message_content
@@ -286,104 +291,27 @@ class MyDiscordBot(discord.Bot):
 
         return {"transcription_text": transcription_text, "transcriptions_messages": transcriptions_messages}
 
-    async def get_extra_prompts(self, message: discord.Message) -> List[str]:
-        logger.debug(f"Getting extra prompts for message: {message.content}")
-        prompts_from_pins = []
-        prompts_from_bot_config_channel = []
-        if message.channel:
-            prompts_from_pins = await self.get_pinned_message_content_from_channel(channel=message.channel)
-        else:
-            logger.error(f"Message has no channel: {message.content}")
-
-        if message.guild:
-            prompts_from_bot_config_channel = await self.get_bot_config_channel_prompts(message)
-
-        extra_prompts = prompts_from_pins + prompts_from_bot_config_channel
-        logger.debug(f"Extra prompts: {extra_prompts}")
-        return extra_prompts
-
-    async def get_pinned_message_content_from_channel(self,
-                                                      channel: discord.channel) -> List[str]:
-        logger.debug(f"Getting pinned messages for channel: {channel}")
-        try:
-            pinned_messages = await channel.pins()
-            pinned_message_content = [msg.content for msg in pinned_messages if msg.content != ""]
-            logger.debug(f"Pinned messages: {pinned_message_content}")
-            return pinned_message_content
-        except Exception as e:
-            logger.error(f"Error getting pinned messages from channel: {channel}")
-            logger.exception(e)
-            raise
-
-    async def get_bot_config_channel_prompts(self,
-                                             message: discord.Message,
-                                             bot_config_channel_name: str = "bot-config",
-                                             ) -> List[str]:
-        """
-        Get messages from the `bot-config` channel in the server, if it exists
-        :param message:
-        :param bot_config_channel_name:
-        :return: List[str]
-        """
-        logger.debug(f"Getting extra prompts from bot-config channel")
-        try:
-            emoji_prompts = []
-            pinned_messages = []
-            for channel in message.guild.channels:
-                if bot_config_channel_name in channel.name.lower():
-                    logger.debug(f"Found bot-config channel")
-                    pinned_messages = await self.get_pinned_message_content_from_channel(channel=channel)
-                    bot_emoji_messages = await self._look_for_emoji_reaction_in_channel(channel,
-                                                                                        emoji="🤖")
-                    emoji_prompts = [message.content for message in bot_emoji_messages]
-
-            extra_prompts = list(set(pinned_messages + emoji_prompts))
-            logger.trace(f"Found prompts in bot-config-channel:\n {extra_prompts}\n")
-            return extra_prompts
-        except Exception as e:
-            logger.error(f"Error getting extra prompts from bot-config channel")
-            logger.exception(e)
-            raise
-
-    async def _look_for_emoji_reaction_in_channel(self,
-                                                  channel: discord.TextChannel,
-                                                  emoji: str) -> List[discord.Message]:
-        messages = []
-        async for msg in channel.history(limit=100):
-            # use messages with `bot` emoji reactions as prompts
-            if msg.reactions:
-                for reaction in msg.reactions:
-                    if str(reaction.emoji) == emoji:
-                        messages.append(msg)
-            logger.trace(f"Found {len(messages)} messages with {emoji} emoji reaction")
-        return messages
-
     async def _update_memory_emojis(self, message):
         try:
             logger.debug(f"Updating memory emojis for message: {message.content}")
             response = await self._database_operations.get_context_memory_document(message=message)
             context_memory_document = ContextMemoryDocument(**response)
 
-            memory_message_ids = []
-            for memory_message in context_memory_document.message_buffer:
-                if "message_id" in memory_message.additional_kwargs:
-                    memory_message_ids.append(memory_message.additional_kwargs["message_id"])
-
-            emoji_tasks = []
-            for memory_message_id in memory_message_ids:
-                message = await message.channel.fetch_message(memory_message_id)
-                if "💭" not in message.reactions:
-                    logger.trace(f"Adding memory emoji to message id: {message.id}")
-                    emoji_tasks.append(message.add_reaction("💭"))
-
-            async for msg in message.channel.history():
-                if "💭" in msg.reactions:
-                    if msg.id not in memory_message_ids:
-                        logger.trace(f"Removing memory emoji from message id: {msg.id}")
-                        emoji_tasks.append(msg.remove_reaction("💭", self.user))
-
-            await asyncio.gather(*emoji_tasks)
+            await self._bot_config_cog.update_memory_emojis(context_memory_document=context_memory_document,
+                                                            message=message)
         except Exception as e:
             logger.error(f"Error updating memory emojis for message: {message.content}")
             logger.exception(e)
             raise
+
+    async def send_error_response(self, exception: Exception, message: discord.Message):
+        home_path_str = str(Path().home())
+        traceback_string = traceback.format_exc()
+        traceback_string.replace(home_path_str, "~")
+        error_message = f"Error message: \n\n ```\n {str(exception)} \n``` "
+
+        # Log the error message and traceback
+        logger.exception(f"Send error response:\n---\n  {error_message} \n---")
+
+        # Send the error message and
+        await message.reply(f"{self.local_message_prefix}{ERROR_MESSAGE_REPLY_PREFIX_TEXT} \n >  {error_message}", )

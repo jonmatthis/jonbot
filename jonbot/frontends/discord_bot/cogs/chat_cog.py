@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 import discord
 
@@ -11,8 +12,16 @@ from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 MAX_FORUM_TITLE_LENGTH = 100
 logger = get_jonbot_logger()
 
+if TYPE_CHECKING:
+    from jonbot.frontends.discord_bot.discord_bot import MyDiscordBot
+
 
 class ChatCog(discord.Cog):
+
+    def __init__(self, bot: "MyDiscordBot"):
+        super().__init__()
+        self.bot = bot
+
     @discord.slash_command(name="chat",
                            description="Open new thread if in a thread or channel, new post if in a forum) ")
     @discord.option(
@@ -113,7 +122,7 @@ class ChatCog(discord.Cog):
         logger.debug(
             f"Sending initial message embed to thread: {thread.id} title: {thread_title}"
         )
-        await starting_message.edit(content=f"Thread title: {thread_title}",
+        await starting_message.edit(content=f"{self.bot.local_message_prefix}Thread title: {thread_title}",
                                     embed=initial_message_embed)
 
         initial_message_text = f"{NEW_CHAT_MESSAGE_PREFIX_TEXT} \n" f"{starting_text}"

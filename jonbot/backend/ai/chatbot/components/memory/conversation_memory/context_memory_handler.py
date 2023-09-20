@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 from langchain import PromptTemplate
 from pydantic import BaseModel
@@ -9,6 +9,7 @@ from jonbot.backend.backend_database_operator.backend_database_operator import (
 from jonbot.backend.data_layer.models.context_memory_document import ContextMemoryDocument
 from jonbot.backend.data_layer.models.context_route import ContextRoute
 from jonbot.backend.data_layer.models.database_request_response_models import ContextMemoryDocumentRequest
+from jonbot.backend.data_layer.models.discord_stuff.discord_message_document import DiscordMessageDocument
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
@@ -88,3 +89,6 @@ class ContextMemoryHandler(BaseModel):
             tokens_count=token_count
         )
         await self._upsert_context_memory()
+
+    def set_memory_messages(self, memory_messages: List[DiscordMessageDocument]):
+        pass

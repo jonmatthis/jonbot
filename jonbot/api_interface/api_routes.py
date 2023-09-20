@@ -7,7 +7,6 @@ from jonbot.backend.backend_database_operator.backend_database_operator import (
     BackendDatabaseOperations,
 )
 from jonbot.backend.controller.controller import Controller
-from jonbot.backend.data_layer.models.calculate_memory_request import CalculateMemoryRequest
 from jonbot.backend.data_layer.models.context_memory_document import ContextMemoryDocument
 from jonbot.backend.data_layer.models.conversation_models import ChatRequest
 from jonbot.backend.data_layer.models.database_request_response_models import UpsertDiscordMessagesRequest, \
@@ -25,8 +24,6 @@ VOICE_TO_TEXT_ENDPOINT = "/voice_to_text"
 
 UPSERT_MESSAGES_ENDPOINT = "/upsert_messages"
 UPSERT_CHATS_ENDPOINT = "/upsert_chats"
-
-CALCULATE_MEMORY_ENDPOINT = "/calculate_memory"
 
 GET_CONTEXT_MEMORY_ENDPOINT = "/get_context_memory"
 
@@ -65,13 +62,6 @@ def register_api_routes(
         )
         if response is None:
             return VoiceToTextResponse(success=False)
-        return response
-
-    @app.post(CALCULATE_MEMORY_ENDPOINT, response_model=ContextMemoryDocument)
-    async def calculate_memory_endpoint(
-            calculate_memory_request: CalculateMemoryRequest,
-    ) -> ContextMemoryDocument:
-        response = await controller.calculate_memory(calculate_memory_request)
         return response
 
     @app.post(CHAT_ENDPOINT)

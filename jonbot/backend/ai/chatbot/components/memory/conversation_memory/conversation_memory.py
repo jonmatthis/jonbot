@@ -11,6 +11,7 @@ from jonbot.backend.backend_database_operator.backend_database_operator import (
 )
 from jonbot.backend.data_layer.models.context_memory_document import ContextMemoryDocument
 from jonbot.backend.data_layer.models.context_route import ContextRoute
+from jonbot.backend.data_layer.models.discord_stuff.discord_message_document import DiscordMessageDocument
 from jonbot.backend.data_layer.models.memory_config import ChatbotConversationMemoryConfig
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
@@ -113,3 +114,28 @@ class ChatbotConversationMemory(ConversationSummaryBufferMemory):
             logger.error(f"Failed to update context memory: {e}")
             logger.exception(e)
             raise
+
+    def set_memory_messages(self, memory_messages: List[DiscordMessageDocument]):
+        self.chat_memory.messages = []
+
+        for message in memory_messages:
+            if message.is_bot:
+                self.chat_memory.messages.append(
+                    AIMessage(
+                        content=message.content,
+                        additional_kwargs={
+                            "message_id": message.message_id,
+                            "type": "ai",
+                        },
+                    )
+                )
+            else:
+                self.chat_memory.messages.append(
+                    HumanMessage(
+                        content=message.content,
+                        additional_kwargs={
+                            "message_id": message.message_id,
+                            "type": "human",
+                        },
+                    )
+                )

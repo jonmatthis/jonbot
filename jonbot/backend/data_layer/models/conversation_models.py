@@ -90,9 +90,10 @@ class MessageHistory(BaseModel):
 class ChatRequestConfig(BaseModel):
     vector_store_memory_config: VectorStoreMemoryConfig = VectorStoreMemoryConfig()
     limit_messages: Optional[int] = 20
-    extra_prompts: Optional[List[str]] = None
     temperature: Optional[float] = 0.9
     model_name: Optional[str] = "gpt-4"
+    extra_prompts: Optional[List[str]] = None
+    memory_messages: Optional[List[DiscordMessageDocument]] = None
 
     @classmethod
     def from_kwargs(cls, kwargs: Dict[str, Any]):
@@ -123,11 +124,10 @@ class ChatRequest(BaseModel):
             text: str,
             database_name: str,
             context_description_text: str,
-            context_route: ContextRoute = ContextRoute.dummy(dummy_text="dummy"),
-            **kwargs
+            config: ChatRequestConfig,
+            timestamp: Timestamp,
+            context_route: ContextRoute  # = ContextRoute.dummy(dummy_text="dummy"),
     ):
-        config = ChatRequestConfig.from_kwargs(kwargs)
-
         return cls(
             user_id=user_id,
             message_id=message_id,
@@ -137,6 +137,7 @@ class ChatRequest(BaseModel):
             context_route=context_route,
             conversation_context_description=ConversationContextDescription(text=context_description_text),
             config=config,
+            timestamp=timestamp,
         )
 
     @classmethod
@@ -146,7 +147,7 @@ class ChatRequest(BaseModel):
             reply_message: discord.Message,
             database_name: str,
             content: str,
-            **kwargs
+            config: ChatRequestConfig,
     ):
         return cls.from_text(
             user_id=message.author.id,
@@ -157,18 +158,18 @@ class ChatRequest(BaseModel):
             database_name=database_name,
             context_route=ContextRoute.from_discord_message(message),
             context_description_text=ConversationContextDescription.from_discord_message(message).text,
-            **kwargs
+            config=config,
         )
 
     @classmethod
     def from_discord_message_document(
-            cls, message_document: DiscordMessageDocument, database_name: str, **kwargs
+            cls,
+            message_document: DiscordMessageDocument, database_name: str, **kwargs
     ):
         return cls.from_text(
             text=message_document.content,
             timestamp=message_document.timestamp,
             database_name=database_name,
             context_route=message_document.context_route,
-            context_description=message_document.context_description,
             **kwargs
         )

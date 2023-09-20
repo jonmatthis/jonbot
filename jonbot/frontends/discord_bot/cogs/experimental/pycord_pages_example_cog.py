@@ -5,7 +5,7 @@ from discord.commands import SlashCommandGroup
 from discord.ext import commands, pages
 
 
-class PageTest(commands.Cog):
+class PageTestCog(discord.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.pages = [
