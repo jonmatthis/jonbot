@@ -2,7 +2,6 @@ import os
 from typing import Optional, List, Dict, Any
 
 from dotenv import load_dotenv
-from jonbot.frontends.telegram_bot.telegram_bot import run_telegram_bot_sync
 
 from jonbot.api_interface.api_main import run_api_sync
 from jonbot.frontends.discord_bot.discord_main import run_discord_bot
