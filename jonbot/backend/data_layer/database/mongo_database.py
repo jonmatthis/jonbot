@@ -167,15 +167,14 @@ class MongoDatabaseManager:
             self,
             database_name: str,
             discord_id: DiscordUserID = None,
-            telegram_id: TelegramUserID = None,
     ) -> str:
         user = await self.get_user(
-            database_name, discord_id=discord_id, telegram_id=telegram_id
+            database_name, discord_id=discord_id
         )
         if user is None:
             logger.debug(f"User not found. Creating new user.")
             user = await self.create_user(
-                database_name, discord_id=discord_id, telegram_id=telegram_id
+                database_name, discord_id=discord_id
             )
         if user is None:
             logger.error(f"Failed to create user.")
@@ -187,15 +186,12 @@ class MongoDatabaseManager:
             self,
             database_name: str,
             discord_id: DiscordUserID = None,
-            telegram_id: TelegramUserID = None,
     ) -> Union[None, UserID]:
         users_collection = self.get_collection(database_name, USERS_COLLECTION_NAME)
 
         query = {}
         if discord_id is not None:
             query["discord_id"] = discord_id.dict()
-        if telegram_id is not None:
-            query["telegram_id"] = telegram_id.dict()
         user = await users_collection.find_one(query)
 
         if user is not None:
@@ -205,7 +201,6 @@ class MongoDatabaseManager:
             self,
             database_name: str,
             discord_id: DiscordUserID = None,
-            telegram_id: TelegramUserID = None,
     ) -> Union[None, UserID]:
         users_collection = self.get_collection(database_name, USERS_COLLECTION_NAME)
 
