@@ -48,50 +48,50 @@ def bot_mentioned_in_message(message: discord.Message,
 def should_reply(message: discord.Message,
                  bot_user_name: str,
                  bot_id: int) -> bool:
-    if not allowed_to_reply(message=message, bot_user_name=bot_user_name, bot_id=bot_id):
+    if not allowed_to_reply_to_message(message=message, bot_user_name=bot_user_name, bot_id=bot_id):
         logger.debug(
-            f"Message `{message.content}` was not handled by the bot {bot_user_name} (reason: not allowed to reply)"
+            f"Message `{message.id}` was not handled by the bot {bot_user_name} (reason: not allowed to reply)"
         )
         return False
 
     if check_if_new_thread_message(message):
         logger.debug(
-            f"Message `{message.content}` was handled by the bot {bot_user_name} (reason: new thread message)"
+            f"Message `{message.id}` was handled by the bot {bot_user_name} (reason: new thread message)"
         )
         return True
 
     if this_message_is_from_a_bot(message):
         logger.debug(
-            f"Message `{message.content}` was not handled by the bot {bot_user_name} (reason: message from bot)"
+            f"Message `{message.id}` was not handled by the bot {bot_user_name} (reason: message from bot)"
         )
         return False
 
     if message_starts_with_ignore_prefix(message):
         logger.debug(
-            f"Message `{message.content}` was not handled by the"
+            f"Message `{message.id}` was not handled by the"
             f" bot {bot_user_name} (reason: starts with ignore prefix{IGNORE_PREFIX})"
         )
         return False
 
     logger.debug(
-        f"Message `{message.content}` will be handled by the bot {bot_user_name} (reason: passed all checks)"
+        f"Message `{message.id}` will be handled by the bot {bot_user_name} (reason: passed all checks)"
     )
     return True
 
 
-def allowed_to_reply(message: discord.Message,
-                     bot_user_name: str,
-                     bot_id: int) -> bool:
+def allowed_to_reply_to_message(message: discord.Message,
+                                bot_user_name: str,
+                                bot_id: int) -> bool:
     try:
         discord_config = get_or_create_discord_environment_config()
         logger.trace(
-            f"Checking if message `{message.content}` is allowed to be handled by the bot {discord_config.BOT_NICK_NAME}"
+            f"Checking if message `{message.id}` is allowed to be handled by the bot {discord_config.BOT_NICK_NAME}"
         )
 
         # Handle DMs
         if message.channel.type == discord.ChannelType.private:
             logger.trace(
-                f"Message `{message.content}` is allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: DM)"
+                f"Message `{message.id}` is allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: DM)"
             )
             return discord_config.DIRECT_MESSAGES_ALLOWED
 
@@ -115,51 +115,51 @@ def allowed_to_reply(message: discord.Message,
 
         if bot_mentioned_in_message(message=message, bot_id=bot_id, bot_user_name=bot_user_name):
             logger.trace(
-                f"Message `{message.content}` is allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: bot mentioned)"
+                f"Message `{message.id}` is allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: bot mentioned)"
             )
             return True
 
         excluded_categories = server_data.get("EXCLUDED_CATEGORIES_IDS", [])
         if channel_id in excluded_categories:
             logger.debug(
-                f"Message `{message.content}` is not allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: excluded category)"
+                f"Message `{message.id}` is not allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: excluded category)"
             )
             return False
         excluded_channels = server_data.get("EXCLUDED_CHANNEL_IDS", [])
         if channel_id in excluded_channels:
             logger.debug(
-                f"Message `{message.content}` is not allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: excluded channel)"
+                f"Message `{message.id}` is not allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: excluded channel)"
             )
             return False
 
         allowed_categories = server_data.get("ALLOWED_CATEGORY_IDS", [])
         if allowed_categories == ["ALL"]:
             logger.trace(
-                f"Message `{message.content}` is allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: allowed categories = ALL)"
+                f"Message `{message.id}` is allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: allowed categories = ALL)"
             )
             return True
 
         if message.channel.category_id in allowed_categories:
             logger.trace(
-                f"Message `{message.content}` is allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: allowed category)"
+                f"Message `{message.id}` is allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: allowed category)"
             )
             return True
 
         allowed_channels = server_data.get("ALLOWED_CHANNEL_IDS", [])
         if allowed_channels == ["ALL"]:
             logger.trace(
-                f"Message `{message.content}` is allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: allowed channels = ALL)"
+                f"Message `{message.id}` is allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: allowed channels = ALL)"
             )
             return True
 
         if channel_id not in allowed_channels:
             logger.debug(
-                f"Message `{message.content}` is not allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: not allowed channel)"
+                f"Message `{message.id}` is not allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: not allowed channel)"
             )
             return False
 
         logger.trace(
-            f"Message `{message.content}` is allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: passed all checks)"
+            f"Message `{message.id}` is allowed to be handled by the bot {discord_config.BOT_NICK_NAME} (reason: passed all checks)"
         )
         return True
 

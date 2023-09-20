@@ -79,7 +79,6 @@ class MyDiscordBot(commands.Bot):
     @discord.Cog.listener()
     async def on_ready(self):
         logger.success(f"Logged in as {self.user.name} ({self.user.id})")
-        asyncio.create_task(self._bot_config_cog.gather_config_messages())
         for server in self.guilds:
             logger.info(f"{self.user}: Connected to server: {server.name}")
 
@@ -125,6 +124,7 @@ class MyDiscordBot(commands.Bot):
                 await self._chat_cog.create_chat(ctx=await self.get_application_context(message),
                                                  parent_message=message,
                                                  initial_message_text=text_to_reply_to)
+
             else:
                 response_messages = await self.handle_text_message(
                     message=message,
@@ -185,44 +185,55 @@ class MyDiscordBot(commands.Bot):
             message: discord.Message,
             respond_to_this_text: str,
     ) -> List[discord.Message]:
-
-        message_responder = DiscordMessageResponder(message_prefix=self.local_message_prefix,
-                                                    bot_name=self.user.name, )
-        await message_responder.initialize(message=message)
-        reply_messages = await message_responder.get_reply_messages()
-
-        config = ChatRequestConfig(extra_prompts=self.config_messages_by_guild_id.get(message.guild.id, []),
-                                   memory_messages=self.memory_messages_by_channel_id.get(message.channel.id, []))
-
-        chat_request = ChatRequest.from_discord_message(
-            message=message,
-            reply_message=reply_messages[-1],
-            database_name=self._database_name,
-            content=respond_to_this_text,
-            config=config,
-        )
-
-        async def callback(
-                token: str, responder: DiscordMessageResponder = message_responder
-        ):
-            logger.trace(f"FRONTEND received token: `{repr(token)}`")
-            await responder.add_token_to_queue(token=token)
-
         try:
-            response_tokens = await self._api_client.send_request_to_api_streaming(
-                endpoint_name=CHAT_ENDPOINT,
-                data=chat_request.dict(),
-                callbacks=[callback],
+            gather_config_prompts_task = asyncio.create_task(
+                self._bot_config_cog.gather_config_messages(channel=message.channel))
+
+            message_responder = DiscordMessageResponder(message_prefix=self.local_message_prefix,
+                                                        bot_name=self.user.name, )
+            await message_responder.initialize(message=message)
+            reply_messages = await message_responder.get_reply_messages()
+
+            extra_prompts = self.config_messages_by_guild_id.get(message.guild.id, [])
+            memory_messages = self.memory_messages_by_channel_id.get(message.channel.id, [])
+            config = ChatRequestConfig(extra_prompts=extra_prompts,
+                                       memory_messages=memory_messages)
+
+            chat_request = ChatRequest.from_discord_message(
+                message=message,
+                reply_message=reply_messages[-1],
+                database_name=self._database_name,
+                content=respond_to_this_text,
+                config=config,
             )
-            await message_responder.shutdown()
-            return await message_responder.get_reply_messages()
+
+            async def callback(
+                    token: str, responder: DiscordMessageResponder = message_responder
+            ):
+                logger.trace(f"FRONTEND received token: `{repr(token)}`")
+                await responder.add_token_to_queue(token=token)
+
+            try:
+                response_tokens = await self._api_client.send_request_to_api_streaming(
+                    endpoint_name=CHAT_ENDPOINT,
+                    data=chat_request.dict(),
+                    callbacks=[callback],
+                )
+                await message_responder.shutdown()
+                return await message_responder.get_reply_messages()
+
+            except Exception as e:
+                await message_responder.add_token_to_queue(
+                    f"  --  \n!!!\n> `Oh no! An error while streaming reply...`"
+                )
+                await message_responder.shutdown()
+                raise
 
         except Exception as e:
-            await message_responder.add_token_to_queue(
-                f"  --  \n!!!\n> `Oh no! An error while streaming reply...`"
-            )
-            await message_responder.shutdown()
+            logger.exception(f"Error occurred while handling text message: {str(e)}")
             raise
+        finally:
+            await gather_config_prompts_task
 
     async def handle_audio_message(self, message: discord.Message) -> Dict[str, Union[str, List[discord.Message]]]:
         logger.info(f"Received voice memo from user: {message.author}")

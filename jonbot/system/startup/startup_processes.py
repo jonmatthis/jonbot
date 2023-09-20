@@ -12,6 +12,7 @@ logger = get_jonbot_logger()
 
 
 def startup(bot_nick_names: List[str]):
+    bot_nick_names = filter_bot_nick_names(bot_nick_names=bot_nick_names)
     logger.info("Starting services...")
     selection = get_services_selection()
     logger.info(f"Selected services: {selection}")

@@ -1,5 +1,5 @@
 import uuid
-from typing import Union, Optional, List, Literal, Dict, Any
+from typing import Union, Optional, List, Literal
 
 import discord
 from pydantic import BaseModel, Field
@@ -96,7 +96,7 @@ class ChatRequestConfig(BaseModel):
     memory_messages: Optional[List[DiscordMessageDocument]] = None
 
     @classmethod
-    def from_kwargs(cls, kwargs: Dict[str, Any]):
+    def from_kwargs(cls, **kwargs):
         build_dict = {}
         for key, value in kwargs.items():
             if key in ChatRequestConfig.__fields__:
