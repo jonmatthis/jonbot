@@ -1,0 +1,19 @@
+version: '3.7'
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    environment:
+      - IS_DOCKER=1
+      - RUN_SERVICES=API
+      - PORT_NUMBER=8091
+  { % for bot_name, service in services.items() % }
+  {{bot_name}}:
+  build: {{service.build}}
+  depends_on: {{service.depends_on}}
+  environment:
+    - IS_DOCKER=1
+    - RUN_SERVICES=DISCORD
+    - PORT_NUMBER=8091
+  { % endfor % }
