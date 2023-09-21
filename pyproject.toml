@@ -34,6 +34,7 @@ anthropic = "^0.3.11"
 langsmith = "^0.0.33"
 pytest = "^7.4.1"
 pytest-asyncio = "^0.21.1"
+Jinja2 = "^3.1.2"
 
 
 [tool.poetry.group.dev.dependencies]

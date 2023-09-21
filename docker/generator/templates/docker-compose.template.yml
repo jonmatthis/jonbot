@@ -8,10 +8,10 @@ services:
       - IS_DOCKER=1
       - RUN_SERVICES=API
       - PORT_NUMBER=8091
-  { % for bot_name, service in services.items() % }
+  { % for bot_name, bot_config in services.items() % }
   {{bot_name}}:
-  build: {{service.build}}
-  depends_on: {{service.depends_on}}
+  build: {{services.build}}
+  depends_on: {{services.depends_on}}
   environment:
     - IS_DOCKER=1
     - RUN_SERVICES=DISCORD

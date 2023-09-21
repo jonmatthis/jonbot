@@ -207,7 +207,7 @@ class Quine:
 
 
 if __name__ == "__main__":
-    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\docker"
+    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\docker\generator"
 
     quine_config = QuineConfig(
         print_mode="all",
@@ -224,7 +224,6 @@ if __name__ == "__main__":
         # CONTENT (i.e. the actual text/code in the files)
         content=ContentFetcherConfig(
             fetch_content_for=[base_directory_in],
-            # r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\__main__.py"],
             recursion_depth=1,
         ),
         output_file_name=f"quine_{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S.%f')}.txt",
