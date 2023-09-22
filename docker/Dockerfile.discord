@@ -11,4 +11,4 @@ RUN apt-get update && \
     apt-get install -y ffmpeg && \
     rm -rf /var/lib/apt/lists/*
 
-CMD ["python", "-m", "jonbot.__main__", "bot_name"]
+CMD ["python", "-m", "jonbot.__main__"]
