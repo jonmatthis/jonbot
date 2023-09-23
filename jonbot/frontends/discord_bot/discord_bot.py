@@ -165,7 +165,7 @@ class MyDiscordBot(commands.Bot):
         message_text = f"In reply to message from {reply_message.author}, with content:\n ```\n{reply_message.content}\n```\n"
 
         if include_attachments and len(reply_message.attachments) > 0:
-            message_text += self.handle_attachments(message=reply_message)
+            message_text += await self.handle_attachments(message=reply_message)
 
         return message_text
 
