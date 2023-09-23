@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from copy import deepcopy
 from typing import List, TYPE_CHECKING
 
 import discord
@@ -79,7 +80,16 @@ class BotConfigCog(discord.Cog):
                 self.bot.memory_messages_by_channel_id[payload.channel_id] = []
             for message in self.bot.memory_messages_by_channel_id[payload.channel_id]:
                 if message.message_id == payload.message_id:
-                    message_document = await DiscordMessageDocument.from_discord_message(message=message)
+                    for message in self.bot.memory_messages_by_channel_id[payload.channel_id]:
+                        if message.message_id == payload.message_id:
+                            if isinstance(message, discord.Message):
+                                message_document = await DiscordMessageDocument.from_discord_message(message=message)
+                            elif isinstance(message, DiscordMessageDocument):
+                                message_document = deepcopy(message.dict())
+                            else:
+                                raise ValueError(f"Message type not recognized: {message}")
+                            self.bot.memory_messages_by_channel_id[payload.channel_id].remove(message_document)
+                            break
                     self.bot.memory_messages_by_channel_id[payload.channel_id].remove(message_document)
                     break
 
