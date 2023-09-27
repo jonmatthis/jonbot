@@ -118,7 +118,7 @@ class MyDiscordBot(commands.Bot):
                     text_to_reply_to += await self.handle_attachments(message=message,
                                                                       messages_to_upsert=messages_to_upsert)
 
-            if "thread" not in str(message.channel.type).lower():
+            if str(message.channel.type).lower() not in ["thread", "private"]:
                 logger.info("Message is not in a thread (or forum post) - "
                             "creating a under this message (bot will process top-level message created in that thread)")
                 await self._chat_cog.create_chat(ctx=await self.get_application_context(message),
@@ -136,9 +136,7 @@ class MyDiscordBot(commands.Bot):
         except Exception as e:
             await self.send_error_response(exception=e, message=messages_to_upsert[-1])
         finally:
-            await asyncio.gather(
-                self._database_operations.upsert_messages(messages=messages_to_upsert),
-                update_emojis_task)
+            await self._database_operations.upsert_messages(messages=messages_to_upsert)
 
     async def handle_attachments(self,
                                  message: discord.Message,
@@ -194,7 +192,10 @@ class MyDiscordBot(commands.Bot):
             await message_responder.initialize(message=message)
             reply_messages = await message_responder.get_reply_messages()
 
-            extra_prompts = self.config_messages_by_guild_id.get(message.guild.id, [])
+            if hasattr(message, "guild") and message.guild is not None:
+                extra_prompts = self.config_messages_by_guild_id.get(message.guild.id, [])
+            else:
+                extra_prompts = []
             memory_messages = self.memory_messages_by_channel_id.get(message.channel.id, [])
             config = ChatRequestConfig(extra_prompts=extra_prompts,
                                        memory_messages=memory_messages)

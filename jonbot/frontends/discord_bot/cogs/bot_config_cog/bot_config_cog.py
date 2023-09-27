@@ -38,7 +38,8 @@ class BotConfigCog(discord.Cog):
         user = self.bot.get_user(payload.user_id)
         guild = self.bot.get_guild(payload.guild_id)
         channel = self.bot.get_channel(payload.channel_id)
-        message = await channel.fetch_message(payload.message_id)
+        # message = await channel.fetch_message(payload.message_id)
+        message = self.bot.get_message(payload.message_id)
 
         if not allowed_to_reply_to_message(message=message,
                                            bot_id=self.bot.user.id,
@@ -112,7 +113,7 @@ class BotConfigCog(discord.Cog):
         try:
             logger.info(f"Getting config messages")
 
-            if channel.guild is not None:
+            if hasattr(channel, "guild") and channel.guild is not None:
                 self.bot.config_messages_by_guild_id[channel.guild.id] = await self.get_bot_config_channel_prompts(
                     guild=channel.guild)
             self.bot.pinned_messages_by_channel_id[channel.id] = await get_pinned_messages(channel=channel)
