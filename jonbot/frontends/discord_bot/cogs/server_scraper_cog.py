@@ -116,7 +116,7 @@ class ServerScraperCog(commands.Cog):
         finally:
             logger.info(f"Waiting for {len(tasks)} tasks to finish...")
             await asyncio.gather(*tasks)
-            logger.info(f"Tasks finished!")
+            logger.success(f"Tasks finished!")
 
         reply_embed_description = await self._update_reply_message_embed(
             channel_message_count_string="",

@@ -20,7 +20,7 @@ class DiscordMessageResponder:
     def __init__(self, message_prefix: str = "", bot_name: str = None):
         self.message_prefix: str = message_prefix
         self._bot_name = bot_name
-        self.message_content: str = self.message_prefix
+        self.message_content: str = ""
         self._reply_message: discord.Message = None
         self._reply_messages: List[discord.Message] = []
         self._full_message_content: str = ""

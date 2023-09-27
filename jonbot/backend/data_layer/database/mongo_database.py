@@ -16,7 +16,8 @@ from jonbot.system.environment_variables import (
     MONGO_URI,
     USERS_COLLECTION_NAME,
     RAW_MESSAGES_COLLECTION_NAME,
-    CONTEXT_MEMORIES_COLLECTION_NAME, CHATS_COLLECTION_NAME,
+    CONTEXT_MEMORIES_COLLECTION_NAME,
+    CHATS_COLLECTION_NAME,
 )
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 

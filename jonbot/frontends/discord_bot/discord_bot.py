@@ -125,6 +125,7 @@ class MyDiscordBot(commands.Bot):
                                                  parent_message=message,
                                                  initial_message_text=text_to_reply_to)
 
+
             else:
                 response_messages = await self.handle_text_message(
                     message=message,
@@ -137,7 +138,7 @@ class MyDiscordBot(commands.Bot):
         finally:
             await asyncio.gather(
                 self._database_operations.upsert_messages(messages=messages_to_upsert),
-                self._update_memory_emojis(message=message))
+                update_emojis_task)
 
     async def handle_attachments(self,
                                  message: discord.Message,
@@ -218,7 +219,8 @@ class MyDiscordBot(commands.Bot):
                     data=chat_request.dict(),
                     callbacks=[callback],
                 )
-                await message_responder.shutdown()
+                await asyncio.gather(message_responder.shutdown(),
+                                     self._update_memory_emojis(message=message))
                 return await message_responder.get_reply_messages()
 
             except Exception as e:

@@ -161,12 +161,14 @@ class BotConfigCog(discord.Cog):
     async def update_memory_emojis(self,
                                    context_memory_document: ContextMemoryDocument,
                                    message: discord.Message):
-        memory_message_ids = []
-        for memory_message in context_memory_document.chat_memory_message_buffer.message_buffer:
-            if "message_id" in memory_message.additional_kwargs.keys():
-                memory_message_ids.append(memory_message.additional_kwargs["message_id"])
 
-        emoji_tasks = []
+        memory_message_ids = []
+        if context_memory_document.chat_memory_message_buffer:
+            if context_memory_document.chat_memory_message_buffer.message_buffer:
+
+                for memory_message in context_memory_document.chat_memory_message_buffer.message_buffer:
+                    if "message_id" in memory_message.additional_kwargs.keys():
+                        memory_message_ids.append(memory_message.additional_kwargs["message_id"])
 
         async def update_message(channel: discord.TextChannel, message_id: int):
 
@@ -175,11 +177,35 @@ class BotConfigCog(discord.Cog):
                 logger.trace(f"Adding memory emoji to message id: {message.id}")
                 await message.add_reaction("💭")
 
-        for memory_message_id in memory_message_ids:
-            emoji_tasks.append(update_message(channel=message.channel, message_id=memory_message_id))
+        current_message_ids = await self._clear_channel_memory_messages_that_arent_in_memory(memory_message_ids,
+                                                                                             message)
+
+        emoji_tasks = [
+            asyncio.create_task(update_message(channel=message.channel, message_id=memory_message_id))
+            for memory_message_id in memory_message_ids if memory_message_id not in current_message_ids
+        ]
 
         await asyncio.gather(*emoji_tasks)
         logger.success(f"Finished updating memory emojis")
+
+    async def _clear_channel_memory_messages_that_arent_in_memory(self, memory_message_ids: List[int],
+                                                                  message: discord.Message):
+        try:
+            current_memory_messages = await self.look_for_emoji_reaction_in_channel(channel=message.channel,
+                                                                                    emoji="💭")
+            current_message_ids = [message.id for message in current_memory_messages]
+            for current_message_id in current_message_ids:
+                if current_message_id not in memory_message_ids:
+                    logger.trace(f"Removing memory emoji from message id: {current_message_id}")
+                    await message.remove_reaction("💭", self.bot.user)
+                    await message.remove_reaction("💭", message.author)
+                    await message.remove_reaction("❌", self.bot.user)
+                    await message.remove_reaction("❌", message.author)
+        except Exception as e:
+            logger.error(f"Error clearing memory messages that aren't in memory")
+            logger.exception(e)
+            raise
+        return current_message_ids
 
     async def look_for_emoji_reaction_in_channel(self,
                                                  channel: discord.TextChannel,
