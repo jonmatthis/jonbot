@@ -118,7 +118,7 @@ class MyDiscordBot(commands.Bot):
                     text_to_reply_to += await self.handle_attachments(message=message,
                                                                       messages_to_upsert=messages_to_upsert)
 
-            if str(message.channel.type).lower() not in ["thread", "private"]:
+            if "thread" not in str(message.channel.type).lower() and str(message.channel.type).lower() != "private":
                 logger.info("Message is not in a thread (or forum post) - "
                             "creating a under this message (bot will process top-level message created in that thread)")
                 await self._chat_cog.create_chat(ctx=await self.get_application_context(message),
