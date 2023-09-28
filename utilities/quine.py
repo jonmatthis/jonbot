@@ -173,7 +173,7 @@ class Quine:
         output += "\n\n" + self.content_fetcher.fetch_content()
 
         logger.debug(f"Writing output to file: {self.config.output_file_path()}")
-        with open(self.config.output_file_path(), "w") as file:
+        with open(self.config.output_file_path(), "w", encoding="utf-8") as file:
             file.write(output)
 
         if self.config.print_mode in ["clipboard", "all"]:
@@ -207,7 +207,7 @@ class Quine:
 
 
 if __name__ == "__main__":
-    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\docker\generator"
+    base_directory_in = r"C:\Users\jonma\github_repos\freemocap_organization\skellycam\skellycam"
 
     quine_config = QuineConfig(
         print_mode="all",
@@ -217,7 +217,7 @@ if __name__ == "__main__":
             fetch_structure_for=[],
             base_directory=base_directory_in,
             excluded_directories=["__pycache__", ".git", "legacy"],
-            included_extensions=[".py", "yaml", "api", "discord"],
+            included_extensions=["py", "yaml", "api", "discord", "md", "txt", "json", "toml", "tex"],
             excluded_file_names=["poetry.lock", ".gitignore", "LICENSE", "*.env"],
         ),
 

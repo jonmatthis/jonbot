@@ -21,9 +21,8 @@ async def transcribe_audio_function(
         language: str = None,
 ) -> VoiceToTextResponse:
     file_name = "voice-message"
-    file_extension = audio_file_url.split(".")[
-        -1
-    ]  # Get the audio file extension from the URL
+    file_extension = audio_file_url.split(".")[-1]  # Get the audio file extension from the URL
+    file_extension = file_extension.split("?")[0]  # Remove any query parameters
     original_file_name = f"{file_name}.{file_extension}"
     original_file_path = Path(get_temp_folder()) / original_file_name
 
