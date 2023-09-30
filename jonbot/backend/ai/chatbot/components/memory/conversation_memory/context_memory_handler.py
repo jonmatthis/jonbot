@@ -1,6 +1,5 @@
 from typing import Optional
 
-from langchain import PromptTemplate
 from pydantic import BaseModel
 
 from jonbot.backend.data_layer.models.context_route import ContextRoute
@@ -19,7 +18,8 @@ class ContextMemoryHandler(BaseModel):
     current_context_memory_document: ContextMemoryDocument = None
     database_operations: "BackendDatabaseOperations"
     database_name: str
-    summary_prompt: PromptTemplate
+
+    # summary_prompt: PromptTemplate
 
     @property
     async def context_memory_document(self) -> ContextMemoryDocument:
@@ -33,7 +33,7 @@ class ContextMemoryHandler(BaseModel):
                 f"Current context memory document was not found in database, returning empty document..."
             )
             self.current_context_memory_document = ContextMemoryDocument.build_empty(
-                context_route=self.context_route, summary_prompt=self.summary_prompt
+                context_route=self.context_route,  # summary_prompt=self.summary_prompt
             )
         return self.current_context_memory_document
 
@@ -43,7 +43,7 @@ class ContextMemoryHandler(BaseModel):
         )
         get_request = ContextMemoryDocumentRequest.build_get_request(
             context_route=self.context_route,
-            summary_prompt=self.summary_prompt,
+            # summary_prompt=self.summary_prompt,
             database_name=self.database_name,
         )
         response = await self.database_operations.get_context_memory_document(
@@ -79,22 +79,25 @@ class ContextMemoryHandler(BaseModel):
 
     async def update(self,
                      chat_memory_message_buffer: ChatMemoryMessageBuffer = None,
-                     summary: str = None,
+                     # summary: str = None,
                      token_count: int = None):
         logger.debug(
-            f"Updating context memory for context route: {self.context_route.dict()} - summary: {summary}"
+            f"Updating context memory for context route: {self.context_route.dict()}"  # - summary: {summary}"
         )
         if chat_memory_message_buffer is None:
             chat_memory_message_buffer = self.current_context_memory_document.chat_memory_message_buffer
-        if summary is None:
-            summary = self.current_context_memory_document.summary
+        # if summary is None:
+        #     summary = self.current_context_memory_document.summary
         if token_count is None:
-            token_count = self.current_context_memory_document.tokens_count
+            if self.current_context_memory_document is not None:
+                token_count = self.current_context_memory_document.tokens_count
+            else:
+                token_count = 0
 
         document = await self.context_memory_document
         document.update(
             chat_memory_message_buffer=chat_memory_message_buffer,
-            summary=summary,
+            # summary=summary,
             tokens_count=token_count
         )
         await self._upsert_context_memory()

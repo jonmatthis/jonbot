@@ -29,7 +29,7 @@ from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 logger = get_jonbot_logger()
 
 
-class ChatbotLLMChain:
+class Chatbot:
     memory: ChatbotConversationMemory
     model: BaseChatModel
     prompt: ChatPromptTemplate
@@ -61,8 +61,6 @@ class ChatbotLLMChain:
             context_route=self.context_route,
         )
 
-        self.apply_config_and_build_chain(config=config)
-
     @classmethod
     async def from_context_route(
             cls,
@@ -82,8 +80,8 @@ class ChatbotLLMChain:
             config=chat_request_config,
 
         )
+        await instance.apply_config_and_build_chain(config=chat_request_config)
 
-        # await instance.memory.configure_memory()
         return instance
 
     @classmethod
@@ -115,7 +113,7 @@ class ChatbotLLMChain:
                 | self.model
         )
 
-    def apply_config_and_build_chain(self, config: ChatRequestConfig):
+    async def apply_config_and_build_chain(self, config: ChatRequestConfig):
         logger.debug(f"Applying config: {config} to chatbot chain...")
         if self.memory is None:
             logger.error(f"Memory not configured!")
@@ -132,7 +130,7 @@ class ChatbotLLMChain:
             extra_prompts=config.extra_prompts,
         )
 
-        self.memory.set_memory_messages(config.memory_messages)
+        await self.memory.set_memory_messages(config.memory_messages)
 
         self.chain = self._build_chain()
 
@@ -160,7 +158,7 @@ class ChatbotLLMChain:
             logger.trace(f"Response message: {response_message}")
             await self.memory.update(
                 inputs=inputs,
-                outputs={"output": response_message,
+                outputs={"output": f"{response_message}",
                          "message_id": reply_message_id},
             )
 

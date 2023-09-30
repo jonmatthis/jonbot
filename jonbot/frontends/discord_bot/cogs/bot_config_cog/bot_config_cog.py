@@ -34,65 +34,75 @@ class BotConfigCog(discord.Cog):
 
     @discord.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
-        logger.debug(f"Received reaction: {payload}")
-        user = self.bot.get_user(payload.user_id)
-        guild = self.bot.get_guild(payload.guild_id)
-        channel = self.bot.get_channel(payload.channel_id)
-        # message = await channel.fetch_message(payload.message_id)
-        message = self.bot.get_message(payload.message_id)
+        try:
+            logger.debug(f"Received reaction: {payload}")
+            user = self.bot.get_user(payload.user_id)
+            guild = self.bot.get_guild(payload.guild_id)
+            channel = self.bot.get_channel(payload.channel_id)
+            # message = await channel.fetch_message(payload.message_id)
+            message = self.bot.get_message(payload.message_id)
 
-        if not allowed_to_reply_to_message(message=message,
-                                           bot_id=self.bot.user.id,
-                                           bot_user_name=self.bot.user.name):
-            return
+            if not allowed_to_reply_to_message(message=message,
+                                               bot_id=self.bot.user.id,
+                                               bot_user_name=self.bot.user.name):
+                return
 
-        emoji = str(payload.emoji)
+            emoji = str(payload.emoji)
 
-        if guild is not None:
-            if emoji == self._bot_config_emoji and BOT_CONFIG_CHANNEL_NAME in channel.name:
-                logger.debug(f"Reaction was in bot-config channel, updating config messages")
-                self.bot.config_messages_by_guild_id[payload.guild_id] = await self.get_bot_config_channel_prompts(
-                    guild=guild)
+            if guild is not None:
+                if emoji == self._bot_config_emoji and BOT_CONFIG_CHANNEL_NAME in channel.name:
+                    logger.debug(f"Reaction was in bot-config channel, updating config messages")
+                    self.bot.config_messages_by_guild_id[payload.guild_id] = await self.get_bot_config_channel_prompts(
+                        guild=guild)
 
-        if emoji == self._memory_emoji:
-            logger.debug(f"User reacted with memory emoji - adding memory message to channel ({channel}) list")
-            if payload.channel_id not in self.bot.memory_messages_by_channel_id.keys():
-                self.bot.memory_messages_by_channel_id[payload.channel_id] = []
+            if emoji == self._memory_emoji:
+                logger.debug(f"User reacted with memory emoji - adding memory message to channel ({channel}) list")
+                if payload.channel_id not in self.bot.memory_messages_by_channel_id.keys():
+                    self.bot.memory_messages_by_channel_id[payload.channel_id] = []
 
-            if message not in self.bot.memory_messages_by_channel_id[payload.channel_id]:
-                message_document = await DiscordMessageDocument.from_discord_message(message=message)
-                self.bot.memory_messages_by_channel_id[payload.channel_id].append(message_document)
+                if message not in self.bot.memory_messages_by_channel_id[payload.channel_id]:
+                    message_document = await DiscordMessageDocument.from_discord_message(message=message)
+                    self.bot.memory_messages_by_channel_id[payload.channel_id].append(message_document)
 
-            if not user == self.bot.user:
-                logger.debug("Emoji was added by a user, so botto will add their own reaction")
-                await message.add_reaction(self._memory_emoji),
+                if not user == self.bot.user:
+                    logger.debug("Emoji was added by a user, so botto will add their own reaction")
+                    await message.add_reaction(self._memory_emoji),
 
-            logger.debug(f"Adding remove memory emoji to message: {self._remove_memory_emoji}")
-            await message.add_reaction(self._remove_memory_emoji)
+                logger.debug(f"Adding remove memory emoji to message: {self._remove_memory_emoji}")
+                await message.add_reaction(self._remove_memory_emoji)
 
-        if emoji == self._remove_memory_emoji and not user == self.bot.user:
-            logger.debug(f"User reacted with remove memory emoji - removing memory message")
-            await message.remove_reaction(self._remove_memory_emoji, self.bot.user)
-            await message.remove_reaction(self._memory_emoji, self.bot.user)
-            await message.remove_reaction(self._remove_memory_emoji, user)
-            await message.remove_reaction(self._memory_emoji, user)
+            if emoji == self._remove_memory_emoji and not user == self.bot.user:
+                logger.debug(f"User reacted with remove memory emoji - removing memory message")
+                await message.remove_reaction(self._remove_memory_emoji, self.bot.user)
+                await message.remove_reaction(self._memory_emoji, self.bot.user)
+                await message.remove_reaction(self._remove_memory_emoji, user)
+                await message.remove_reaction(self._memory_emoji, user)
 
-            if not payload.channel_id in self.bot.memory_messages_by_channel_id.keys():
-                self.bot.memory_messages_by_channel_id[payload.channel_id] = []
-            for message in self.bot.memory_messages_by_channel_id[payload.channel_id]:
-                if message.message_id == payload.message_id:
-                    for message in self.bot.memory_messages_by_channel_id[payload.channel_id]:
-                        if message.message_id == payload.message_id:
-                            if isinstance(message, discord.Message):
-                                message_document = await DiscordMessageDocument.from_discord_message(message=message)
-                            elif isinstance(message, DiscordMessageDocument):
-                                message_document = deepcopy(message.dict())
-                            else:
-                                raise ValueError(f"Message type not recognized: {message}")
+                if not payload.channel_id in self.bot.memory_messages_by_channel_id.keys():
+                    self.bot.memory_messages_by_channel_id[payload.channel_id] = []
+                for message in self.bot.memory_messages_by_channel_id[payload.channel_id]:
+                    if message.message_id == payload.message_id:
+                        for message in self.bot.memory_messages_by_channel_id[payload.channel_id]:
+                            if message.message_id == payload.message_id:
+                                if isinstance(message, discord.Message):
+                                    message_document = await DiscordMessageDocument.from_discord_message(
+                                        message=message)
+                                elif isinstance(message, DiscordMessageDocument):
+                                    message_document = deepcopy(message.dict())
+                                else:
+                                    raise ValueError(f"Message type not recognized: {message}")
+                                self.bot.memory_messages_by_channel_id[payload.channel_id].remove(message_document)
+                                break
+                        try:
                             self.bot.memory_messages_by_channel_id[payload.channel_id].remove(message_document)
-                            break
-                    self.bot.memory_messages_by_channel_id[payload.channel_id].remove(message_document)
-                    break
+                        except ValueError:
+                            logger.error(f"Message not found in memory messages: {message_document}")
+                            raise
+                        break
+        except Exception as e:
+            logger.error(f"Error handling {emoji} reaction` add: {e}")
+            logger.exception(e)
+            raise
 
     async def get_memory_messages(self,
                                   channel: discord.channel,
@@ -171,7 +181,7 @@ class BotConfigCog(discord.Cog):
                     if "message_id" in memory_message.additional_kwargs.keys():
                         memory_message_ids.append(memory_message.additional_kwargs["message_id"])
 
-        async def update_message(channel: discord.TextChannel, message_id: int):
+        async def update_message_inner_function(channel: discord.TextChannel, message_id: int):
 
             message = await channel.fetch_message(message_id)
             if "💭" not in message.reactions:
@@ -182,7 +192,7 @@ class BotConfigCog(discord.Cog):
                                                                                              message)
 
         emoji_tasks = [
-            asyncio.create_task(update_message(channel=message.channel, message_id=memory_message_id))
+            asyncio.create_task(update_message_inner_function(channel=message.channel, message_id=memory_message_id))
             for memory_message_id in memory_message_ids if memory_message_id not in current_message_ids
         ]
 

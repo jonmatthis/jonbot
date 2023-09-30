@@ -1,4 +1,3 @@
-import asyncio
 import traceback
 from pathlib import Path
 from typing import List, Union, Dict
@@ -220,8 +219,9 @@ class MyDiscordBot(commands.Bot):
                     data=chat_request.dict(),
                     callbacks=[callback],
                 )
-                await asyncio.gather(message_responder.shutdown(),
-                                     self._update_memory_emojis(message=message))
+                await message_responder.shutdown()
+                await self._update_memory_emojis(message=message)
+
                 return await message_responder.get_reply_messages()
 
             except Exception as e:
