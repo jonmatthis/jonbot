@@ -100,7 +100,7 @@ class BotConfigCog(discord.Cog):
                             raise
                         break
         except Exception as e:
-            logger.error(f"Error handling {emoji} reaction` add: {e}")
+            logger.error(f"Error handling reaction` add: {e}")
             logger.exception(e)
             raise
 
