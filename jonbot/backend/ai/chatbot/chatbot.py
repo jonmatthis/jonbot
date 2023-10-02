@@ -127,7 +127,7 @@ class Chatbot:
         self.prompt = ChatbotPrompt.build(
             chat_history_placeholder_name=self.chat_history_placeholder_name,
             context_description_string=self.conversation_context_description.text,
-            extra_prompts=config.extra_prompts,
+            config_prompts=config.config_prompts,
         )
 
         await self.memory.set_memory_messages(config.memory_messages)

@@ -8,9 +8,8 @@ import discord
 from jonbot.backend.data_layer.models.discord_stuff.discord_message_document import DiscordMessageDocument
 from jonbot.backend.data_layer.models.user_stuff.memory.context_memory_document import ContextMemoryDocument
 from jonbot.frontends.discord_bot.cogs.bot_config_cog.helpers.get_pinned_messages_in_channel import get_pinned_messages
-from jonbot.frontends.discord_bot.handlers.should_process_message import allowed_to_reply_to_message
-
-BOT_CONFIG_CHANNEL_NAME = "bot-config"
+from jonbot.frontends.discord_bot.handlers.should_process_message import BOT_CONFIG_CHANNEL_NAME, \
+    allowed_to_reply_to_message
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +52,7 @@ class BotConfigCog(discord.Cog):
                 if emoji == self._bot_config_emoji and BOT_CONFIG_CHANNEL_NAME in channel.name:
                     logger.debug(f"Reaction was in bot-config channel, updating config messages")
                     self.bot.config_messages_by_guild_id[payload.guild_id] = await self.get_bot_config_channel_prompts(
-                        guild=guild)
+                        channel=channel)
 
             if emoji == self._memory_emoji:
                 logger.debug(f"User reacted with memory emoji - adding memory message to channel ({channel}) list")
@@ -125,7 +124,7 @@ class BotConfigCog(discord.Cog):
 
             if hasattr(channel, "guild") and channel.guild is not None:
                 self.bot.config_messages_by_guild_id[channel.guild.id] = await self.get_bot_config_channel_prompts(
-                    guild=channel.guild)
+                    channel=channel)
             self.bot.pinned_messages_by_channel_id[channel.id] = await get_pinned_messages(channel=channel)
             self.bot.memory_messages_by_channel_id[channel.id] = await self.get_memory_messages(channel=channel)
 
@@ -136,36 +135,55 @@ class BotConfigCog(discord.Cog):
         logger.success(f"Finished gathering config messages")
 
     async def get_bot_config_channel_prompts(self,
-                                             guild: discord.Guild,
+                                             channel: discord.TextChannel,
                                              bot_config_channel_name: str = BOT_CONFIG_CHANNEL_NAME,
-                                             selected_emoji: str = "🤖") -> List[str]:
-        """
-        Get messages from the `bot-config` channel in the server, if it exists
-        :param message:
-        :param bot_config_channel_name:
-        :param selected_emoji:
-        :return: List[str]
-        """
-        logger.debug(f"Getting extra prompts from bot-config channel")
-        try:
-            emoji_prompts = []
-            pinned_messages = []
-            for channel in filter(lambda channel: bot_config_channel_name in channel.name, guild.channels):
-                logger.debug(f"Found bot-config channel: {channel}")
-                pinned_messages = await get_pinned_messages(channel=channel)
-                bot_emoji_messages = await self.look_for_emoji_reaction_in_channel(channel,
-                                                                                   emoji=selected_emoji)
-                emoji_prompts = [message.content for message in bot_emoji_messages]
+                                             selected_emoji: str = "🤖") -> str:
 
-            bot_config_prompts = list(set(pinned_messages + emoji_prompts))
-            if len(bot_config_prompts) == 0:
-                logger.debug(f"No extra prompts found in bot-config channel")
-            else:
-                logger.debug(
-                    f"Found {len(bot_config_prompts)} prompts for bot {self.bot.user} in `{guild}` - `{channel}`")
+        logger.debug("Getting extra prompts from bot-config channel")
+
+        try:
+            guild = channel.guild
+            parent_category = channel.category
+
+            category_channels = []
+            top_level_channels = []
+            for guild_channel in guild.channels:
+                if guild_channel.category == parent_category:
+                    category_channels.append(guild_channel)
+                elif not guild_channel.category:
+                    top_level_channels.append(guild_channel)
+
+            bot_config_prompts = ""
+            for prompt_type in ["top", "category"]:
+
+                if prompt_type == "top":
+                    channels = top_level_channels
+                    bot_config_prompts += "# Top-Level `bot-config` prompts: \n"
+                elif prompt_type == "category":
+                    channels = category_channels
+                    bot_config_prompts += "# Category-Level `bot-config` prompts: \n"
+
+                for _channel in channels:
+                    if bot_config_channel_name in _channel.name:
+                        logger.debug(f"Found bot-config channel - {_channel}")
+                        pinned_messages = await get_pinned_messages(channel=_channel)
+                        pinned_messages_str = "\n".join(pinned_messages)
+                        bot_config_prompts += f" ## Pins - \n {pinned_messages_str}\n\n"
+
+                        bot_emoji_messages = await self.look_for_emoji_reaction_in_channel(channel=_channel,
+                                                                                           emoji=selected_emoji)
+                        emoji_prompts = [message.content for message in bot_emoji_messages]
+                        emoji_prompts_str = "\n".join(emoji_prompts)
+                        bot_config_prompts += f" ## {selected_emoji} tagged Messages - \n {emoji_prompts_str}\n\n"
+
+            channel_pinned_messages = await get_pinned_messages(channel=channel)
+            channel_pinned_messages_str = "\n".join(channel_pinned_messages)
+            bot_config_prompts += f" # Channel-level Pinned Messages - \n {channel_pinned_messages_str}\n\n"
+
             return bot_config_prompts
+
         except Exception as e:
-            logger.error(f"Error getting extra prompts from bot-config channel")
+            logger.error("Error getting extra prompts from bot-config channel")
             logger.exception(e)
             raise
 

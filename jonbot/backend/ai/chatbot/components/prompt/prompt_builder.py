@@ -1,5 +1,3 @@
-from typing import List
-
 from langchain import PromptTemplate
 from langchain.prompts import (
     ChatPromptTemplate,
@@ -21,12 +19,10 @@ class ChatbotPrompt(ChatPromptTemplate):
             chat_history_placeholder_name: str,
             context_description_string: str,
             system_prompt_template: str = DEFAULT_CHATBOT_SYSTEM_PROMPT_TEMPLATE,
-            extra_prompts: List[str] = None,
+            config_prompts: str = None,
     ) -> ChatPromptTemplate:
-        if extra_prompts is not None:
-            extra_prompts_string = "\n".join(extra_prompts)
-        else:
-            extra_prompts_string = ""
+        if config_prompts is None:
+            config_prompts = ""
 
         system_prompt = PromptTemplate(
             template=system_prompt_template,
@@ -36,7 +32,7 @@ class ChatbotPrompt(ChatPromptTemplate):
                 "personality",
                 "formatting",
                 "context_description",
-                "extra_prompts_string",
+                "config_prompts",
                 # "vectorstore_memory"
             ],
         )
@@ -46,7 +42,7 @@ class ChatbotPrompt(ChatPromptTemplate):
             personality=DEFAULT_PERSONALITY,
             formatting=DEFAULT_FORMATTING_INSTRUCTIONS,
             context_description=context_description_string,
-            extra_prompts_string=extra_prompts_string,
+            config_prompts=config_prompts,
 
         )
 

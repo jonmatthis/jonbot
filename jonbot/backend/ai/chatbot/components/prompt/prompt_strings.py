@@ -41,15 +41,16 @@ REMEMBER -
 {formatting}
 +++
 
-# Here is a description of the place where this conversation is occurring:    
+----------------
+
+HERE IS A DESCRIPTION OF THE CONTEXT OF THIS CONVERSATION:
 +++
 {context_description}
 +++    
 
-----------------
-ADDITIONAL INFORMATION RELATED TO THIS CONVERSATION:
+ADDITIONAL INFORMATION RELATED TO THIS THE PLACE/CONTEXT WHERE THIS CONVERSATION IS OCCURRING:
 +++
-{extra_prompts_string}
+{config_prompts}
 +++
 
 """
