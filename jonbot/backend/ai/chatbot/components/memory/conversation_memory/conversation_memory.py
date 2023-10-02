@@ -1,6 +1,6 @@
 from typing import List, Union, Any, Dict
 
-from langchain.memory import ConversationSummaryBufferMemory
+from langchain.memory import ConversationTokenBufferMemory
 from langchain.schema import HumanMessage, AIMessage
 
 from jonbot.backend.ai.chatbot.components.memory.conversation_memory.context_memory_handler import (
@@ -20,7 +20,8 @@ from jonbot.backend.backend_database_operator.backend_database_operator import (
 from jonbot.backend.data_layer.models.context_route import ContextRoute
 
 
-class ChatbotConversationMemory(ConversationSummaryBufferMemory):
+# class ChatbotConversationMemory(ConversationSummaryBufferMemory):
+class ChatbotConversationMemory(ConversationTokenBufferMemory):
     context_memory_handler: ContextMemoryHandler
 
     def __init__(
@@ -43,11 +44,11 @@ class ChatbotConversationMemory(ConversationSummaryBufferMemory):
                 context_route=context_route,
                 database_name=database_name,
                 database_operations=database_operations,
-                summary_prompt=config.summary_prompt,
+                # summary_prompt=config.summary_prompt,
             ),
         )
 
-        self.prompt = config.summary_prompt
+        # self.prompt = config.summary_prompt
 
     @property
     async def context_memory_document(self) -> ContextMemoryDocument:
@@ -61,20 +62,24 @@ class ChatbotConversationMemory(ConversationSummaryBufferMemory):
     @property
     def token_count(self) -> int:
         tokens_in_messages = self.llm.get_num_tokens_from_messages(self.buffer)
-        tokens_in_summary = self.llm.get_num_tokens(self.moving_summary_buffer)
-        return tokens_in_messages + tokens_in_summary
+        # tokens_in_summary = self.llm.get_num_tokens(self.moving_summary_buffer)
+        return tokens_in_messages  # + tokens_in_summary
 
     def _build_memory_from_context_memory_document(
             self, document: ContextMemoryDocument
     ):
-        self._load_messages_from_message_buffer(buffer=document.chat_memory_message_buffer)
+        try:
+            self._load_messages_from_message_buffer(buffer=document.chat_memory_message_buffer.message_buffer)
 
-        # # self.message_uuids = [message["additional_kwargs"]["uuid"] for message in self.message_buffer],
-        self.moving_summary_buffer = document.summary
-        self.prompt = document.summary_prompt
+            # self.moving_summary_buffer = document.summary
+            # self.prompt = document.summary_prompt
+        except Exception as e:
+            logger.error(f"Failed to build memory from context memory document: {e}")
+            logger.exception(e)
+            raise
 
     def _load_messages_from_message_buffer(
-            self, buffer: List[Dict[str, Any]]
+            self, buffer: List[Union[HumanMessage, AIMessage]]
     ) -> List[Union[HumanMessage, AIMessage]]:
         messages = []
         try:
@@ -111,7 +116,7 @@ class ChatbotConversationMemory(ConversationSummaryBufferMemory):
 
             await self.context_memory_handler.update(
                 chat_memory_message_buffer=ChatMemoryMessageBuffer(message_buffer=buffer),
-                summary=self.moving_summary_buffer,
+                # summary=self.moving_summary_buffer,
                 token_count=self.token_count,
             )
         except Exception as e:
@@ -119,9 +124,10 @@ class ChatbotConversationMemory(ConversationSummaryBufferMemory):
             logger.exception(e)
             raise
 
-    def set_memory_messages(self, memory_messages: List[DiscordMessageDocument]):
+    async def set_memory_messages(self, memory_messages: List[DiscordMessageDocument]):
         chat_history_message_buffer = ChatMemoryMessageBuffer.from_discord_message_documents(
             discord_message_documents=memory_messages)
 
-        self.chat_memory.messages = chat_history_message_buffer.message_buffer
-        self.context_memory_handler.update(chat_memory_message_buffer=chat_history_message_buffer)
+        # self.chat_memory.messages = chat_history_message_buffer.message_buffer
+        await self.context_memory_handler.update(chat_memory_message_buffer=chat_history_message_buffer)
+        await self.configure_memory()

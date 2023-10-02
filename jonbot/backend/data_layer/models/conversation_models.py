@@ -92,7 +92,7 @@ class ChatRequestConfig(BaseModel):
     limit_messages: Optional[int] = 20
     temperature: Optional[float] = 0.9
     model_name: Optional[str] = "gpt-4"
-    extra_prompts: Optional[List[str]] = None
+    config_prompts: Optional[str] = None
     memory_messages: Optional[List[DiscordMessageDocument]] = None
 
     @classmethod

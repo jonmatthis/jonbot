@@ -207,8 +207,7 @@ class Quine:
 
 
 if __name__ == "__main__":
-    base_directory_in = r"C:\Users\jonma\github_repos\freemocap_organization\skellycam\skellycam"
-
+    base_directory_in = r"C:\Users\jonma\github_repos\freemocap_organization\skellycam\skellycam\frontend\qt_gui\widgets\sub_widgets\qml_camera"
     quine_config = QuineConfig(
         print_mode="all",
 
@@ -217,14 +216,14 @@ if __name__ == "__main__":
             fetch_structure_for=[],
             base_directory=base_directory_in,
             excluded_directories=["__pycache__", ".git", "legacy"],
-            included_extensions=["py", "yaml", "api", "discord", "md", "txt", "json", "toml", "tex"],
+            included_extensions=["py", "yaml", "api", "discord", "md", "txt", "json", "toml", "tex", "qml"],
             excluded_file_names=["poetry.lock", ".gitignore", "LICENSE", "*.env"],
         ),
 
         # CONTENT (i.e. the actual text/code in the files)
         content=ContentFetcherConfig(
             fetch_content_for=[base_directory_in],
-            recursion_depth=1,
+            recursion_depth=0,
         ),
         output_file_name=f"quine_{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S.%f')}.txt",
         output_directory=str(Path(__file__).parent / "quine_output"),

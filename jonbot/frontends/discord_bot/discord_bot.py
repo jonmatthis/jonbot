@@ -1,4 +1,3 @@
-import asyncio
 import traceback
 from pathlib import Path
 from typing import List, Union, Dict
@@ -87,21 +86,21 @@ class MyDiscordBot(commands.Bot):
     @discord.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
         if not message.system_content == message.content:
-            logger.debug(f"Message is a system message: {message.content}")
+            logger.debug(f"Message is a system message: {message.id}")
             return
 
         if not should_reply(message=message,
                             bot_user_name=self.user.name,
                             bot_id=self.user.id):
             logger.debug(
-                f"Message `{message.content}` was not handled by the bot: {self.user.name}"
+                f"Message `{message.id}` was not handled by the bot: {self.user.name}"
             )
             return
 
         await self.handle_message(message=message)
 
     async def handle_message(self, message: discord.Message):
-        logger.debug(f"Handling message: {message.content}")
+        logger.debug(f"Handling message: {message.id}")
 
         messages_to_upsert = [message]
         text_to_reply_to = ""
@@ -192,12 +191,12 @@ class MyDiscordBot(commands.Bot):
             await message_responder.initialize(message=message)
             reply_messages = await message_responder.get_reply_messages()
 
+            config_prompts = []
             if hasattr(message, "guild") and message.guild is not None:
-                extra_prompts = self.config_messages_by_guild_id.get(message.guild.id, [])
-            else:
-                extra_prompts = []
+                config_prompts = self.config_messages_by_guild_id.get(message.guild.id, {})
+
             memory_messages = self.memory_messages_by_channel_id.get(message.channel.id, [])
-            config = ChatRequestConfig(extra_prompts=extra_prompts,
+            config = ChatRequestConfig(config_prompts=config_prompts,
                                        memory_messages=memory_messages)
 
             chat_request = ChatRequest.from_discord_message(
@@ -220,8 +219,9 @@ class MyDiscordBot(commands.Bot):
                     data=chat_request.dict(),
                     callbacks=[callback],
                 )
-                await asyncio.gather(message_responder.shutdown(),
-                                     self._update_memory_emojis(message=message))
+                await message_responder.shutdown()
+                await self._update_memory_emojis(message=message)
+
                 return await message_responder.get_reply_messages()
 
             except Exception as e:

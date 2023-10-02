@@ -4,7 +4,7 @@ from jonbot.backend.ai.audio_transcription.transcribe_audio import (
     transcribe_audio_function,
 )
 from jonbot.backend.ai.chatbot.chatbot import (
-    ChatbotLLMChain,
+    Chatbot,
 )
 from jonbot.backend.ai.chatbot.get_chatbot import (
     get_chatbot,
@@ -22,7 +22,7 @@ logger = get_jonbot_logger()
 class Controller:
     def __init__(self, database_operations: BackendDatabaseOperations):
         self.database_operations = database_operations
-        self.chatbots: Dict[str, ChatbotLLMChain] = {}
+        self.chatbots: Dict[str, Chatbot] = {}
 
     @staticmethod
     async def transcribe_audio(

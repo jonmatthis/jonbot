@@ -1,6 +1,5 @@
 from typing import Optional
 
-from langchain import PromptTemplate
 from pydantic import BaseModel
 
 from jonbot.backend.data_layer.models.context_route import ContextRoute
@@ -11,7 +10,7 @@ class ContextMemoryDocument(BaseModel):
     context_route: ContextRoute
     context_route_full_path: str
     context_route_friendly_path: str
-    summary_prompt: Optional[PromptTemplate]
+    # summary_prompt: Optional[PromptTemplate]
 
     query: dict
     server_name: str
@@ -23,19 +22,19 @@ class ContextMemoryDocument(BaseModel):
 
     chat_memory_message_buffer: Optional[ChatMemoryMessageBuffer]
     # message_uuids: List[str] = None
-    summary: str = ""
+    # summary: str = ""
     tokens_count: int = 0
 
     @classmethod
     def build_empty(cls,
-                    context_route: ContextRoute,
-                    summary_prompt: Optional[PromptTemplate]):
+                    context_route: ContextRoute):
+        # summary_prompt: Optional[PromptTemplate]):
         return cls(
             context_route=context_route,
             context_route_full_path=context_route.full_path,
             context_route_friendly_path=context_route.friendly_path,
-            summary="",
-            summary_prompt=summary_prompt,
+            # summary="",
+            # summary_prompt=summary_prompt,
             tokens_count=0,
             query=context_route.as_query,
             **context_route.as_flat_dict,
@@ -44,9 +43,9 @@ class ContextMemoryDocument(BaseModel):
     def update(
             self,
             chat_memory_message_buffer: ChatMemoryMessageBuffer,
-            summary: str,
+            # summary: str,
             tokens_count: int,
     ):
         self.chat_memory_message_buffer = chat_memory_message_buffer
-        self.summary = summary
+        # self.summary = summary
         self.tokens_count = tokens_count

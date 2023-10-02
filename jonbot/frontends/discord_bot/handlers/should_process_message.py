@@ -23,6 +23,10 @@ def this_message_is_from_a_bot(message: discord.Message) -> bool:
     return message.author.bot
 
 
+def this_message_is_in_a_bot_config_channel(message: discord.Message) -> bool:
+    return BOT_CONFIG_CHANNEL_NAME in message.channel.name
+
+
 # def check_if_transcribed_audio_message(message: discord.Message) -> bool:
 #     return message.content.startswith(
 #         TRANSCRIBED_AUDIO_PREFIX
@@ -51,6 +55,11 @@ def should_reply(message: discord.Message,
     if not allowed_to_reply_to_message(message=message, bot_user_name=bot_user_name, bot_id=bot_id):
         logger.debug(
             f"Message `{message.id}` was not handled by the bot {bot_user_name} (reason: not allowed to reply)"
+        )
+        return False
+    if this_message_is_in_a_bot_config_channel(message):
+        logger.debug(
+            f"Message `{message.id}` was not handled by the bot {bot_user_name} (reason: bot config channel)"
         )
         return False
 
@@ -167,3 +176,6 @@ def allowed_to_reply_to_message(message: discord.Message,
         logger.error(f"Error while checking if message is allowed to be handled: {e}")
         logger.exception(e)
         raise e
+
+
+BOT_CONFIG_CHANNEL_NAME = "bot-config"
