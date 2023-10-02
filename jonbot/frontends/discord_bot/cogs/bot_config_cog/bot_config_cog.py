@@ -180,10 +180,11 @@ class BotConfigCog(discord.Cog):
                             emoji_prompts_str = "\n".join(emoji_prompts)
                             bot_config_prompts += f" ## {selected_emoji} tagged Messages - \n {emoji_prompts_str}\n\n"
 
-            channel_pinned_messages = await get_pinned_messages(channel=channel)
-            if len(channel_pinned_messages) > 0:
-                channel_pinned_messages_str = "\n".join(channel_pinned_messages)
-                bot_config_prompts += f" # Channel-level Pinned Messages - \n {channel_pinned_messages_str}\n\n"
+            if hasattr(channel, "parent"):
+                channel_pinned_messages = await get_pinned_messages(channel=channel.parent)
+                if len(channel_pinned_messages) > 0:
+                    channel_pinned_messages_str = "\n".join(channel_pinned_messages)
+                    bot_config_prompts += f" # Parent Channel Pinned Messages - \n {channel_pinned_messages_str}\n\n"
 
             return bot_config_prompts
 
