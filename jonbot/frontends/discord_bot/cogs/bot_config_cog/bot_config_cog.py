@@ -38,9 +38,8 @@ class BotConfigCog(discord.Cog):
             user = self.bot.get_user(payload.user_id)
             guild = self.bot.get_guild(payload.guild_id)
             channel = self.bot.get_channel(payload.channel_id)
-            # message = await channel.fetch_message(payload.message_id)
-            message = self.bot.get_message(payload.message_id)
 
+            message = await channel.fetch_message(payload.message_id)
             if not allowed_to_reply_to_message(message=message,
                                                bot_id=self.bot.user.id,
                                                bot_user_name=self.bot.user.name):
