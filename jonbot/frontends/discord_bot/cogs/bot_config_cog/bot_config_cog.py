@@ -167,18 +167,23 @@ class BotConfigCog(discord.Cog):
                     if bot_config_channel_name in _channel.name:
                         logger.debug(f"Found bot-config channel - {_channel}")
                         pinned_messages = await get_pinned_messages(channel=_channel)
-                        pinned_messages_str = "\n".join(pinned_messages)
-                        bot_config_prompts += f" ## Pins - \n {pinned_messages_str}\n\n"
+                        if len(pinned_messages) > 0:
+                            logger.trace(f"Channel: {_channel} - No pinned messages found")
+                            pinned_messages_str = "\n".join(pinned_messages)
+                            bot_config_prompts += f" ## Pins - \n {pinned_messages_str}\n\n"
 
                         bot_emoji_messages = await self.look_for_emoji_reaction_in_channel(channel=_channel,
                                                                                            emoji=selected_emoji)
-                        emoji_prompts = [message.content for message in bot_emoji_messages]
-                        emoji_prompts_str = "\n".join(emoji_prompts)
-                        bot_config_prompts += f" ## {selected_emoji} tagged Messages - \n {emoji_prompts_str}\n\n"
+                        if len(bot_emoji_messages) > 0:
+                            logger.trace(f"Channel: {_channel} - No {selected_emoji} tagged messages found")
+                            emoji_prompts = [message.content for message in bot_emoji_messages]
+                            emoji_prompts_str = "\n".join(emoji_prompts)
+                            bot_config_prompts += f" ## {selected_emoji} tagged Messages - \n {emoji_prompts_str}\n\n"
 
             channel_pinned_messages = await get_pinned_messages(channel=channel)
-            channel_pinned_messages_str = "\n".join(channel_pinned_messages)
-            bot_config_prompts += f" # Channel-level Pinned Messages - \n {channel_pinned_messages_str}\n\n"
+            if len(channel_pinned_messages) > 0:
+                channel_pinned_messages_str = "\n".join(channel_pinned_messages)
+                bot_config_prompts += f" # Channel-level Pinned Messages - \n {channel_pinned_messages_str}\n\n"
 
             return bot_config_prompts
 
