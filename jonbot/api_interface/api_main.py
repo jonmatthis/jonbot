@@ -8,7 +8,7 @@ from jonbot.backend.backend_database_operator.get_backend_database_operator impo
     get_backend_database_operator,
 )
 from jonbot.backend.controller.get_controller import get_controller
-from jonbot.backend.data_layer.database.get_or_create_mongo_database_manager import (
+from jonbot.backend.data_layer.database.get_mongo_database_manager import (
     get_mongo_database_manager,
 )
 from jonbot.system.environment_variables import HOST_NAME, PORT_NUMBER

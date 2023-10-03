@@ -1,7 +1,7 @@
 import logging
 import uuid
 
-from jonbot.backend.data_layer.database.get_or_create_mongo_database_manager import get_mongo_database_manager
+from jonbot.backend.data_layer.database.get_mongo_database_manager import get_mongo_database_manager
 from jonbot.backend.data_layer.database.mongo_database import MongoDatabaseManager
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 

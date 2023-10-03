@@ -2,18 +2,18 @@ import asyncio
 import logging
 from pathlib import Path
 
-from jonbot.backend.data_layer.database.get_or_create_mongo_database_manager import get_mongo_database_manager
+from jonbot.backend.data_layer.database.get_mongo_database_manager import get_mongo_database_manager
 from jonbot.system.environment_variables import CHATS_COLLECTION_NAME
 from jonbot.system.path_getters import get_base_data_folder_path
 
 logger = logging.getLogger(__name__)
 
 
-async def save_chats(database_name: str,
-                     channel_id: int,
-                     save_folder: str,
-                     ignored_users: list[int],
-                     collection_name: str = CHATS_COLLECTION_NAME):
+async def save_chats_to_markdown(database_name: str,
+                                 channel_id: int,
+                                 save_folder: str,
+                                 ignored_users: list[int],
+                                 collection_name: str = CHATS_COLLECTION_NAME):
     try:
         save_path = Path(save_folder)
         bot_nick_name = database_name.replace("_database", "")
@@ -78,10 +78,10 @@ if __name__ == "__main__":
     else:
         save_folder_in = get_base_data_folder_path()
 
-    asyncio.run(save_chats(database_name=database_name,
-                           channel_id=channel_id,
-                           save_folder=save_folder_in,
-                           ignored_users=ignored_users_in
-                           )
+    asyncio.run(save_chats_to_markdown(database_name=database_name,
+                                       channel_id=channel_id,
+                                       save_folder=save_folder_in,
+                                       ignored_users=ignored_users_in
+                                       )
                 )
     print("Done!")
