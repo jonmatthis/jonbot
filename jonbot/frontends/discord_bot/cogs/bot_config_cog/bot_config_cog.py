@@ -154,7 +154,7 @@ class BotConfigCog(discord.Cog):
 
             bot_config_prompts = ""
             for prompt_type in ["top", "category"]:
-
+                channels = []
                 if prompt_type == "top":
                     channels = top_level_channels
                     bot_config_prompts += "# Top-Level `bot-config` prompts: \n"
@@ -163,27 +163,10 @@ class BotConfigCog(discord.Cog):
                     bot_config_prompts += "# Category-Level `bot-config` prompts: \n"
 
                 for _channel in channels:
-                    if bot_config_channel_name in _channel.name:
-                        logger.debug(f"Found bot-config channel - {_channel}")
-                        pinned_messages = await get_pinned_messages(channel=_channel)
-                        if len(pinned_messages) > 0:
-                            logger.trace(f"Channel: {_channel} - No pinned messages found")
-                            pinned_messages_str = "\n".join(pinned_messages)
-                            bot_config_prompts += f" ## Pins - \n {pinned_messages_str}\n\n"
+                    bot_config_prompts = await self._get_channel_config_messages(_channel, bot_config_channel_name,
+                                                                                 bot_config_prompts, selected_emoji)
 
-                        bot_emoji_messages = await self.look_for_emoji_reaction_in_channel(channel=_channel,
-                                                                                           emoji=selected_emoji)
-                        if len(bot_emoji_messages) > 0:
-                            logger.trace(f"Channel: {_channel} - No {selected_emoji} tagged messages found")
-                            emoji_prompts = [message.content for message in bot_emoji_messages]
-                            emoji_prompts_str = "\n".join(emoji_prompts)
-                            bot_config_prompts += f" ## {selected_emoji} tagged Messages - \n {emoji_prompts_str}\n\n"
-
-            if hasattr(channel, "parent"):
-                channel_pinned_messages = await get_pinned_messages(channel=channel.parent)
-                if len(channel_pinned_messages) > 0:
-                    channel_pinned_messages_str = "\n".join(channel_pinned_messages)
-                    bot_config_prompts += f" # Parent Channel Pinned Messages - \n {channel_pinned_messages_str}\n\n"
+            bot_config_prompts = await self._get_parent_channel_pins(bot_config_prompts, channel)
 
             return bot_config_prompts
 
@@ -191,6 +174,33 @@ class BotConfigCog(discord.Cog):
             logger.error("Error getting extra prompts from bot-config channel")
             logger.exception(e)
             raise
+
+    async def _get_channel_config_messages(self, _channel, bot_config_channel_name, bot_config_prompts, selected_emoji):
+        if bot_config_channel_name in _channel.name:
+            logger.debug(f"Found bot-config channel - {_channel}")
+            pinned_messages = await get_pinned_messages(channel=_channel)
+            if len(pinned_messages) > 0:
+                logger.trace(f"Channel: {_channel} - No pinned messages found")
+                pinned_messages_str = "\n".join(pinned_messages)
+                bot_config_prompts += f" ## Pins - \n {pinned_messages_str}\n\n"
+
+            bot_emoji_messages = await self.look_for_emoji_reaction_in_channel(channel=_channel,
+                                                                               emoji=selected_emoji)
+            if len(bot_emoji_messages) > 0:
+                logger.trace(f"Channel: {_channel} - No {selected_emoji} tagged messages found")
+                emoji_prompts = [message.content for message in bot_emoji_messages]
+                emoji_prompts_str = "\n".join(emoji_prompts)
+                bot_config_prompts += f" ## {selected_emoji} tagged Messages - \n {emoji_prompts_str}\n\n"
+        return bot_config_prompts
+
+    async def _get_parent_channel_pins(self, bot_config_prompts, channel):
+        if hasattr(channel, "parent"):
+            if str(channel.parent.type) != "forum":
+                channel_pinned_messages = await get_pinned_messages(channel=channel.parent)
+                if len(channel_pinned_messages) > 0:
+                    channel_pinned_messages_str = "\n".join(channel_pinned_messages)
+                    bot_config_prompts += f" # Parent Channel Pinned Messages - \n {channel_pinned_messages_str}\n\n"
+        return bot_config_prompts
 
     async def update_memory_emojis(self,
                                    context_memory_document: ContextMemoryDocument,
