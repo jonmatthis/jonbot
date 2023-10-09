@@ -7,7 +7,7 @@ license = "AGPLv3+"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">=3.11,<3.13"
 fastapi = "<0.100.0"
 mkdocs-material = "^9.1.19"
 pydantic = "<2"
@@ -35,7 +35,8 @@ langsmith = "^0.0.33"
 pytest = "^7.4.1"
 pytest-asyncio = "^0.21.1"
 Jinja2 = "^3.1.2"
-
+pandas = "^2.1.1"
+tabulate = "^0.9.0"
 
 [tool.poetry.group.dev.dependencies]
 bumpver = "^2023.1125"
