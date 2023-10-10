@@ -1,5 +1,5 @@
 import uuid
-from typing import Union, Optional, List, Literal
+from typing import Union, Optional, List, Literal, Tuple
 
 import discord
 from pydantic import BaseModel, Field
@@ -173,3 +173,42 @@ class ChatRequest(BaseModel):
             context_route=message_document.context_route,
             **kwargs
         )
+
+
+class ChatCouplet(BaseModel):
+    human_message: Optional[DiscordMessageDocument]
+    ai_message: Optional[DiscordMessageDocument]
+
+    @classmethod
+    def from_tuple(cls, couplet: Tuple[Optional[DiscordMessageDocument], Optional[DiscordMessageDocument]]):
+        if len(couplet) != 2:
+            raise Exception(f"Invalid couplet: {couplet}")
+        human_message, ai_message = couplet
+        if human_message is not None and human_message.is_bot:
+            raise Exception(f"Invalid human message: human_message.is_bot = {human_message.is_bot}")
+        if ai_message is not None and not ai_message.is_bot:
+            raise Exception(f"Invalid ai message: ai_message.is_bot = {ai_message.is_bot}")
+        if human_message is None and ai_message is None:
+            raise Exception(f"Invalid couplet: both messages are None")
+        return cls(human_message=human_message,
+                   ai_message=ai_message)
+
+    @property
+    def as_text(self):
+        return f"{self.human_text}\n{self.ai_text}"
+
+    @property
+    def ai_text(self):
+        if self.ai_message is None:
+            ai_message_text = ""
+        else:
+            ai_message_text = f"AI: {self.ai_message.content}"
+        return ai_message_text
+
+    @property
+    def human_text(self):
+        if self.human_message is None:
+            human_message_text = ""
+        else:
+            human_message_text = f"Human: {self.human_message.content}"
+        return human_message_text

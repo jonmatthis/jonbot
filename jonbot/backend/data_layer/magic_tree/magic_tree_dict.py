@@ -1,12 +1,8 @@
 import collections
 import sys
 from collections import defaultdict
-from typing import Any
+from typing import Any, Callable, Hashable, Iterable, Literal
 from typing import List, Union
-
-import pandas as pd
-from rich.console import Console
-from rich.tree import Tree
 
 from jonbot.backend.data_layer.magic_tree.helpers.calculator import TreeCalculator
 from jonbot.backend.data_layer.magic_tree.helpers.printer import TreePrinter
@@ -26,10 +22,18 @@ class MagicTreeDict(defaultdict):
         super().__init__(self.create_nested_dict)
 
     @staticmethod
-    def create_nested_dict():
+    def create_nested_dict() -> defaultdict:
         return defaultdict(MagicTreeDict.create_nested_dict)
 
-    def get_leaf_paths(self):
+    @property
+    def number_of_leaves(self) -> int:
+        return len(self.get_all_leaf_paths())
+
+    @property
+    def total_number_of_nodes(self) -> int:
+        return len(self.get_all_paths())
+
+    def get_all_leaf_paths(self) -> List[List[Hashable]]:
         """
         Returns a list of all the paths to the leaves in the tree.
         """
@@ -37,7 +41,7 @@ class MagicTreeDict(defaultdict):
         self._traverse_tree(lambda path, value: leaf_paths.append(path))
         return leaf_paths
 
-    def get_leaf_keys(self):
+    def get_all_leaf_keys(self) -> List[Hashable]:
         """
         Returns all the keys of leaf nodes in the tree.
         """
@@ -45,19 +49,37 @@ class MagicTreeDict(defaultdict):
         self._traverse_tree(lambda path, value: leaf_keys.append(path[-1]))
         return leaf_keys
 
-    def get_path_to_leaf(self, leaf_key: str) -> List[str]:
+    def get_paths_to_keys(self,
+                          keys: Union[Hashable, Iterable[Hashable]],
+                          duplicates_ok: bool = True,
+                          missing_ok: bool = False) -> Union[List[Hashable], List[List[Hashable]]]:
         """
-        Returns the path to a specified leaf in the tree.
+        Returns the paths to leaves/node(s) with the given key or keys.
         """
-        leaf_paths = []
-        self._traverse_tree(lambda path, value: leaf_paths.append(path) if path[-1] == leaf_key else None)
+        if isinstance(keys, Hashable):
+            keys = [keys]
+        elif isinstance(keys, Iterable):
+            keys = keys
+        else:
+            raise TypeError(f"Invalid key type: {type(keys)}")
 
-        if not leaf_paths:
-            raise KeyError(f"Leaf key '{leaf_key}' not found in tree.")
+        paths = []
 
-        return leaf_paths
+        for key in keys:
 
-    def data_from_path(self, path: List[str], current=None) -> Union['MagicTreeDict', Any]:
+            key_paths = self._traverse_tree(lambda path, value: key_paths.append(path) if path[-1] == key else None)
+
+            if not key_paths and not missing_ok:
+                raise KeyError(f"Leaf key '{key}' not found in tree.")
+            if len(key_paths) > 1 and not duplicates_ok:
+                raise KeyError(f"Leaf key '{key}' found multiple times in tree and `duplicates_ok` is set to False.")
+
+            paths += key_paths
+
+        return paths
+
+    def get_data_from_path(self, path: Iterable[Hashable], current=None, missing_ok=True) -> Union[
+        'MagicTreeDict', Any]:
         """
         Returns the data at the given path, be it a leaf(endpoint) or a branch (i.e. a sub-tree/dict)
 
@@ -66,7 +88,10 @@ class MagicTreeDict(defaultdict):
         """
         if current is None:
             current = self
-        return current if len(path) == 0 else self.data_from_path(path[1:], current=current[path[0]])
+        data = current if len(path) == 0 else self.get_data_from_path(path[1:], current=current[path[0]])
+        if not data and not missing_ok:
+            raise KeyError(f"No data found at path: {path}")
+        return data
 
     def calculate_tree_stats(self,
                              metrics: List[str] = None,
@@ -75,24 +100,25 @@ class MagicTreeDict(defaultdict):
                                                      data_keys=data_keys)
         return stats
 
-    def print_leaf_info(self, current=None, path=None):
+    def print_leaf_info(self, current=None, path=None) -> None:
         """Prints the information about all the leaves of the tree."""
-        console = Console()
-        tree = Tree(":seedling:")
         self._get_leaf_info()
         print(self._leaf_info)
 
-    def print_table(self, keys: Union[str, List[str]] = None):
+    def print_table(self, keys: Union[str, List[str]] = None) -> None:
         if isinstance(keys, str):
             keys = [keys]
         TreePrinter(tree=self).print_table(keys)
 
-    def get_paths_for_keys(self, keys):
+    def get_all_paths(self) -> List[List[Hashable]]:
+        """
+        Returns a list of all the paths in the tree.
+        """
         paths = []
-        self._traverse_tree(lambda path, value: paths.append(path) if path[-1] in keys else None)
+        self._traverse_tree(lambda path, value: paths.append(path))
         return paths
 
-    def filter_tree(self, target_key, current=None, path=None):
+    def filter_tree(self, target_key) -> 'MagicTreeDict':
         """
         Returns a new tree containing only the branches and leaves that contain the target key.
         """
@@ -102,45 +128,79 @@ class MagicTreeDict(defaultdict):
             raise KeyError(f"'{target_key}' not found in tree...")
 
         for path in paths:
-            new_tree[path] = self.data_from_path(path)
+            new_tree[path] = self.get_data_from_path(path)
 
         return new_tree
 
-    def to_dataframe(self, leaf_keys: Union[str, List[str]] = None):
-        if leaf_keys is None:
-            leaf_keys = self.get_leaf_keys()
+    def to_dataframe(self, leaf_keys: Union[str, List[str]] = None) -> 'pd.DataFrame':
+        return TreePrinter(self).to_dataframe(leaf_keys=leaf_keys)
 
-        paths = [self.get_path_to_leaf(leaf_key=key) for key in leaf_keys]
-        paths = [path for sublist in paths for path in sublist]  # flatten list
+    def map_function(self,
+                     function: Callable,
+                     make_new_tree: bool = True,
+                     **kwargs) -> "MagicTreeDict":
+        results = TreeCalculator(self).map_function(function=function,
+                                                    **kwargs)
+        if not make_new_tree:
+            self.update(results)
+            return self
+        return results
 
-        table_dict = {}
-        leaf_lengths = set()
-
-        for path in paths:
-            data = self.data_from_path(path)
-            if hasattr(data, '__iter__'):
-                leaf_lengths.add(len(data))
-            else:
-                leaf_lengths.add(1)
-
-            if tuple(path) in table_dict:
-                raise ValueError(
-                    f"Error at path level {path} - Path is not unique. Ensure each path in your tree is unique - exisiting paths: {table_dict.keys()}")
-            table_dict[tuple(path)] = data
-
-        if len(leaf_lengths) > 1:
-            raise ValueError(
-                f"Error at {path} level -  Leaf node data lengths are inconsistent. Ensure all leaf data have the same length or are scalar. Found lengths: {leaf_lengths}")
-
-        return pd.DataFrame.from_dict(table_dict, orient='index').transpose()
-
-    @staticmethod
-    def create_new() -> 'MagicTreeDict':
+    def update(self,
+               value: Any = None,
+               level: Union[int, str, Iterable[Hashable]] = 0,
+               duplicate_keys: Literal['error', 'overwrite', 'append'] = 'error') -> None:
         """
-        Utility method for creating a new MagicTreeDict object (to avoid having to import the class)
+        Override the default update method to allow for updating the tree with different types:
+        - If input is a dict, it updates the tree with the dict using key-value pairs.
+            - if keys are not iterable, it inputs the data at the level specified by `level`
+                - Level - 0 is the root/top level, -1 is the at the node that matches the key with duplicates handled according to `duplicate_keys`)
+            - if keys are iterable, it inputs the data at the path specified by `keys` (with duplicates handled according to `duplicate_keys`)
+        - If input is a list, it updates the tree with the list using index-value pairs.
+
         :return:
         """
-        return MagicTreeDict()
+        if isinstance(value, dict):
+            if isinstance(level, int):
+                if level == 0:
+                    super().update(value)
+                else:
+                    raise ValueError(f"Invalid level: {level}")
+            else:
+                if isinstance(level, Hashable):
+                    level = [level]
+                elif not isinstance(level, Iterable):
+                    raise TypeError(f"Invalid level type: {type(level)}")
+
+                for key, value in value.items():
+                    if isinstance(key, str):
+                        key = [key]
+                    elif not isinstance(key, Iterable):
+                        raise TypeError(f"Invalid key type: {type(key)}")
+
+                    if len(key) != len(level):
+                        raise ValueError(f"Key and level must be the same length: {len(key)} != {len(level)}")
+
+                    path = level + key
+                    data_at_path = self.get_data_from_path(path=path)
+                    if len(data_at_path) > 0:
+                        if duplicate_keys == 'error':
+                            raise KeyError(
+                                f"Data already exists at path: {path} - Existing data: {data_at_path} and `duplicate_keys` is set to 'error'")
+                        elif duplicate_keys == 'overwrite':
+                            self.get_data_from_path(path=path[:-1])[key] = value
+                        elif duplicate_keys == 'append':
+                            data_at_path.update(value, level=0, duplicate_keys='append')
+
+    def create_new_tree(self) -> 'MagicTreeDict':
+        """
+        Utility method for creating a new MagicTreeDict object (to avoid having to import the class)
+
+        Big Ouroboros energy
+
+        :return:
+        """
+        return self.__new__(self.__class__)
 
     def _get_leaf_info(self, current=None, path=None):
         if current is None:
@@ -179,20 +239,19 @@ class MagicTreeDict(defaultdict):
     def __str__(self):
         return TreePrinter(self).__str__()
 
-    def __setitem__(self, keys, value):
+    def __setitem__(self, key: Union[Hashable, Iterable[Hashable]], value: Any):
         """
         Allows for setting values using a list of keys, e.g. `magic_tree['a']['b']['c'] = 1`
-        Checks if the input is a string, an integer, or an iterable.
-        If it's a string or integer, it just sets the value at the given key, like a normal dict.
-        If it's an iterable, it builds a path out of it and sets the value at that path.
+        Checks if the input is a Hashable or an Iterable of Hashables (aka a tree path)
         """
-        if isinstance(keys, str) or isinstance(keys, int):
-            super(MagicTreeDict, self).__setitem__(keys, value)
-        elif isinstance(keys, collections.abc.Iterable):
+        if isinstance(key, Hashable):
+            super(MagicTreeDict, self).__setitem__(key, value)
+        elif isinstance(key, Iterable):
+            key = list(key)
+            if not all(isinstance(k, Hashable) for k in key):
+                raise TypeError("Invalid key/path type - all keys in a path must be hashable.")
             current_data = self
-            for key in keys[:-1]:
-                current_data = current_data[key]
-            current_data[keys[-1]] = value
+            current_data[key[:-1]][key[-1]] = value
         else:
             raise TypeError("Invalid key type.")
 

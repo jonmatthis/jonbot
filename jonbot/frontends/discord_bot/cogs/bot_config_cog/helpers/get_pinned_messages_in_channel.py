@@ -1,10 +1,9 @@
-import logging
 from typing import List
 
 import discord
 from discord import Forbidden
 
-logger = logging.getLogger(__name__)
+from jonbot import logger
 
 
 async def get_pinned_messages(channel: discord.channel) -> List[str]:

@@ -1,17 +1,15 @@
 import asyncio
-import logging
 from copy import deepcopy
 from typing import List, TYPE_CHECKING
 
 import discord
 
+from jonbot import logger
 from jonbot.backend.data_layer.models.discord_stuff.discord_message_document import DiscordMessageDocument
 from jonbot.backend.data_layer.models.user_stuff.memory.context_memory_document import ContextMemoryDocument
 from jonbot.frontends.discord_bot.cogs.bot_config_cog.helpers.get_pinned_messages_in_channel import get_pinned_messages
 from jonbot.frontends.discord_bot.handlers.should_process_message import BOT_CONFIG_CHANNEL_NAME, \
     allowed_to_reply_to_message
-
-logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from jonbot.frontends.discord_bot.discord_bot import MyDiscordBot

@@ -1,6 +1,5 @@
 import ast
 import datetime
-import logging
 import os
 import platform
 import subprocess
@@ -10,7 +9,7 @@ from typing import List, Literal
 import pyperclip
 from pydantic import BaseModel, Field
 
-logger = logging.getLogger(__name__)
+from jonbot import logger
 
 
 ## MODEL DEFINITIONS
@@ -207,15 +206,15 @@ class Quine:
 
 
 if __name__ == "__main__":
-    base_directory_in = r"C:\Users\jonma\github_repos\freemocap_organization\skellycam\skellycam\frontend\qt_gui\widgets\sub_widgets\qml_camera"
+    base_directory_in = r"C:\Users\jonma\github_repos\jonmatthis\jonbot\jonbot\backend\data_layer\magic_tree"
     quine_config = QuineConfig(
         print_mode="all",
 
         # STRUCTURE (i.e. the file/folder structure with function/class/method definitions, but no other content    )
         structure=StructureFetcherConfig(
-            fetch_structure_for=[],
+            fetch_structure_for=[base_directory_in],
             base_directory=base_directory_in,
-            excluded_directories=["__pycache__", ".git", "legacy"],
+            excluded_directories=["__pycache__", ".git", "legacy", ".idea", "venv", ".pytest_cache"],
             included_extensions=["py", "yaml", "api", "discord", "md", "txt", "json", "toml", "tex", "qml"],
             excluded_file_names=["poetry.lock", ".gitignore", "LICENSE", "*.env"],
         ),

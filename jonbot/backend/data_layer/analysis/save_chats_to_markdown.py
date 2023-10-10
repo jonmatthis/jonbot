@@ -1,12 +1,10 @@
 import asyncio
-import logging
 from pathlib import Path
 
+from jonbot import logger
 from jonbot.backend.data_layer.database.get_mongo_database_manager import get_mongo_database_manager
 from jonbot.system.environment_variables import CHATS_COLLECTION_NAME
 from jonbot.system.path_getters import get_base_data_folder_path
-
-logger = logging.getLogger(__name__)
 
 
 async def save_chats_to_markdown(database_name: str,

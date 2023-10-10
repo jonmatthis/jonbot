@@ -1,6 +1,5 @@
 import asyncio
 import json
-import logging
 from pathlib import Path
 from typing import Dict, Any
 
@@ -8,10 +7,9 @@ from langchain import PromptTemplate, ConversationChain
 from langchain.callbacks import StdOutCallbackHandler
 from langchain.chat_models import ChatOpenAI
 
+from jonbot import logger
 from jonbot.backend.data_layer.analysis.get_server_chats import get_chats
 from jonbot.backend.data_layer.models.discord_stuff.discord_chat_document import DiscordChatDocument
-
-logger = logging.getLogger(__name__)
 
 _DEFAULT_SUMMARY_TEMPLATE = """
 Write a concise summary of the following:
@@ -20,8 +18,8 @@ CONCISE SUMMARY:"""
 SUMMARY_TEMPLATE = PromptTemplate.from_template(_DEFAULT_SUMMARY_TEMPLATE)
 
 
-async def extract_conversation_topics(chats: Dict[str, DiscordChatDocument],
-                                      save_path: str) -> Dict[str, Any]:
+async def summarize_tree(chats: Dict[str, DiscordChatDocument],
+                         save_path: str) -> Dict[str, Any]:
     topics_by_chat = {}
     tasks = []
     try:
@@ -44,7 +42,6 @@ async def extract_topics_from_chat(chat: DiscordChatDocument,
                                    save_path: str,
                                    topics_by_chat: Dict[str, Any]):
     print(f"\n=====================================\n"
-          f"Extracting topics from chat {chat_id}..."
           f"There are {len(chat.messages)} messages in this chat."
           f"\n_____________________________________\n")
     llm = ChatOpenAI(temperature=0,
@@ -86,8 +83,8 @@ if __name__ == "__main__":
                                      query={"server_id": server_id}))
     save_path = Path().home() / "syncthing_folders" / "jon_main_syncthing" / "jonbot_data"
     save_path.mkdir(parents=True, exist_ok=True)
-    topics_by_chat = asyncio.run(extract_conversation_topics(chats=chats_in,
-                                                             save_path=str(save_path)))
+    topics_by_chat = asyncio.run(summarize_tree(chats=chats_in,
+                                                save_path=str(save_path)))
 
     json_filename_out = f"_all_chats_extracted_topics.json"
     json_path_out = Path(save_path) / json_filename_out

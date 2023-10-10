@@ -1,11 +1,8 @@
-import logging
-
 import discord
 
+from jonbot import logger
 from jonbot.backend.data_layer.models.discord_stuff.environment_config.load_discord_config import \
     get_or_create_discord_environment_config
-
-logger = logging.getLogger(__name__)
 
 
 def allowed_to_reply_in_channel(channel: discord.TextChannel) -> bool:

@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from jonbot.backend.data_layer.models.context_route import ContextRoute
 from jonbot.backend.data_layer.models.conversation_context import ConversationContextDescription
-from jonbot.backend.data_layer.models.conversation_models import Speaker
+from jonbot.backend.data_layer.models.conversation_models import Speaker, ChatCouplet
 from jonbot.backend.data_layer.models.discord_stuff.discord_message_document import DiscordMessageDocument
 from jonbot.backend.data_layer.models.timestamp_model import Timestamp
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
@@ -84,3 +84,32 @@ class DiscordChatDocument(BaseModel):
         for message in message_documents:
             if message.thread_id != thread_id:
                 raise Exception("Messages must have the same thread id")
+
+    def to_couplets(self) -> List[ChatCouplet]:
+        couplets = []
+        ai_messages = [message for message in self.messages if message.is_bot]
+        human_messages = [message for message in self.messages if not message.is_bot]
+
+        ai_parent_ids = []
+        for ai_message in ai_messages:
+            ai_parent_ids.append(ai_message.parent_message_id)
+            for human_message in human_messages:
+                if human_message.message_id == ai_parent_ids[-1]:
+                    couplets.append(ChatCouplet.from_tuple((human_message, ai_message)))
+                    break
+
+        if (not (len(couplets) == len(human_messages)) or
+                not (len(couplets) == len(ai_messages))):
+
+            logger.warning("Unable to match all messages to their parents - creating partial couplets")
+            human_message_ids = []
+            for human_message in human_messages:
+                human_message_ids.append(human_message.message_id)
+                if human_message_ids[-1] not in ai_parent_ids:
+                    couplets.append(ChatCouplet.from_tuple((human_message, None)))
+
+            for ai_message in ai_messages:
+                if ai_message.parent_message_id not in ai_parent_ids:
+                    couplets.append(ChatCouplet.from_tuple((None, ai_message)))
+
+        return couplets

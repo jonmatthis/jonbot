@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union, List
 
 import discord
 from pydantic import BaseModel
@@ -30,6 +30,18 @@ class SubContextComponent(BaseModel):
     def as_sub_dict(self):
         return {"name": self.name, "id": self.id, "parent": self.parent}
 
+    @classmethod
+    def create_dummy(cls,
+                     dummy_text: str = "dummy",
+                     parent: str = None,
+                     id: int = 0):
+        return cls(
+            type=SubContextComponentTypes.DUMMY.value,
+            name=dummy_text,
+            id=id,
+            parent=parent,
+        )
+
 
 class Frontends(str, Enum):
     DISCORD = "discord"
@@ -43,7 +55,7 @@ class ContextRoute(BaseModel):
     frontend: Frontends
     server: SubContextComponent
     channel: SubContextComponent
-    thread: Optional[SubContextComponent] = None
+    thread: SubContextComponent
 
     @classmethod
     def from_discord_channel(cls, channel: discord.TextChannel):
@@ -74,8 +86,9 @@ class ContextRoute(BaseModel):
                     parent=str(channel),
                     type=SubContextComponentTypes.THREAD.value,
                 )
-            else:  # Direct Message
-                thread = None
+            else:  # top level channel
+                thread = SubContextComponent.create_dummy(dummy_text="top_level",
+                                                          parent=str(server))
                 channel = SubContextComponent(
                     name=f"{message.channel.name}",
                     id=message.channel.id,
@@ -96,7 +109,8 @@ class ContextRoute(BaseModel):
                 parent=str(server),
                 type=SubContextComponentTypes.CHANNEL.value,
             )
-            thread = None
+            thread = SubContextComponent.create_dummy(dummy_text="DM-chat",
+                                                      parent=str(channel))
 
         return cls(
             frontend=frontend,
@@ -107,17 +121,11 @@ class ContextRoute(BaseModel):
 
     @property
     def friendly_path(self):
-        if self.thread:
-            return f"{self.frontend.value}/{self.server.name}/{self.channel.name}/threads/{self.thread.name}/messages/"
-        else:
-            return f"{self.frontend.value}/{self.server.name}/{self.channel.name}/messages/"
+        return f"{self.frontend.value}/{self.server.name}/{self.channel.name}/threads/{self.thread.name}/messages/"
 
     @property
     def full_path(self):
-        if self.thread:
-            return f"frontend-{self.frontend}/{str(self.server)}/{str(self.channel)}/threads/{str(self.thread)}/messages/"
-        else:
-            return f"frontend-{self.frontend}/{str(self.server)}/{str(self.channel)}/messages/"
+        return f"frontend-{self.frontend}/{str(self.server)}/{str(self.channel)}/threads/{str(self.thread)}/messages/"
 
     @property
     def as_query(self) -> dict:
@@ -125,11 +133,13 @@ class ContextRoute(BaseModel):
             "frontend": self.frontend.value,
             "server_id": self.server.id,
             "channel_id": self.channel.id,
+            "thread_id": self.thread.id
         }
-        if self.thread:
-            query.update({"thread_id": self.thread.id})
-
         return query
+
+    @property
+    def as_tree_path(self) -> List[Union[str, int]]:
+        return list(self.as_query.values())
 
     @property
     def as_flat_dict(self):
@@ -138,8 +148,8 @@ class ContextRoute(BaseModel):
             "server_id": self.server.id,
             "channel_name": self.channel.name,
             "channel_id": self.channel.id,
-            "thread_name": self.thread.name if self.thread else None,
-            "thread_id": self.thread.id if self.thread else None,
+            "thread_name": self.thread.name,
+            "thread_id": self.thread.id,
         }
 
     @classmethod

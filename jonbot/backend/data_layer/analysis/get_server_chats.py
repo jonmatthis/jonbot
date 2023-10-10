@@ -1,12 +1,10 @@
 import asyncio
-import logging
 from typing import Dict
 
+from jonbot import logger
 from jonbot.backend.data_layer.database.get_mongo_database_manager import get_mongo_database_manager
 from jonbot.backend.data_layer.models.discord_stuff.discord_chat_document import DiscordChatDocument
 from jonbot.system.environment_variables import CHATS_COLLECTION_NAME
-
-logger = logging.getLogger(__name__)
 
 
 async def get_chats(database_name: str,

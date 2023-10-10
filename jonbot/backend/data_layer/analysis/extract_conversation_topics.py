@@ -1,6 +1,5 @@
 import asyncio
 import json
-import logging
 from pathlib import Path
 from typing import Dict, Any
 
@@ -9,11 +8,10 @@ from langchain.callbacks import StdOutCallbackHandler
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationEntityMemory
 
+from jonbot import logger
 from jonbot.backend.data_layer.analysis.get_server_chats import get_chats
 from jonbot.backend.data_layer.analysis.utilities import get_human_ai_message_pairs
 from jonbot.backend.data_layer.models.discord_stuff.discord_chat_document import DiscordChatDocument
-
-logger = logging.getLogger(__name__)
 
 _DEFAULT_TOPIC_CONVERSATION_TEMPLATE = """
 
