@@ -15,12 +15,15 @@ logger = get_jonbot_logger()
 
 class DiscordChatDocument(BaseModel):
     messages: List[DiscordMessageDocument]
+    couplets: List[ChatCouplet]
     created_at: Timestamp
     last_accessed: Timestamp
     owner_id: int
     owner_name: str
     server_name: str
     server_id: int
+    category_name: str
+    category_id: int
     channel_name: str
     channel_id: int
     thread_name: str
@@ -32,7 +35,10 @@ class DiscordChatDocument(BaseModel):
     context_route: ContextRoute
     context_route_full_path: str
     context_route_as_friendly_dict: str
+    context_route_as_tree_path: List[str]
     query: dict
+
+    as_text: str = ""
 
     @classmethod
     async def build(cls,
@@ -50,8 +56,9 @@ class DiscordChatDocument(BaseModel):
 
         context_route = ContextRoute.from_discord_message(message=messages[0])
 
-        return cls(
+        instance = cls(
             messages=message_documents,
+            couplets=cls.to_couplets(message_documents),
             created_at=Timestamp.from_datetime(parent_message.created_at),
             last_accessed=Timestamp.now(),
             owner_id=parent_message.author.id,
@@ -65,9 +72,18 @@ class DiscordChatDocument(BaseModel):
             context_route=context_route,
             context_route_full_path=context_route.full_path,
             context_route_as_friendly_dict=context_route.friendly_path,
+            context_route_as_tree_path=context_route.as_tree_path,
             query={"chat_id": chat_id},
             **context_route.as_flat_dict,
         )
+        instance.as_text = instance.to_text()
+        return instance
+
+    def to_text(self):
+        text = ""
+        for couplet in self.couplets:
+            text += f"[{couplet.text}]\n"
+        return text
 
     @classmethod
     async def get_unique_speakers(cls, messages: List[discord.Message]):
@@ -85,10 +101,11 @@ class DiscordChatDocument(BaseModel):
             if message.thread_id != thread_id:
                 raise Exception("Messages must have the same thread id")
 
-    def to_couplets(self) -> List[ChatCouplet]:
+    @staticmethod
+    def to_couplets(messages: List[DiscordMessageDocument]) -> List[ChatCouplet]:
         couplets = []
-        ai_messages = [message for message in self.messages if message.is_bot]
-        human_messages = [message for message in self.messages if not message.is_bot]
+        ai_messages = [message for message in messages if message.is_bot]
+        human_messages = [message for message in messages if not message.is_bot]
 
         ai_parent_ids = []
         for ai_message in ai_messages:

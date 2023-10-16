@@ -22,6 +22,7 @@ class ServerScraperCog(commands.Cog):
 
     def __init__(self, database_operations: DiscordDatabaseOperations):
         self._database_operations = database_operations
+        self._upsert_tasks = []
 
     @commands.slash_command(
         name="scrape_server",
@@ -60,10 +61,12 @@ class ServerScraperCog(commands.Cog):
         )
 
         total_server_messages = 0
-        tasks = []
+        all_messages = []
         try:
-            for channel in filter(lambda ch: isinstance(ch, discord.TextChannel), channels):
+            filtered_channels = filter(lambda ch: isinstance(ch, discord.TextChannel), channels)
+            for channel in filtered_channels:
                 logger.info(f"Scraping channel:  {ctx.channel.name}")
+
                 channel_message_count_string = ""
                 total_channel_messages = 0
                 channel_thread_message_count = 0
@@ -71,12 +74,14 @@ class ServerScraperCog(commands.Cog):
                 channel_messages = await self._get_message_list_from_channel(
                     channel=channel
                 )
+                all_messages.extend(channel_messages)
                 total_channel_messages += len(channel_messages)
 
                 chat_documents = []
                 for message in channel_messages:
                     if message.thread is not None:
                         thread_messages = await self._get_message_list_from_channel(channel=message.thread)
+                        all_messages.extend(thread_messages)
                         channel_thread_message_count += len(thread_messages)
                         chat_documents.append(await DiscordChatDocument.build(chat_id=message.thread.id,
                                                                               parent_message=message,
@@ -99,9 +104,8 @@ class ServerScraperCog(commands.Cog):
                 logger.info(
                     f"Upserting {len(channel_messages)} channel messages and {len(chat_documents)} chat documents to database...")
 
-                tasks.append(asyncio.create_task(self._send_messages_to_database(messages_to_upsert=channel_messages)))
-                tasks.append(asyncio.create_task(self._send_chats_to_database(chat_documents=chat_documents)))
-                logger.info(f"Finished upserting messages from channel: {channel} to database.")
+                self._upsert_tasks.append(self._send_messages_to_database(messages_to_upsert=channel_messages))
+                self._upsert_tasks.append(self._send_chats_to_database(chat_documents=chat_documents))
 
         except Exception as e:
             await ctx.send(
@@ -114,10 +118,9 @@ class ServerScraperCog(commands.Cog):
             logger.exception(e)
             raise e
         finally:
-            logger.info(f"Waiting for {len(tasks)} tasks to finish...")
-            await asyncio.gather(*tasks)
-            logger.success(f"Tasks finished!")
-
+            logger.info(f"Upserting {len(self._upsert_tasks)} tasks to database...")
+            await asyncio.gather(*self._upsert_tasks)
+            logger.success(f"Sucessfully sent {len(self._upsert_tasks)} tasks to database!")
         reply_embed_description = await self._update_reply_message_embed(
             channel_message_count_string="",
             total_server_messages_count=total_server_messages,
@@ -125,6 +128,9 @@ class ServerScraperCog(commands.Cog):
             embed_message=reply_embed_description,
             reply_message=reply_message,
             done=True)
+        if len(all_messages) == total_server_messages:
+            raise ValueError("Total messages scraped does not match total messages upserted!")
+
         logger.success(f"Finished scraping server: {ctx.guild.name}!\n "
                        f"{reply_embed_description}"
                        )
@@ -174,9 +180,12 @@ class ServerScraperCog(commands.Cog):
     ) -> List[discord.Message]:
         channel_messages = []
         try:
+            logger.info(f"Scraping channel: {channel}")
             async for message in channel.history(limit=None, oldest_first=True):
                 channel_messages.append(message)
+            logger.info(f"Scraped {len(channel_messages)} messages from channel: {channel}")
+
         except Forbidden:
-            logger.warning(f"Missing permissions to scrape channel: {channel.name}")
+            logger.warning(f"Missing permissions to scrape channel: {channel}")
 
         return channel_messages

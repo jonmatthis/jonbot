@@ -26,7 +26,7 @@ class BackendDatabaseOperations(BaseModel):
             self, request: UpsertDiscordChatsRequest
     ) -> UpsertResponse:
         logger.info(
-            f"Upserting {len(request.data)} chats to database: {request.database_name} with query: {request.query}"
+            f"Upserting {len(request.data)} chats to database: {request.database_name}"
         )
 
         success = await self.mongo_database.upsert_discord_chats(request=request)
@@ -39,7 +39,7 @@ class BackendDatabaseOperations(BaseModel):
             self, request: UpsertDiscordMessagesRequest
     ) -> UpsertResponse:
         logger.info(
-            f"Upserting {len(request.data)} messages to database: {request.database_name} with query: {request.query}"
+            f"Upserting {len(request.data)} messages to database: {request.database_name}"
         )
 
         success = await self.mongo_database.upsert_discord_messages(request=request)

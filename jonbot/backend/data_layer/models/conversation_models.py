@@ -178,6 +178,7 @@ class ChatRequest(BaseModel):
 class ChatCouplet(BaseModel):
     human_message: Optional[DiscordMessageDocument]
     ai_message: Optional[DiscordMessageDocument]
+    text: str = ""
 
     @classmethod
     def from_tuple(cls, couplet: Tuple[Optional[DiscordMessageDocument], Optional[DiscordMessageDocument]]):
@@ -190,10 +191,11 @@ class ChatCouplet(BaseModel):
             raise Exception(f"Invalid ai message: ai_message.is_bot = {ai_message.is_bot}")
         if human_message is None and ai_message is None:
             raise Exception(f"Invalid couplet: both messages are None")
-        return cls(human_message=human_message,
-                   ai_message=ai_message)
+        instance = cls(human_message=human_message,
+                       ai_message=ai_message)
+        instance.text = instance.as_text()
+        return instance
 
-    @property
     def as_text(self):
         return f"{self.human_text}\n{self.ai_text}"
 

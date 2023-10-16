@@ -11,6 +11,7 @@ class SubContextComponentTypes(str, Enum):
     CHANNEL = "channel"
     THREAD = "thread"
     FORUM = "forum"
+    CATEGORY = "category"
     UNKNOWN = "unknown"
     DUMMY = "dummy"
     OTHER = "other"
@@ -54,6 +55,7 @@ class ContextRoute(BaseModel):
 
     frontend: Frontends
     server: SubContextComponent
+    category: SubContextComponent
     channel: SubContextComponent
     thread: SubContextComponent
 
@@ -71,6 +73,16 @@ class ContextRoute(BaseModel):
                 parent=frontend,
                 type=SubContextComponentTypes.SERVER.value,
             )
+            if hasattr(message.channel, "category"):
+                category = SubContextComponent(
+                    name=f"{message.channel.category.name}",
+                    id=message.channel.category.id,
+                    parent=str(server),
+                    type=SubContextComponentTypes.CATEGORY.value,
+                )
+            else:
+                category = SubContextComponent.create_dummy(dummy_text="no_category",
+                                                            parent=str(server))
 
             if "thread" in message.channel.type.name:
                 channel = SubContextComponent(
@@ -103,6 +115,8 @@ class ContextRoute(BaseModel):
                 parent=str(frontend),
                 type=SubContextComponentTypes.DIRECT_MESSAGE.value,
             )
+            category = SubContextComponent.create_dummy(dummy_text="DM0Cha",
+                                                        parent=str(server))
             channel = SubContextComponent(
                 name=f"DM-{message.channel.id}",
                 id=message.channel.id,
@@ -115,23 +129,25 @@ class ContextRoute(BaseModel):
         return cls(
             frontend=frontend,
             server=server,
+            category=category,
             channel=channel,
             thread=thread,
         )
 
     @property
     def friendly_path(self):
-        return f"{self.frontend.value}/{self.server.name}/{self.channel.name}/threads/{self.thread.name}/messages/"
+        return f"{self.frontend.value}/{self.server.name}/{self.category.name}/{self.channel.name}/threads/{self.thread.name}/messages/"
 
     @property
     def full_path(self):
-        return f"frontend-{self.frontend}/{str(self.server)}/{str(self.channel)}/threads/{str(self.thread)}/messages/"
+        return f"frontend-{self.frontend}/{str(self.server)}/{str(self.category)}/{str(self.channel)}/threads/{str(self.thread)}/"
 
     @property
     def as_query(self) -> dict:
         query = {
             "frontend": self.frontend.value,
             "server_id": self.server.id,
+            "category_id": self.category.id,
             "channel_id": self.channel.id,
             "thread_id": self.thread.id
         }
@@ -139,7 +155,7 @@ class ContextRoute(BaseModel):
 
     @property
     def as_tree_path(self) -> List[Union[str, int]]:
-        return list(self.as_query.values())
+        return list(self.friendly_path.split("/"))
 
     @property
     def as_flat_dict(self):
