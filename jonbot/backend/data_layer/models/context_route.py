@@ -162,6 +162,8 @@ class ContextRoute(BaseModel):
         return {
             "server_name": self.server.name,
             "server_id": self.server.id,
+            "category_name": self.category.name,
+            "category_id": self.category.id,
             "channel_name": self.channel.name,
             "channel_id": self.channel.id,
             "thread_name": self.thread.name,
