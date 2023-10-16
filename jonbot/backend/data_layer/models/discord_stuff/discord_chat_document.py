@@ -117,8 +117,6 @@ class DiscordChatDocument(BaseModel):
 
         if (not (len(couplets) == len(human_messages)) or
                 not (len(couplets) == len(ai_messages))):
-
-            logger.warning("Unable to match all messages to their parents - creating partial couplets")
             human_message_ids = []
             for human_message in human_messages:
                 human_message_ids.append(human_message.message_id)

@@ -20,6 +20,8 @@ class DiscordDatabaseOperations:
         self._database_name = database_name
 
     async def upsert_messages(self, messages: List[discord.Message]) -> bool:
+        if len(messages) == 0:
+            raise ValueError("Cannot upsert 0 messages")
         try:
             documents = [
                 await DiscordMessageDocument.from_discord_message(message)
@@ -47,14 +49,15 @@ class DiscordDatabaseOperations:
             logger.exception(e)
             raise
 
-        logger.success(
+        logger.info(
             f"Successfully sent {len(request.data)} messages to database: {request.database_name}"
         )
         return response["success"]
 
     async def upsert_chats(self, chat_documents: List[DiscordChatDocument]) -> bool:
+        if len(chat_documents) == 0:
+            raise ValueError("Cannot upsert 0 chats")
         try:
-
             request = UpsertDiscordChatsRequest.from_discord_chat_documents(
                 documents=chat_documents, database_name=self._database_name
             )

@@ -22,7 +22,6 @@ class ServerScraperCog(commands.Cog):
 
     def __init__(self, database_operations: DiscordDatabaseOperations):
         self._database_operations = database_operations
-        self._upsert_tasks = []
 
     @commands.slash_command(
         name="scrape_server",
@@ -50,6 +49,7 @@ class ServerScraperCog(commands.Cog):
         await self._scrape(channels=channels, ctx=ctx)
 
     async def _scrape(self, channels: List[discord.abc.Messageable], ctx: discord.ApplicationContext):
+        upsert_tasks = []
         reply_embed_title = f"Scraping server: {ctx.guild.name}"
         reply_embed_description = ""
         reply_embed = discord.Embed(
@@ -104,8 +104,13 @@ class ServerScraperCog(commands.Cog):
                 logger.info(
                     f"Upserting {len(channel_messages)} channel messages and {len(chat_documents)} chat documents to database...")
 
-                self._upsert_tasks.append(self._send_messages_to_database(messages_to_upsert=channel_messages))
-                self._upsert_tasks.append(self._send_chats_to_database(chat_documents=chat_documents))
+                if len(channel_messages) > 0:
+                    upsert_tasks.append(
+                        asyncio.create_task(self._send_messages_to_database(messages_to_upsert=channel_messages)))
+
+                if len(chat_documents) > 0:
+                    upsert_tasks.append(
+                        asyncio.create_task(self._send_chats_to_database(chat_documents=chat_documents)))
 
         except Exception as e:
             await ctx.send(
@@ -118,9 +123,9 @@ class ServerScraperCog(commands.Cog):
             logger.exception(e)
             raise e
         finally:
-            logger.info(f"Upserting {len(self._upsert_tasks)} tasks to database...")
-            await asyncio.gather(*self._upsert_tasks)
-            logger.success(f"Sucessfully sent {len(self._upsert_tasks)} tasks to database!")
+            logger.info(f"Awaiting {len(upsert_tasks)} tasks to upsert messages to database...")
+            await asyncio.gather(*upsert_tasks)
+
         reply_embed_description = await self._update_reply_message_embed(
             channel_message_count_string="",
             total_server_messages_count=total_server_messages,
@@ -128,7 +133,7 @@ class ServerScraperCog(commands.Cog):
             embed_message=reply_embed_description,
             reply_message=reply_message,
             done=True)
-        if len(all_messages) == total_server_messages:
+        if not len(all_messages) == total_server_messages:
             raise ValueError("Total messages scraped does not match total messages upserted!")
 
         logger.success(f"Finished scraping server: {ctx.guild.name}!\n "

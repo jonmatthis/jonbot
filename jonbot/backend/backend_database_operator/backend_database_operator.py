@@ -25,6 +25,8 @@ class BackendDatabaseOperations(BaseModel):
     async def upsert_discord_chats(
             self, request: UpsertDiscordChatsRequest
     ) -> UpsertResponse:
+        if len(request.data) == 0:
+            raise ValueError("Cannot upsert 0 chats")
         logger.info(
             f"Upserting {len(request.data)} chats to database: {request.database_name}"
         )

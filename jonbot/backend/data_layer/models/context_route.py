@@ -74,12 +74,23 @@ class ContextRoute(BaseModel):
                 type=SubContextComponentTypes.SERVER.value,
             )
             if hasattr(message.channel, "category"):
-                category = SubContextComponent(
-                    name=f"{message.channel.category.name}",
-                    id=message.channel.category.id,
-                    parent=str(server),
-                    type=SubContextComponentTypes.CATEGORY.value,
-                )
+                if "thread" in (str(message.channel.type)).lower():
+                    category = SubContextComponent(
+                        name=f"{message.channel.parent.name}",
+                        id=message.channel.parent.id,
+                        parent=str(server),
+                        type=SubContextComponentTypes.CATEGORY.value,
+                    )
+                elif not message.channel.category:
+                    category = SubContextComponent.create_dummy(dummy_text="TopLevel",
+                                                                parent=str(server))
+                else:
+                    category = SubContextComponent(
+                        name=f"{message.channel.category.name}",
+                        id=message.channel.category.id,
+                        parent=str(server),
+                        type=SubContextComponentTypes.CATEGORY.value,
+                    )
             else:
                 category = SubContextComponent.create_dummy(dummy_text="no_category",
                                                             parent=str(server))
