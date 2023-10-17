@@ -40,6 +40,9 @@ class Speaker(BaseModel):
             type="bot" if message.author.bot else "human",
         )
 
+    def __str__(self):
+        return f"{self.type}-{self.name}-{self.id}"
+
 
 class ChatMessage(BaseModel):
     content: str
@@ -193,18 +196,18 @@ class ChatCouplet(BaseModel):
             raise Exception(f"Invalid couplet: both messages are None")
         instance = cls(human_message=human_message,
                        ai_message=ai_message)
-        instance.text = instance.as_text()
+        instance.text = instance._to_text()
         return instance
 
-    def as_text(self):
-        return f"{self.human_text}\n{self.ai_text}"
+    def _to_text(self):
+        return f"{self.human_text}\n\n{self.ai_text}"
 
     @property
     def ai_text(self):
         if self.ai_message is None:
             ai_message_text = ""
         else:
-            ai_message_text = f"AI: {self.ai_message.content}"
+            ai_message_text = f"**AI**:\n {self.ai_message.content}"
         return ai_message_text
 
     @property
@@ -212,5 +215,5 @@ class ChatCouplet(BaseModel):
         if self.human_message is None:
             human_message_text = ""
         else:
-            human_message_text = f"Human: {self.human_message.content}"
+            human_message_text = f"**Human**:\n {self.human_message.content}"
         return human_message_text

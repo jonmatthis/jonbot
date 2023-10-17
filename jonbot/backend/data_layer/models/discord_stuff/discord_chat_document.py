@@ -67,9 +67,7 @@ class DiscordChatDocument(BaseModel):
             jump_url=parent_message.jump_url,
             parent_message_id=parent_message.id,
             speakers=speakers,
-            context_description=ConversationContextDescription.from_discord_message(
-                parent_message
-            ).text,
+            context_description=ConversationContextDescription.from_discord_message(parent_message).text,
             context_route=context_route,
             context_route_full_path=context_route.full_path,
             context_route_as_friendly_dict=context_route.friendly_path,
@@ -78,17 +76,17 @@ class DiscordChatDocument(BaseModel):
             query={"chat_id": chat_id},
             **context_route.as_flat_dict,
         )
-        instance.as_text = instance.to_text()
+        instance.as_text = instance._to_text()
         return instance
 
-    def to_text(self):
+    def _to_text(self):
         text = ""
         for couplet in self.couplets:
-            text += f"[{couplet.text}]\n"
+            text += f"[{couplet.text}],\n\n"
         return text
 
     @classmethod
-    async def get_unique_speakers(cls, messages: List[discord.Message]):
+    async def get_unique_speakers(cls, messages: List[discord.Message]) -> List[Speaker]:
         all_speakers = [Speaker.from_discord_message(message).dict() for message in messages]
         speakers = []
         for speaker in all_speakers:

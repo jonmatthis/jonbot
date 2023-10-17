@@ -14,7 +14,7 @@ def os_independent_home_dir():
 
 
 def get_backups_folder_path():
-    backups_folder_path = Path(Path().home()) / BACKUP_FOLDER_RELATIVE_TO_HOME
+    backups_folder_path = Path().home() / BACKUP_FOLDER_RELATIVE_TO_HOME
     backups_folder_path.mkdir(exist_ok=True, parents=True)
     return str(backups_folder_path)
 
@@ -63,11 +63,20 @@ def clean_path_string(filename: str):
     return filename.replace(":", "_").replace(".", "_").replace(" ", "_")
 
 
-def get_default_backup_json_save_path(filename: str,
-                                      precise_timestamp: bool = False,
-                                      tag: str = None) -> str:
-    if filename.endswith(".json"):
-        filename.replace(".json", "")
+def get_default_backup_save_path(filename: str,
+                                 subfolder: str = None,
+                                 precise_timestamp: bool = False,
+                                 filetype: str = "json") -> str:
+    backup_path = Path(get_backups_folder_path())
+    if subfolder:
+        backup_path = backup_path / subfolder
+    backup_path.mkdir(exist_ok=True, parents=True)
+
+    if not filetype.startswith("."):
+        filetype = "." + filetype
+
+    if filename.endswith(filetype):
+        filename.replace(filetype, "")
     filename = clean_path_string(filename)
 
     if precise_timestamp:
@@ -75,13 +84,8 @@ def get_default_backup_json_save_path(filename: str,
     else:
         filename += f"_{get_current_date_time_string()[:10]}"  # just the date
 
-    if tag:
-        filename += f"_{tag}"
-
-    filename += ".json"
-
-    save_path = Path(get_backups_folder_path()) / f"{filename}"
-    save_path.parent.mkdir(exist_ok=True, parents=True)
+    filename += filetype
+    save_path = backup_path / filename
     return str(save_path)
 
 
