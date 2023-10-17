@@ -36,6 +36,7 @@ class DiscordChatDocument(BaseModel):
     context_route_full_path: str
     context_route_as_friendly_dict: str
     context_route_as_tree_path: List[str]
+    context_route_as_friendly_tree_path: List[str]
     query: dict
 
     as_text: str = ""
@@ -73,6 +74,7 @@ class DiscordChatDocument(BaseModel):
             context_route_full_path=context_route.full_path,
             context_route_as_friendly_dict=context_route.friendly_path,
             context_route_as_tree_path=context_route.as_tree_path,
+            context_route_as_friendly_tree_path=context_route.as_friendly_tree_path,
             query={"chat_id": chat_id},
             **context_route.as_flat_dict,
         )

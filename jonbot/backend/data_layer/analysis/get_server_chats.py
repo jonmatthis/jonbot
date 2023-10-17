@@ -34,8 +34,8 @@ async def get_chats(database_name: str,
 
 
 if __name__ == "__main__":
-    database_name = "classbot_database"
+    database_name_in = "classbot_database"
     server_id = 1150736235430686720
 
-    chats = asyncio.run(get_chats(database_name=database_name,
-                                  query={"server_id": server_id}))
+    chats_out = asyncio.run(get_chats(database_name=database_name_in,
+                                      query={"server_id": server_id}))

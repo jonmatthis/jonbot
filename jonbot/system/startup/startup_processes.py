@@ -89,9 +89,9 @@ def create_discord_services(bot_nick_names: List[str]):
 
 
 def filter_bot_nick_names(bot_nick_names: List[str]) -> List[str]:
-    # if not os.getenv("IS_DOCKER"):
-    #     if len(bot_nick_names) > 2:
-    #         return bot_nick_names[:2]  # when running locally, only run the first two bots
+    if not os.getenv("IS_DOCKER"):
+        if len(bot_nick_names) > 2:
+            return bot_nick_names[:2]  # when running locally, only run the first two bots
 
     return bot_nick_names
 

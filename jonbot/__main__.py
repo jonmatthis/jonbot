@@ -23,9 +23,9 @@ if __name__ == "__main__":
     if args.bot_nick_name == "":
         from jonbot.system.environment_variables import BOT_NICK_NAMES
 
-        bot_nick_names = BOT_NICK_NAMES
+        bot_nick_names_in = BOT_NICK_NAMES
     else:
-        bot_nick_names = args.bot_nick_name.split(",")
+        bot_nick_names_in = args.bot_nick_name.split(",")
 
     logger.debug("Running __main__.py...")
-    main(bot_nick_names=bot_nick_names)
+    main(bot_nick_names=bot_nick_names_in)

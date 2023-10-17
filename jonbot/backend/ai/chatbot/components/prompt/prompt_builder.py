@@ -1,9 +1,8 @@
-from langchain import PromptTemplate
 from langchain.prompts import (
     ChatPromptTemplate,
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
-    MessagesPlaceholder,
+    MessagesPlaceholder, PromptTemplate,
 )
 
 from jonbot.backend.ai.chatbot.components.prompt.prompt_strings import (

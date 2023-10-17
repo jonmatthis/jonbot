@@ -5,12 +5,18 @@ from typing import Union
 from jonbot.system.environment_variables import (
     BASE_DATA_FOLDER_NAME,
     LOG_FILE_FOLDER_NAME,
-    DATABASE_BACKUP,
+    BACKUP_FOLDER_RELATIVE_TO_HOME,
 )
 
 
 def os_independent_home_dir():
     return str(Path.home())
+
+
+def get_backups_folder_path():
+    backups_folder_path = Path(Path().home()) / BACKUP_FOLDER_RELATIVE_TO_HOME
+    backups_folder_path.mkdir(exist_ok=True, parents=True)
+    return str(backups_folder_path)
 
 
 def get_log_file_path():
@@ -57,16 +63,24 @@ def clean_path_string(filename: str):
     return filename.replace(":", "_").replace(".", "_").replace(" ", "_")
 
 
-def get_default_database_json_save_path(filename: str, timestamp: bool = False):
+def get_default_backup_json_save_path(filename: str,
+                                      precise_timestamp: bool = False,
+                                      tag: str = None) -> str:
     if filename.endswith(".json"):
         filename.replace(".json", "")
     filename = clean_path_string(filename)
-    if timestamp:
-        filename += f"_{get_current_date_time_string()}"
+
+    if precise_timestamp:
+        filename += f"_{get_current_date_time_string()}"  # full timestamp, down to the millisecond lol
+    else:
+        filename += f"_{get_current_date_time_string()[:10]}"  # just the date
+
+    if tag:
+        filename += f"_{tag}"
 
     filename += ".json"
 
-    save_path = Path(get_base_data_folder_path()) / DATABASE_BACKUP / f"{filename}"
+    save_path = Path(get_backups_folder_path()) / f"{filename}"
     save_path.parent.mkdir(exist_ok=True, parents=True)
     return str(save_path)
 

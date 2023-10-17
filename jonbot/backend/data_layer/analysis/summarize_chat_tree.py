@@ -1,16 +1,16 @@
 import asyncio
-import json
 from pathlib import Path
 from typing import List
 
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
 from langchain.text_splitter import CharacterTextSplitter
+from magic_tree.magic_tree_dictionary import MagicTreeDictionary
 
 from jonbot import logger
 from jonbot.backend.data_layer.analysis.get_server_chats import get_chats
-from jonbot.backend.data_layer.magic_tree import MagicTreeDict
 from jonbot.backend.data_layer.models.discord_stuff.discord_chat_document import DiscordChatDocument
+from jonbot.system.path_getters import get_default_backup_json_save_path
 
 
 def split_text_into_chunks(text: str,
@@ -25,17 +25,6 @@ def split_text_into_chunks(text: str,
     texts = text_splitter.split_text(text)
     return texts
 
-
-# def summarize_couplet(couplet: ChatCouplet,
-#                       chunk_size: int = 1e4,
-#                       model: str = "gpt-3.5-turbo-16k") -> str:
-#     if couplet is None:
-#         logger.error(f"Error summarizing couplet - couplet is None")
-#         return None
-#     if couplet.as_text is not None:
-#         return summarize_text(text=couplet.as_text,
-#                               chunk_size=chunk_size,
-#                               model=model)
 
 CONVERSATION_TURN_SUMMARIZER_PROMPT_TEMPLATE = """
 This text represents a turn of conversation between a Human and an AI.
@@ -75,9 +64,9 @@ def summarize_text(text: str,
         return summary
 
 
-def get_chat_tree(chats: List[DiscordChatDocument]) -> MagicTreeDict:
+def get_chat_tree(chats: List[DiscordChatDocument]) -> MagicTreeDictionary:
     try:
-        tree = MagicTreeDict()
+        tree = MagicTreeDictionary()
         for chat in chats:
             context_tree_path = chat.context_route.as_tree_path
             for number, couplet in enumerate(chat.to_couplets()):
@@ -95,13 +84,15 @@ if __name__ == "__main__":
     chats_by_route = asyncio.run(get_chats(database_name=database_name,
                                            query={"server_id": server_id}))
 
+    # save to json
+    json_path = Path(get_default_backup_json_save_path(tag="classbot_chats_by_route"))
     chat_tree = get_chat_tree(chats=list(chats_by_route.values()))
     chat_tree.print_leaf_info()
-
-    summary_tree = chat_tree.map_to_leaves(function=lambda leaf: summarize_text(text=leaf))
-    summary_tree_dict = summary_tree.__dict__
-    json_path = Path("summary_tree.json")
-    with open(json_path, "w") as f:
-        json.dump(summary_tree_dict, f, indent=4)
-    print(summary_tree_dict)
-    f = 9
+    #
+    # summary_tree = chat_tree.map_to_leaves(function=lambda leaf: summarize_text(text=leaf))
+    # summary_tree_dict = summary_tree.__dict__
+    # json_path = Path("summary_tree.json")
+    # with open(json_path, "w") as f:
+    #     json.dump(summary_tree_dict, f, indent=4)
+    # print(summary_tree_dict)
+    # f = 9

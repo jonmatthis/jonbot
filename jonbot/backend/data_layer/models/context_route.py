@@ -65,89 +65,90 @@ class ContextRoute(BaseModel):
 
     @classmethod
     def from_discord_message(cls, message: discord.Message):
-        frontend = Frontends.DISCORD.value
+        frontend_component = Frontends.DISCORD.value
         if message.guild:
-            server = SubContextComponent(
+            server_component = SubContextComponent(
                 name=f"{message.guild.name}",
                 id=message.guild.id,
-                parent=frontend,
+                parent=frontend_component,
                 type=SubContextComponentTypes.SERVER.value,
             )
             if hasattr(message.channel, "category"):
-                if "thread" in (str(message.channel.type)).lower():
-                    category = SubContextComponent(
-                        name=f"{message.channel.parent.name}",
-                        id=message.channel.parent.id,
-                        parent=str(server),
-                        type=SubContextComponentTypes.CATEGORY.value,
-                    )
-                elif not message.channel.category:
-                    category = SubContextComponent.create_dummy(dummy_text="TopLevel",
-                                                                parent=str(server))
-                else:
-                    category = SubContextComponent(
+                if message.channel.category:
+                    category_component = SubContextComponent(
                         name=f"{message.channel.category.name}",
                         id=message.channel.category.id,
-                        parent=str(server),
+                        parent=str(server_component),
                         type=SubContextComponentTypes.CATEGORY.value,
                     )
+                else:
+                    category_component = SubContextComponent.create_dummy(dummy_text="TopLevel",
+                                                                          parent=str(server_component))
             else:
-                category = SubContextComponent.create_dummy(dummy_text="no_category",
-                                                            parent=str(server))
+                category_component = SubContextComponent.create_dummy(dummy_text="no_category",
+                                                                      parent=str(server_component))
 
-            if "thread" in message.channel.type.name:
-                channel = SubContextComponent(
+            if "thread" in message.channel.type.name.lower():
+                channel_component = SubContextComponent(
                     name=f"{message.channel.parent.name}",
                     id=message.channel.parent.id,
-                    parent=str(server),
+                    parent=str(server_component),
                     type=SubContextComponentTypes.CHANNEL.value,
                 )
 
-                thread = SubContextComponent(
+                thread_component = SubContextComponent(
                     name=f"{message.channel.name}",
                     id=message.channel.id,
-                    parent=str(channel),
+                    parent=str(channel_component),
                     type=SubContextComponentTypes.THREAD.value,
                 )
-            else:  # top level channel
-                thread = SubContextComponent.create_dummy(dummy_text="top_level",
-                                                          parent=str(server))
-                channel = SubContextComponent(
+            else:  # top level message
+                channel_component = SubContextComponent(
                     name=f"{message.channel.name}",
                     id=message.channel.id,
-                    parent=str(server),
+                    parent=str(server_component),
                     type=SubContextComponentTypes.CHANNEL.value,
                 )
-
+                if message.thread:
+                    thread_component = SubContextComponent(
+                        name=f"{message.thread.name}",
+                        id=message.thread.id,
+                        parent=str(channel_component),
+                        type=SubContextComponentTypes.THREAD.value,
+                    )
+                else:
+                    thread_component = SubContextComponent.create_dummy(dummy_text="no_thread",
+                                                                        parent=str(server_component))
         else:  # DM
-            server = SubContextComponent(
+            server_component = SubContextComponent(
                 name="DirectMessage",
                 id=message.channel.id,
-                parent=str(frontend),
+                parent=str(frontend_component),
                 type=SubContextComponentTypes.DIRECT_MESSAGE.value,
             )
-            category = SubContextComponent.create_dummy(dummy_text="DM0Cha",
-                                                        parent=str(server))
-            channel = SubContextComponent(
+            category_component = SubContextComponent.create_dummy(dummy_text="DM-Chat",
+                                                                  parent=str(server_component))
+            channel_component = SubContextComponent(
                 name=f"DM-{message.channel.id}",
                 id=message.channel.id,
-                parent=str(server),
+                parent=str(server_component),
                 type=SubContextComponentTypes.CHANNEL.value,
             )
-            thread = SubContextComponent.create_dummy(dummy_text="DM-chat",
-                                                      parent=str(channel))
+            thread_component = SubContextComponent.create_dummy(dummy_text="DM-chat",
+                                                                parent=str(channel_component))
 
         return cls(
-            frontend=frontend,
-            server=server,
-            category=category,
-            channel=channel,
-            thread=thread,
+            frontend=frontend_component,
+            server=server_component,
+            category=category_component,
+            channel=channel_component,
+            thread=thread_component,
         )
 
     @property
     def friendly_path(self):
-        return f"{self.frontend.value}/{self.server.name}/{self.category.name}/{self.channel.name}/threads/{self.thread.name}/messages/"
+        path = f"{self.frontend.value}/{self.server.name}/{self.category.name}/{self.channel.name}/threads/{self.thread.name}/messages/"
+        return path.replace(" ", "_")
 
     @property
     def full_path(self):
@@ -166,7 +167,17 @@ class ContextRoute(BaseModel):
 
     @property
     def as_tree_path(self) -> List[Union[str, int]]:
-        return list(self.friendly_path.split("/"))
+        return [value for key, value in self.as_flat_dict.items() if key.endswith("_id")]
+
+    @property
+    def as_friendly_tree_path(self) -> List[str]:
+        path = []
+        for key, value in self.as_flat_dict.items():
+            if key.endswith("_name"):
+                thing = key.replace("_name", "")
+                id = self.as_flat_dict[f"{thing}_id"]
+                path.append(f"{thing}-{value.replace(' ', '_')}-{id}")
+        return path
 
     @property
     def as_flat_dict(self):
