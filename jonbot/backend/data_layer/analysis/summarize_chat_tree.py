@@ -177,6 +177,7 @@ def add_summary_to_chat_tree(tree_dict: Dict[str, Any]) -> Dict[str, Any]:
         else:
             summary = summarize_text(text=value["text"])
             value["summary"] = summary
+    return tree_dict
 
 
 if __name__ == "__main__":
