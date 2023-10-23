@@ -144,6 +144,7 @@ def clean_dictionary(d):
 def nested_dict_to_markdown(tree_dict: Dict[str, Any],
                             markdown_string: str = "",
                             depth: int = 0) -> str:
+
     for key, value in tree_dict.items():
         if isinstance(value, dict) and key != "chat":
             if "chat" in value.keys():
