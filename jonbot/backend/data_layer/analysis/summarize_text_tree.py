@@ -8,7 +8,7 @@ from langchain.callbacks import StdOutCallbackHandler
 from langchain.chat_models import ChatOpenAI
 
 from jonbot import logger
-from jonbot.backend.data_layer.analysis.get_server_chats import get_chats
+from jonbot.backend.data_layer.analysis.get_chats import get_chats
 from jonbot.backend.data_layer.models.discord_stuff.discord_chat_document import DiscordChatDocument
 
 _DEFAULT_SUMMARY_TEMPLATE = """
