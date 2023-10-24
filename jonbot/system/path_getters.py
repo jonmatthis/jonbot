@@ -1,6 +1,6 @@
 from datetime import datetime
 from pathlib import Path
-from typing import Union
+from typing import Union, Optional
 
 from jonbot.system.environment_variables import (
     BASE_DATA_FOLDER_NAME,
@@ -66,17 +66,20 @@ def clean_path_string(filename: str):
 def get_default_backup_save_path(filename: str,
                                  subfolder: str = None,
                                  precise_timestamp: bool = False,
-                                 filetype: str = "json") -> str:
+                                 filetype: Optional[str] = "json") -> str:
     backup_path = Path(get_backups_folder_path())
     if subfolder:
         backup_path = backup_path / subfolder
     backup_path.mkdir(exist_ok=True, parents=True)
 
-    if not filetype.startswith("."):
-        filetype = "." + filetype
+    if filetype is not None:
+        if not filetype.startswith("."):
+            filetype = "." + filetype
 
-    if filename.endswith(filetype):
-        filename.replace(filetype, "")
+        if filename.endswith(filetype):
+            filename.replace(filetype, "")
+    else:
+        filetype = ""
     filename = clean_path_string(filename)
 
     if precise_timestamp:

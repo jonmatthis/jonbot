@@ -217,3 +217,8 @@ class ChatCouplet(BaseModel):
         else:
             human_message_text = f"**Human**:\n {self.human_message.content}"
         return human_message_text
+
+    def dict(self, *args, **kwargs):
+        return {"text": self.text,
+                "human_message": self.human_message.dict() if self.human_message is not None else "",
+                "ai_message": self.ai_message.dict() if self.ai_message is not None else ""}

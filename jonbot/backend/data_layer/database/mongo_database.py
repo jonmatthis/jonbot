@@ -45,12 +45,11 @@ class MongoDatabaseManager:
 
         collection = self.get_collection(database_name=database_name, collection_name=collection_name)
         try:
-            collection.insert_one({"$set": data}, upsert=True, filter=query)
+            collection.update_one(filter=query, update={"$set": data}, upsert=True)
             return True
         except Exception as e:
             logger.error(f"Error occurred while upserting. Error: {e}")
             return False
-
 
     async def upsert_many(
             self,

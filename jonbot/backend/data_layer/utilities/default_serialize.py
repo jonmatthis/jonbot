@@ -1,11 +1,10 @@
-from datetime import datetime
 from typing import Any
 
 
 def default_serialize(o: Any) -> str:
-    if isinstance(o, datetime):
-        return o.isoformat()
-    elif hasattr(o, "model_dump"):
+    # if isinstance(o, datetime):
+    #     return o.isoformat()
+    if hasattr(o, "model_dump"):
         return o.model_dump()
     elif hasattr(o, "dict"):
         return o.dict()

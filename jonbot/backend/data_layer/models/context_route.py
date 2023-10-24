@@ -176,7 +176,7 @@ class ContextRoute(BaseModel):
             if key.endswith("_name"):
                 thing = key.replace("_name", "")
                 id = self.as_flat_dict[f"{thing}_id"]
-                path.append(f"{thing}-{value.replace(' ', '_')}-{id}")
+                path.append(f"{value.replace(' ', '_')}-{id}")
         return path
 
     @property
