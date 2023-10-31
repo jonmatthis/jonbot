@@ -10,6 +10,7 @@ from langchain.text_splitter import CharacterTextSplitter
 from magic_tree.magic_tree_dictionary import MagicTreeDictionary
 
 from jonbot.backend.data_layer.analysis.get_chats import get_chats
+from jonbot.backend.data_layer.analysis.summarize_chats.print_results_as_markdown import save_all_results_to_markdown
 from jonbot.backend.data_layer.database.get_mongo_database_manager import get_mongo_database_manager
 from jonbot.backend.data_layer.database.mongo_database import MongoDatabaseManager
 from jonbot.backend.data_layer.models.discord_stuff.discord_chat_document import DiscordChatDocument
@@ -520,7 +521,7 @@ async def run_summary_analysis(subset_size: int = -1,
                         index_name = value[index_name_key]
                         break
 
-                all_results[index_type][f"{index_name}:{index_id}"]= await calculate_global_topic_tree(chats=chats)
+                all_results[index_type][f"{index_name}:{index_id}"] = await calculate_global_topic_tree(chats=chats)
                 await mongo_database_manager.upsert_one(database_name=database_name,
                                                         collection_name="analysis_global",
                                                         data=all_results[index_type][f"{index_name}:{index_id}"],
@@ -535,6 +536,11 @@ async def run_summary_analysis(subset_size: int = -1,
                                                 data=all_results[index_type],
                                                 query={"server_id": CLASSBOT_SERVER_ID})
 
+        save_all_results_to_markdown(all_results=all_results,
+                                     directory_root=get_default_backup_save_path(
+                                         filename="classbot_all_results",
+                                         filetype=None,
+                                     ))
         # save_chats_to_markdown_directory(chats_by_id=selected_chats_by_id,
         #                                  directory_root=get_default_backup_save_path(
         #                                      filename="classbot_chat_summaries_obsidian_vault",
