@@ -25,7 +25,8 @@ async def get_chats(mongo_database_manager: MongoDatabaseManager,
         chats = {}
         for chat_document in chat_documents:
             chat_context_query = chat_document['query']
-            chats[str(chat_context_query)] = DiscordChatDocument(**chat_document)
+            # chats[str(chat_context_query)] = DiscordChatDocument(**chat_document)
+            chats[str(chat_context_query)] = chat_document
         logger.info(f"Found {len(chat_documents)} chat documents in  database: {database_name} with query: {query}")
         return chats
     except Exception as e:

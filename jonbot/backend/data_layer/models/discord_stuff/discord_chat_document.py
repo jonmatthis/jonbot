@@ -1,7 +1,7 @@
-from typing import List
+from typing import List, Optional, Dict, Any
 
 import discord
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from jonbot.backend.data_layer.models.context_route import ContextRoute
 from jonbot.backend.data_layer.models.conversation_context import ConversationContextDescription
@@ -41,6 +41,8 @@ class DiscordChatDocument(BaseModel):
 
     as_text: str = ""
 
+    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
+
     @classmethod
     async def build(cls,
                     chat_id: int,
@@ -74,6 +76,7 @@ class DiscordChatDocument(BaseModel):
             context_route_as_tree_path=context_route.as_tree_path,
             context_route_as_friendly_tree_path=context_route.as_friendly_tree_path,
             query={"chat_id": chat_id},
+            metadata={},
             **context_route.as_flat_dict,
         )
         instance.as_text = instance._to_text()

@@ -102,7 +102,8 @@ class MongoDatabaseManager:
             return []
 
     async def upsert_discord_chats(
-            self, request: UpsertDiscordChatsRequest
+            self, request: UpsertDiscordChatsRequest,
+            collection_name: str = CHATS_COLLECTION_NAME
     ) -> bool:
 
         entries = []
@@ -114,7 +115,7 @@ class MongoDatabaseManager:
         return await self.upsert_many(
             database_name=request.database_name,
             entries=entries,
-            collection_name=CHATS_COLLECTION_NAME,
+            collection_name=collection_name,
         )
 
     async def upsert_discord_messages(
