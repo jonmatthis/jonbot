@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict
+from typing import Dict, Any
 
 from jonbot import logger
 from jonbot.backend.data_layer.database.mongo_database import MongoDatabaseManager
@@ -10,7 +10,7 @@ from jonbot.system.environment_variables import CHATS_COLLECTION_NAME
 async def get_chats(mongo_database_manager: MongoDatabaseManager,
                     database_name: str,
                     query: Dict = None,
-                    collection_name: str = CHATS_COLLECTION_NAME) -> Dict[str, DiscordChatDocument]:
+                    collection_name: str = CHATS_COLLECTION_NAME) -> Dict[str, Dict[str, Any]]:
     try:
         if query is None:
             query = {}

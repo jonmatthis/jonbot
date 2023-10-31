@@ -1,5 +1,4 @@
 import asyncio
-import random
 import time
 import traceback
 from pathlib import Path
@@ -13,10 +12,8 @@ from magic_tree.magic_tree_dictionary import MagicTreeDictionary
 from jonbot.backend.data_layer.analysis.get_chats import get_chats
 from jonbot.backend.data_layer.database.get_mongo_database_manager import get_mongo_database_manager
 from jonbot.backend.data_layer.database.mongo_database import MongoDatabaseManager
-from jonbot.backend.data_layer.models.database_request_response_models import UpsertDiscordChatsRequest
 from jonbot.backend.data_layer.models.discord_stuff.discord_chat_document import DiscordChatDocument
 from jonbot.system.environment_variables import CLASSBOT_SERVER_ID
-from jonbot.system.path_getters import get_default_backup_save_path
 
 
 def split_text_into_chunks(text: str,
@@ -33,7 +30,25 @@ def split_text_into_chunks(text: str,
 
 
 SIMPLE_CONVERSATION_SUMMARIZER_PROMPT_TEMPLATE = """
-Summarize this conversation:
+You are an AI teaching assistant for a class called "The Neural Control of Real World Human Movement", analyzing text 
+conversations between students and an AI in an effort to understand the interests of the students as well as the general
+ intellectual landscape of this class.
+
+Here is a description of this class:
+
+=====
+COURSE DESCRIPTION
+
+Students will explore the neural basis of natural human behavior in real-world contexts (e.g., sports, dance, or 
+everyday-activities) by investigating the neural-control of full-body human-movement. The course will cover 
+philosophical, technological, and scientific aspects related to the study of natural-behavior while emphasizing  
+ands-on, project-based learning. Students will use free-open-source-software, and artificial-intelligence, 
+machine-learning and computer-vision driven tools and methods to record human movement in unconstrained environments. 
+======
+
+Below is a conversation between a student in this class and an AI teaching assistant.
+
+Your job is to summarize this conversation in a way that captures the most important information in the conversation.
 
 +++
 {text}
@@ -45,35 +60,6 @@ You are an AI teaching assistant for a class called "The Neural Control of Real 
 conversations between students and an AI in an effort to understand the interests of the students as well as the general
  intellectual landscape of this class.
 
-Below is a summary of a conversation between a student in a class called "The Neural Control of Real World Human Movement" 
-and an AI teaching assistant.
-
-Your job is to extract topic tags from this conversation that can be used to categorize the relationship between this 
-conversation and the broader context of the class.
-
-Remember - Your job is to extract topic tags from this conversation that can be used to categorize the relationship 
-between this conversation and the broader context of the class.
-
-Your topic tags should be formatted as individual tags in kebab-case-lowercase preceeded by a #hash-tag separated by commas, 
-like this: '#tag-name,  #tag-name-2, #tag-name-3'
-
-If the topic is not relevant to this course, simply tag it as `#off-topic`
-
-EXAMPLE:
-
-++++
-BEGIN-EXAMPLE
-EXAMPLE_SUMMARY:
-"The Human asked the AI about the use of motion capture in the study of human movement and the AI explained how motion
-    capture is used to record human movement in real-world contexts. The student asked whether it could be used to study people with cerebellar disorders
-    and the AI provded details about how motion capture could be used in clinical settings" 
-    
-TOPICS:
-#neuoscience, #technology, #motion-capture, #cerebellum, #movement-disorders, #clinical-settings
-END-EXAMPLE
-++++
-
-
 Here is a description of this class:
 
 =====
@@ -86,8 +72,20 @@ ands-on, project-based learning. Students will use free-open-source-software, an
 machine-learning and computer-vision driven tools and methods to record human movement in unconstrained environments. 
 ======
 
+Below is a conversation between a student in the class and an AI teaching assistant.
 
-Here is a summary of the conversation:
+Your job is to extract tags for the course-relevant topics that are discussed in this conversation.
+
+Your response should consist of heirarchically organized outline formatted like this: 
+
+```markdown
+# [[Topic Name]]
+## [[Sub Topic Name]]
+### [[Sub Sub Topic Name]]
+... and as many deeper layers as you need
+```
+
+Here is the conversation:
 
 +++
 {text}
@@ -95,13 +93,8 @@ Here is a summary of the conversation:
 """
 
 GLOBAL_TOPIC_TREE_PROMPT = """
-You are an AI teaching assistant for a class called "The Neural Control of Real World Human Movement", analyzing a collection of summaries
- of text conversations between students and an a different teaching assistant AI. 
-
-Below is a list of summaries of all the conversaions.
-
-Your job is to extract topic tags from these conversations in order to extract an heirarical list of topics and sub topics that can 
-efficiently categorize the content of these conversations and provide good coversage over the broad range of topics relevant to "the neural control of real world human movement".
+You are an AI teaching assistant for a class called "The Neural Control of Real World Human Movement", analyzing a
+ collection of extracted tags and/or summaries based on conversations between students and an AI teaching assistant.
 
 Here is a description of this class:
 
@@ -114,6 +107,9 @@ philosophical, technological, and scientific aspects related to the study of nat
 ands-on, project-based learning. Students will use free-open-source-software, and artificial-intelligence, 
 machine-learning and computer-vision driven tools and methods to record human movement in unconstrained environments. 
 ======
+
+Your job is to extract tags for the course-relevant topics that are discussed in this conversation.
+
 
 Your reponse should consist of heirarchically organized outline formatted like this: 
 
@@ -128,7 +124,7 @@ Your reponse should consist of heirarchically organized outline formatted like t
 ++++
 
 
-Here is a list of all the summaries:
+Here is the extracted tags and/or summaries:
 
 +++
 {text}
@@ -239,10 +235,10 @@ def create_simple_summary_chain():
 #
 
 
-async def analyze_chats(chats: Dict[str, DiscordChatDocument],
+async def analyze_chats(chats: Dict[str, Dict[str, Any]],
                         target_key: str,
                         result_key: str,
-                        chains: Dict[str, Any]) -> Dict[str, DiscordChatDocument]:
+                        chains: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     try:
 
         for chain_name, chain in chains.items():
@@ -255,12 +251,12 @@ async def analyze_chats(chats: Dict[str, DiscordChatDocument],
             text_inputs = []
             for chat in chats.values():
                 if target_key == "text":
-                    text_inputs.append({"text": chat.as_text})
+                    text_inputs.append({"text": chat["as_text"]})
                 else:
-                    if target_key in chat.metadata.keys():
-                        text_inputs.append({"text": chat.metadata[target_key]})
-                    elif target_key in chat.dict().keys():
-                        text_inputs.append({"text": chat.dict[target_key]})
+                    if target_key in chat["metadata"].keys():
+                        text_inputs.append({"text": chat["metadata"][target_key]})
+                    elif target_key in chat.keys():
+                        text_inputs.append({"text": chat[target_key]})
                     else:
                         raise ValueError(f"Could not find target key {target_key} in chat {chat}")
 
@@ -284,7 +280,9 @@ async def analyze_chats(chats: Dict[str, DiscordChatDocument],
                     content = result.content
                     content.replace("TOPICS:\n", "").replace(",", ",\n")
                 #     parsed_result = parser.invoke(result)
-                chats[key].metadata[result_key] = result.content
+                if not "metadata" in chats[key].keys():
+                    chats[key]["metadata"] = {}
+                chats[key]["metadata"][result_key] = result.content
     except Exception as e:
         print(f"Failed to analyze leaves: {e}")
         raise e
@@ -327,14 +325,17 @@ async def upsert_tree(tree: MagicTreeDictionary,
                                                    query=query)
 
 
-async def upsert_chats(chats_by_id: Dict[str, DiscordChatDocument],
+async def upsert_chats(chats_by_id: Dict[str, Dict[str, Any]],
                        database_name: str,
                        collection_name: str,
                        mongo_database_manager: MongoDatabaseManager) -> bool:
-    upsert_request = UpsertDiscordChatsRequest.from_discord_chat_documents(documents=list(chats_by_id.values()),
-                                                                           database_name=database_name)
-    await mongo_database_manager.upsert_discord_chats(request=upsert_request,
-                                                      collection_name=collection_name)
+    entries = []
+    for chat_id, chat in chats_by_id.items():
+        entries.append({"query": chat["query"],
+                        "data": chat})
+    await mongo_database_manager.upsert_many(database_name=database_name,
+                                             collection_name=collection_name,
+                                             entries=entries)
 
 
 def chats_to_magic_tree(chats_by_id):
@@ -380,35 +381,46 @@ async def handle_text_chunks(chain, text_chunks: List[str]) -> str:
     return results.content
 
 
-async def calculate_global_topic_tree(chats_by_id: Dict[str, DiscordChatDocument]) -> Dict[str, Any]:
+async def calculate_global_topic_tree(chats: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
     all_results = {}
     global_topic_tree_chain = create_global_topic_tree_chain()
 
-    all_topics = [f"{chat['metadata']['topics']}\n\n==========\n\n" for chat in chats_by_id.values()]
+    all_topics = [f"{chat['metadata']['topics']}\n\n==========\n\n" for chat in chats.values()]
     all_topics_str = "\n".join(all_topics)
     results = await global_topic_tree_chain.ainvoke({"text": all_topics_str})
-    all_results["from_topics"] = results.content
 
-    all_summaries = [f"{chat['metadata']['simple_summary']}\n\n==========\n\n" for chat in chats_by_id.values()]
+    all_results["from_topics"] = {"input": all_topics_str,
+                                  "result": results.content}
+
+    all_summaries = [f"{chat['metadata']['simple_summary']}\n\n==========\n\n" for chat in chats.values()]
     all_summaries_str = "\n".join(all_summaries)
     all_summaries_chunks = split_text_into_chunks(text=all_summaries_str, model="gpt-3.5-turbo-16k",
                                                   chunk_size=int(1.3e4))
-    all_results["from_summaries"] = await handle_text_chunks(global_topic_tree_chain, all_summaries_chunks)
+    all_results["from_summaries"] = {"input": all_summaries_str,
+                                     "result": await handle_text_chunks(global_topic_tree_chain, all_summaries_chunks)}
 
     all_summaries_and_tags = [
         f"{chat['metadata']['simple_summary']}\n{chat['metadata']['topics']}\n==========\n\n"
-        for chat in chats_by_id.values()]
+        for chat in chats.values()]
     all_summaries_and_tags_str = "\n".join(all_summaries_and_tags)
     all_summaries_and_tags_chunks = split_text_into_chunks(text=all_summaries_and_tags_str, model="gpt-3.5-turbo-16k",
                                                            chunk_size=int(1e4))
-    all_results["from_summaries_and_tags"] = await handle_text_chunks(global_topic_tree_chain,
-                                                                      all_summaries_and_tags_chunks)
+    all_results["from_summaries_and_tags"] = {"input": all_summaries_and_tags_str,
+                                              "result": await handle_text_chunks(global_topic_tree_chain,
+                                                                                 all_summaries_and_tags_chunks)}
 
     return all_results
 
 
-async def analyze_individual_chats(chats_by_id: Dict[str, DiscordChatDocument]) -> Dict[
-    str, DiscordChatDocument]:
+async def analyze_individual_chats(mongo_database_manager: MongoDatabaseManager,
+                                   database_name: str,
+                                   server_id: int,
+                                   ):
+    chats_by_id = await get_chats(mongo_database_manager=mongo_database_manager,
+                                  database_name=database_name,
+                                  collection_name="chats",
+                                  query={"server_id": server_id})
+
     simple_summary_chain = {"simple_summary": create_simple_summary_chain()}
     chats_by_id = await analyze_chats(chats=chats_by_id,
                                       target_key="text",
@@ -420,6 +432,10 @@ async def analyze_individual_chats(chats_by_id: Dict[str, DiscordChatDocument]) 
                                       target_key="text",
                                       result_key="topics",
                                       chains=topics_chain)
+    await upsert_chats(chats_by_id=chats_by_id,
+                       database_name=database_name,
+                       collection_name="analysis_chats",
+                       mongo_database_manager=mongo_database_manager)
 
     return chats_by_id
 
@@ -427,10 +443,11 @@ async def analyze_individual_chats(chats_by_id: Dict[str, DiscordChatDocument]) 
 async def get_chats_by_index_type(mongo_database_manager: MongoDatabaseManager,
                                   database_name: str,
                                   server_id: int,
-                                  ):
+                                  collection_name: str = "analysis_chats"
+                                  ) -> Dict[str, Dict[str, Dict[str, Any]]]:
     chats_by_server_id = await get_chats(mongo_database_manager=mongo_database_manager,
                                          database_name=database_name,
-                                         collection_name="analysis",
+                                         collection_name=collection_name,
                                          query={"server_id": server_id})
     print(f"Found {len(chats_by_server_id)} total chats...")
     all_category_ids = set([chat["category_id"] for chat in chats_by_server_id.values()])
@@ -439,15 +456,16 @@ async def get_chats_by_index_type(mongo_database_manager: MongoDatabaseManager,
     for category_id in all_category_ids:
         chats_by_category_id[category_id] = await get_chats(mongo_database_manager=mongo_database_manager,
                                                             database_name=database_name,
-                                                            collection_name="analysis",
+                                                            collection_name=collection_name,
                                                             query={"category_id": category_id})
+
     all_channel_ids = set([chat["channel_id"] for chat in chats_by_server_id.values()])
     print(f"Found {len(all_channel_ids)} total channel ids...")
     chats_by_channel_id = {}
     for channel_id in all_channel_ids:
         chats_by_channel_id[channel_id] = await get_chats(mongo_database_manager=mongo_database_manager,
                                                           database_name=database_name,
-                                                          collection_name="analysis",
+                                                          collection_name=collection_name,
                                                           query={"channel_id": channel_id})
     all_owner_ids = set([chat["owner_id"] for chat in chats_by_server_id.values()])
     print(f"Found {len(all_owner_ids)} total owner ids...")
@@ -455,52 +473,66 @@ async def get_chats_by_index_type(mongo_database_manager: MongoDatabaseManager,
     for owner_id in all_owner_ids:
         chats_by_owner_id[owner_id] = await get_chats(mongo_database_manager=mongo_database_manager,
                                                       database_name=database_name,
-                                                      collection_name="analysis",
+                                                      collection_name=collection_name,
                                                       query={"owner_id": owner_id})
     chats_by_index_type = {
-        "category": chats_by_category_id,
         "channel": chats_by_channel_id,
+        "category": chats_by_category_id,
         "owner": chats_by_owner_id,
         "server": chats_by_server_id,
     }
     return chats_by_index_type
 
 
-async def run_summary_analysis(subset_size: str = 20,
+async def run_summary_analysis(subset_size: int = -1,
                                database_name: str = "classbot_database",
                                server_id: int = CLASSBOT_SERVER_ID):
     mongo_database_manager = await get_mongo_database_manager()
 
     all_results = {}
     try:
+        # await analyze_individual_chats(mongo_database_manager=mongo_database_manager,
+        #                                database_name=database_name,
+        #                                server_id=server_id)
+
         chats_by_index_type = await get_chats_by_index_type(
             mongo_database_manager=mongo_database_manager,
             database_name=database_name,
+            collection_name="analysis_chats",
             server_id=server_id)
 
-        for index_type, chats_by_id in chats_by_index_type.items():
-
+        for index_type, chats_by_index_id in chats_by_index_type.items():
             print("\n\n========================\n\n")
             print(f"Analyzing {index_type} chats...")
             print("\n\n========================\n\n")
 
-            chat_ids = list(chats_by_id.keys())
-            if subset_size == -1 or subset_size > len(chat_ids):
-                subset_size = len(chat_ids)
-            selected_keys = random.sample(chat_ids, subset_size)
-            selected_chats_by_id = {key: chats_by_id[key] for key in selected_keys}
+            all_results[index_type] = {}
+            for index_id, chats in chats_by_index_id.items():
+                if 0 in chats.keys():
+                    del chats[0]
+                if '0' in chats.keys():
+                    del chats['0']
 
-            selected_chats_by_id = await analyze_individual_chats(chats_by_id=selected_chats_by_id)
-            await upsert_chats(chats_by_id=selected_chats_by_id,
-                               database_name=database_name,
-                               collection_name="analysis",
-                               mongo_database_manager=mongo_database_manager)
+                index_name_key = f"{index_type}_name"
+                index_name = ""
+                for value in chats.values():
+                    if index_name_key in value.keys():
+                        index_name = value[index_name_key]
+                        break
 
-            all_results[index_type] = await calculate_global_topic_tree(chats_by_id=selected_chats_by_id)
+                all_results[index_type][f"{index_name}:{index_id}"]= await calculate_global_topic_tree(chats=chats)
+                await mongo_database_manager.upsert_one(database_name=database_name,
+                                                        collection_name="analysis_global",
+                                                        data=all_results[index_type][f"{index_name}:{index_id}"],
+                                                        query={"server_id": CLASSBOT_SERVER_ID})
 
+            await mongo_database_manager.upsert_one(database_name=database_name,
+                                                    collection_name="analysis_global",
+                                                    data=all_results[index_type],
+                                                    query={"server_id": CLASSBOT_SERVER_ID})
         await mongo_database_manager.upsert_one(database_name=database_name,
-                                                collection_name="analysis",
-                                                data=all_results,
+                                                collection_name="analysis_global",
+                                                data=all_results[index_type],
                                                 query={"server_id": CLASSBOT_SERVER_ID})
 
         # save_chats_to_markdown_directory(chats_by_id=selected_chats_by_id,
