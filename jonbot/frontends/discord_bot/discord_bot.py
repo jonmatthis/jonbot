@@ -142,7 +142,7 @@ class MyDiscordBot(commands.Bot):
                                  messages_to_upsert: List[discord.Message] = None, ) -> str:
         attachment_text = ""
         for attachment in message.attachments:
-            if "audio" in attachment.content_type:
+            if "audio" in attachment.content_type or "video" in attachment.content_type:
                 audio_response_dict = await self.handle_audio_message(message=message)
 
                 if messages_to_upsert is not None:
@@ -253,8 +253,8 @@ class MyDiscordBot(commands.Bot):
                 )
 
             for attachment in message.attachments:
-                if attachment.content_type.startswith("audio"):
-                    logger.debug(f"Found audio attachment: {attachment.url}")
+                if attachment.content_type.startswith(("audio", "video")):
+                    logger.debug(f"Found audio/video attachment: {attachment.url}")
                     reply_message_content += f"File URL: {attachment.url}\n\n"
 
                     if in_thread:

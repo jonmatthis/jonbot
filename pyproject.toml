@@ -38,6 +38,7 @@ Jinja2 = "*"
 pandas = "*"
 tabulate = "*"
 magic-tree = { git = "https://github.com/jonmatthis/magic_tree.git" }
+moviepy = "^1.0.3"
 
 [tool.poetry.group.dev.dependencies]
 bumpver = "^2023.1125"

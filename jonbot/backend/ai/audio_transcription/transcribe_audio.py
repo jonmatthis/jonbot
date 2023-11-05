@@ -1,9 +1,11 @@
+import mimetypes
 import os
 from pathlib import Path
 
 import aiofiles
 import aiohttp
 import openai
+from moviepy.video.io.VideoFileClip import VideoFileClip
 from pydub import AudioSegment
 
 from jonbot.backend.data_layer.models.voice_to_text_request import VoiceToTextResponse
@@ -13,6 +15,21 @@ from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 logger = get_jonbot_logger()
 
 
+def save_mp3_from_video(original_file_path, mp3_file_path):
+    video = VideoFileClip(str(original_file_path))
+    audio = video.audio
+    audio.write_audiofile(str(mp3_file_path))
+    video.close()
+    audio.close()
+
+
+def save_mp3_from_audio(original_file_path, mp3_file_path):
+    format_name = original_file_path.suffix.lstrip('.')
+    audio = AudioSegment.from_file(str(original_file_path), format=format_name)
+    audio.export(mp3_file_path, format="mp3")
+    audio.close()
+
+
 async def transcribe_audio_function(
         audio_file_url: str,
         prompt: str = None,
@@ -20,7 +37,7 @@ async def transcribe_audio_function(
         temperature: float = None,
         language: str = None,
 ) -> VoiceToTextResponse:
-    file_name = "voice-message"
+    file_name = "audio-file"
     file_extension = audio_file_url.split(".")[-1]  # Get the audio file extension from the URL
     file_extension = file_extension.split("?")[0]  # Remove any query parameters
     original_file_name = f"{file_name}.{file_extension}"
@@ -39,18 +56,19 @@ async def transcribe_audio_function(
                     logger.info("Audio file failed to download.")
                     raise Exception("Audio file failed to download.")
 
-        # Convert audio to mp3 based on its format
-        if file_extension == "ogg":
-            audio = AudioSegment.from_ogg(original_file_path)
-        elif file_extension == "wav":
-            audio = AudioSegment.from_wav(original_file_path)
-        elif file_extension == "mp3":
-            audio = AudioSegment.from_mp3(original_file_path)
-        # Add more formats as needed
-        else:
-            raise ValueError(f"Unsupported file format: {file_extension}")
+        mimetype = mimetypes.guess_type(original_file_path)[0]
 
-        audio.export(mp3_file_path, format="mp3")
+        # Convert to mp3 based on its format
+        if mimetype and 'video' in mimetype:
+            save_mp3_from_video(original_file_path, mp3_file_path)
+        elif mimetype and 'audio' in mimetype:
+            save_mp3_from_audio(original_file_path, mp3_file_path)
+        else:
+            raise ValueError(f"Unsupported file format: {mimetype}")
+
+        if not Path(mp3_file_path).exists():
+            raise FileNotFoundError(
+                f"Could not find mp3 file at {mp3_file_path} - failed to extract audio from this URL: {audio_file_url}")
 
         with open(mp3_file_path, "rb") as audio_file:
             # Call OpenAI's Whisper model for transcription

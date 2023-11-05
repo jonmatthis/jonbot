@@ -12,8 +12,8 @@ def save_all_results_to_markdown(all_results: dict,
             raise ValueError(f"Expected index_type_results to be a dict, but got {type(index_type_results)}")
 
         for results_source, index_name_results in index_type_results.items():
-            result_save_path = root_path / f"extraction_by_{index_type_in}" / index_id.replace(":",
-                                                                                               "_") / results_source
+            result_save_path = root_path / f"extraction_by_{index_type}" / index_id.replace(":",
+                                                                                            "_") / results_source
             result_save_path.mkdir(parents=True, exist_ok=True)
             markdown_string = ""
             file_name = f"{index_id}__{results_source}.md".replace(":", "_")
