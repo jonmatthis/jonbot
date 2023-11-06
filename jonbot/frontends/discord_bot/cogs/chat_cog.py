@@ -1,3 +1,4 @@
+import tempfile
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -125,10 +126,24 @@ class ChatCog(discord.Cog):
         await starting_message.edit(content=f"{self.bot.local_message_prefix}Thread title: {thread_title}",
                                     embed=initial_message_embed)
 
-        initial_message_text = f"{NEW_CHAT_MESSAGE_PREFIX_TEXT} \n" f"{starting_text}"
+        initial_message_text = f"{NEW_CHAT_MESSAGE_PREFIX_TEXT} \n {starting_text}"
         logger.debug(f"Sending initial message to thread: {initial_message_text}")
 
-        initial_message = await thread.send(initial_message_text)
+        if len(initial_message_text) < 2000:
+            initial_message = await thread.send(initial_message_text)
+        else:
+            # create a temporary file
+            with tempfile.NamedTemporaryFile('w', delete=False, suffix='.md', encoding='utf-8', ) as tf:
+                initial_message_text.replace(NEW_CHAT_MESSAGE_PREFIX_TEXT, "")
+                tf.write(initial_message_text)
+                temp_filepath = tf.name
+
+                # create a discord.File instance
+                file = discord.File(temp_filepath)
+
+                initial_message = await thread.send(
+                    content=f"{NEW_CHAT_MESSAGE_PREFIX_TEXT} \n Initial message too long to send, adding as attachment",
+                    files=[file])
         return initial_message
 
     def _create_chat_title_string(self, user_name: str,
