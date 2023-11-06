@@ -100,6 +100,11 @@ class ChatCog(discord.Cog):
 
         thread = await parent_message.create_thread(name=thread_title)
 
+        files_to_attach = []
+        if parent_message.attachments:
+            for attachment in parent_message.attachments:
+                files_to_attach.append(await attachment.to_file())
+
         starting_message = await thread.send("Creating thread...")
 
         if initial_text_input is None:
@@ -130,7 +135,7 @@ class ChatCog(discord.Cog):
         logger.debug(f"Sending initial message to thread: {initial_message_text}")
 
         if len(initial_message_text) < 2000:
-            initial_message = await thread.send(initial_message_text)
+            initial_message = await thread.send(content=initial_message_text, files=files_to_attach)
         else:
             # create a temporary file
             with tempfile.NamedTemporaryFile('w', delete=False, suffix='.md', encoding='utf-8', ) as tf:
@@ -140,10 +145,11 @@ class ChatCog(discord.Cog):
 
                 # create a discord.File instance
                 file = discord.File(temp_filepath)
+                files_to_attach.append(file)
 
                 initial_message = await thread.send(
                     content=f"{NEW_CHAT_MESSAGE_PREFIX_TEXT} \n Initial message too long to send, adding as attachment",
-                    files=[file])
+                    files=files_to_attach)
         return initial_message
 
     def _create_chat_title_string(self, user_name: str,

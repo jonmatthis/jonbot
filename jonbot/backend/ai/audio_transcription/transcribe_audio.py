@@ -27,7 +27,6 @@ def save_mp3_from_audio(original_file_path, mp3_file_path):
     format_name = original_file_path.suffix.lstrip('.')
     audio = AudioSegment.from_file(str(original_file_path), format=format_name)
     audio.export(mp3_file_path, format="mp3")
-    audio.close()
 
 
 async def transcribe_audio_function(
