@@ -46,8 +46,9 @@ class DiscordDatabaseOperations:
                 )
 
         except Exception as e:
+            logger.error(f"Error occurred while sending `upsert_messages` request for - Error: `{e}`")
             logger.exception(e)
-            raise
+            raise Exception
 
         logger.info(
             f"Successfully sent {len(request.data)} messages to database: {request.database_name}"

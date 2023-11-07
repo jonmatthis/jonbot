@@ -15,7 +15,7 @@ logger = get_jonbot_logger()
 
 class DiscordChatDocument(BaseModel):
     messages: List[DiscordMessageDocument]
-    couplets: List[ChatCouplet]
+    couplets: Optional[List[ChatCouplet]]
     created_at: Timestamp
     last_accessed: Timestamp
     owner_id: int
@@ -61,7 +61,7 @@ class DiscordChatDocument(BaseModel):
 
         instance = cls(
             messages=message_documents,
-            couplets=cls.to_couplets(message_documents),
+            # couplets=cls.to_couplets(message_documents),
             created_at=Timestamp.from_datetime(parent_message.created_at),
             last_accessed=Timestamp.now(),
             owner_id=parent_message.author.id,
@@ -131,3 +131,12 @@ class DiscordChatDocument(BaseModel):
                     couplets.append(ChatCouplet.from_tuple((None, ai_message)))
 
         return couplets
+
+    @classmethod
+    def from_dict(cls, chat_dict: dict):
+        messages = [DiscordMessageDocument(**message_dict) for message_dict in chat_dict["messages"]]
+        couplets = [ChatCouplet.from_dict(couplet_dict) for couplet_dict in chat_dict["couplets"]]
+        cls._validate_messages(message_documents=messages)
+        chat_dict["messages"] = messages
+        chat_dict["couplets"] = couplets
+        return cls(**chat_dict)

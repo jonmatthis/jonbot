@@ -38,6 +38,7 @@ pandas = "*"
 tabulate = "*"
 magic-tree = { git = "https://github.com/jonmatthis/magic_tree.git" }
 moviepy = "^1.0.3"
+plotly = "^5.18.0"
 
 [tool.poetry.group.dev.dependencies]
 bumpver = "^2023.1125"

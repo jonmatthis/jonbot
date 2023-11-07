@@ -222,3 +222,14 @@ class ChatCouplet(BaseModel):
         return {"text": self.text,
                 "human_message": self.human_message.dict() if self.human_message is not None else "",
                 "ai_message": self.ai_message.dict() if self.ai_message is not None else ""}
+
+    @classmethod
+    def from_dict(cls, couplet_dict):
+        human_message = None
+        ai_message = None
+        if couplet_dict["human_message"]:
+            human_message = DiscordMessageDocument(**couplet_dict["human_message"])
+        if couplet_dict["ai_message"]:
+            ai_message = DiscordMessageDocument(**couplet_dict["ai_message"])
+        return cls(human_message=human_message,
+                   ai_message=ai_message)
