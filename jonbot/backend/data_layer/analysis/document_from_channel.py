@@ -216,6 +216,14 @@ The paper should have this format (note the use of 'markdown' formatting, with [
 ### [[Gaze lasers]]
 ### [[Perception/Action coupling]]
 
++++
+
+Include information for each ehading and subheading
+
+make sure to keep the headings and subheadsings wrapped in double brackets like this: [[heading title]]
+
+IN the main text body, wrap key terms in double brackets like this: [[key term]]
+
 """
 
 
@@ -412,4 +420,4 @@ if __name__ == "__main__":
     chats_in = {key: DiscordChatDocument.from_dict(value) for key, value in chats_dict.items()}
     asyncio.run(document_from_chats(chats=chats_in,
                                     save_path=Path(
-                                        r"C:\Users\jonma\syncthing_folders\jon_main_syncthing\jonbot_data\classbot_database\eyetracking_channel_autodocument.json")))
+                                        r"C:\Users\jonma\syncthing_folders\jon_main_syncthing\jonbot_data\classbot_database\eyetracking_channel_autodocument.md")))
