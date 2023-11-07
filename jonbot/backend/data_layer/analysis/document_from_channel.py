@@ -224,6 +224,34 @@ make sure to keep the headings and subheadsings wrapped in double brackets like 
 
 IN the main text body, wrap key terms in double brackets like this: [[key term]]
 
+
+MAKE SURE THAT THE FINAL DOOCUMENT HAS THIS OUTLINE FORMAT AND THAT THE HEADING TITLES AND KEY TERMA ARE WRAPPED IN DOUBLE BRACKETS LIKE THIS: [[heading title]] and [[key term]]
+
+DOCUMENT OUTLINE:
+
+```
+
+# Vision, Eye Tracking, and Oculomotor Control
+## [[The technology of eye tracking]]
+### [[Use as a scientific tool]]
+### [[use as a clinical tool]]
+### [[cameras, computer vision, computational geometry]]
+
+## [[Neuroscience]]
+### [[Visual neuroscience]]
+### [[Oculomotor control]]
+### [[Perceptual motor integration]]
+
+## [[Physiology of eyeballs]]
+### [[Fovea]]
+### [[eye movement muscles]]
+### [[photo receptors]]
+
+## [[Laser skeletons]]
+### [[Full-body motion capture]]
+### [[Gaze lasers]]
+### [[Perception/Action coupling]]
+```
 """
 
 
@@ -386,6 +414,11 @@ async def document_from_chats(chats: Dict[str, DiscordChatDocument],
     print("Extracted topics from chats:\n\n")
     print(topics_str)
     print("\n\n========================\n\n")
+
+    # save to markdown file
+    topics_md_path = Path(save_path.parent / (save_path.stem + "_topics" + save_path.suffix))
+    with open(topics_md_path, "w", encoding="utf-8") as file:
+        file.write(topics_str)
 
     # # Organize extracted topics into a hierarchical outline
     # topic_organizer_chain = create_topic_organizer_chain(context_description=EYE_TRACKING_CONTEXT_DESCRIPTION)
