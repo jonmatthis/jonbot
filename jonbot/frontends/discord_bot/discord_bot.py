@@ -18,6 +18,7 @@ from jonbot.backend.data_layer.models.user_stuff.memory.context_memory_document 
 from jonbot.backend.data_layer.models.voice_to_text_request import VoiceToTextRequest
 from jonbot.frontends.discord_bot.cogs.bot_config_cog.bot_config_cog import BotConfigCog
 from jonbot.frontends.discord_bot.cogs.chat_cog import ChatCog
+from jonbot.frontends.discord_bot.cogs.dm_cog import DMCog
 from jonbot.frontends.discord_bot.cogs.experimental.pycord_pages_example_cog import PageTestCog
 from jonbot.frontends.discord_bot.cogs.server_scraper_cog import ServerScraperCog
 from jonbot.frontends.discord_bot.handlers.discord_message_responder import (
@@ -36,6 +37,56 @@ from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 
+
+BASE_CLASSBOT_PROMPT: """
+You are a teaching assistant for the graduate-level university course: `Neural Control of Real-World Human Movement`. 
+
+You are an expert in modern pedagogy and androgogy - your favorite books on teaching are Paolo Friere's `Pedagogy of the Oppressed` and Bell Hooks' `Teaching to Transgress.`
+    
+    You understand, it is more important that the students get a valuable educational experience than it is that we adhere to any rigid expectations for what this course will be. Do not focus  on the "course" - focus on the student you are talking about and help them deepen their exploration of their interests. Feel free to let the conversation go in whatever direction it needs to go in order to help the student learn and grow (even if it shifts away from the course material)
+
+-----
+
+## Course Description
+Students will explore the neural basis of natural human behavior in real-world contexts (e.g., [sports], [dance], or [everyday-activities]) by investigating the [neural-control] of [full-body] [human-movement]. The course will cover [philosophical], [technological], and [scientific] aspects related to the study of [natural-behavior] while emphasizing hands-on, project-based learning. Students will use [free-open-source-software], and [artificial-intelligence],[machine-learning] and [computer-vision] driven tools and methods to record human movement in unconstrained environments.
+
+The course promotes interdisciplinary collaboration and introduces modern techniques for decentralized [project-management], [AI-assisted-research-techniques], and [Python]-based programming (No prior programming experience is required). Students will receive training in the use of AI technology for project management and research conduct, including [literature-review], [data-analysis], [data-visualization], and [presentation-of-results]. Through experiential learning, students will develop valuable skills in planning and executing technology-driven research projects while examining the impact of structural inequities on scientific inquiry.
+
+    
+## Course Objectives
+- Gain exposure to key concepts related to neural control of human movement.
+- Apply interdisciplinary approaches when collaborating on complex problems.
+- Develop a basic understanding of machine-learning tools for recording human movements.
+- Contribute effectively within a team setting towards achieving common goals.
+- Acquire valuable skills in data analysis or background research.
+
+-----
+    Your main goal is to understand the students' interest and find ways to connect those to the general topic of visual and neural underpinnings of real world human movement. Use socratic questioning and other teaching methodologies to guide students in their exploration of the course material. Try to to find out information about their background experience in programming, neuroscience, and other relevant topics.
+    
+    In your responses, strike a casual tone and give the students a sense of your personality. You can use emojis to express yourself.  Ask questions about things that pique their interest in order to delve deeper and help them to explore those topics in more depth while connecting them to things they already know from other contexts.            
+    
+    Try to engage with the students in Socratic dialog in order to explore the aspects of this topic that are the most interseting to *them.*
+    Do not try to steer the conversation back to the Course material if the student wants to talk about something else! Let the student drive the conversation!            
+"""
+
+def get_private_message_prompts(user_id: int) ->str:
+    student_interests_base_path = Path().home() /"syncthing_folders" /"jon_main_syncthing"/"jonbot_data"/"classbot_database"/"student_interests"/"organized_results"
+    file_name = f"student_{user_id}_interests_organized.md"
+    student_topics_file_path = student_interests_base_path / file_name
+    if not student_topics_file_path.is_file():
+        logger.error(f"Cannot find topics file for this user: {user_id}...")
+        return ""
+
+    with open(student_topics_file_path, "r") as file:
+        content = file.read()
+        split_content = content.split("TOPICS")
+        if len(split_content) > 1:
+            topics_of_interest =  split_content[1:]
+
+            return f"{BASE_CLASSBOT_PROMPT}\n\n This student has expressed interests in these topics: \n\n {topics_of_interest} \n\n Check in with them about how they are doing, how the class has been going for them"
+        else:
+            logger.warning("No 'TOPICS' keyword found in the file")
+            return ""
 
 class MyDiscordBot(commands.Bot):
     def __init__(
@@ -61,10 +112,13 @@ class MyDiscordBot(commands.Bot):
         )
 
         self._chat_cog = ChatCog(bot=self)
+        self._dm_cog = DMCog(bot=self)
         self._server_scraping_cog = ServerScraperCog(database_operations=self._database_operations)
         self._bot_config_cog = BotConfigCog(bot=self)
         self._pages_test_cog = PageTestCog(bot=self)
+
         self.add_cog(self._chat_cog)
+        self.add_cog(self._dm_cog)
         self.add_cog(self._server_scraping_cog)
         self.add_cog(self._bot_config_cog)
         self.add_cog(self._pages_test_cog)
@@ -123,8 +177,6 @@ class MyDiscordBot(commands.Bot):
                 await self._chat_cog.create_chat(ctx=await self.get_application_context(message),
                                                  parent_message=message,
                                                  initial_message_text=text_to_reply_to)
-
-
             else:
                 response_messages = await self.handle_text_message(
                     message=message,
@@ -194,6 +246,10 @@ class MyDiscordBot(commands.Bot):
             config_prompts = []
             if hasattr(message, "guild") and message.guild is not None:
                 config_prompts = self.config_messages_by_guild_id.get(message.guild.id, {})
+
+            if str(message.channel.type).lower() != "private":
+                if  "classbot" in self._database_name or "jonbot" in self._database_name:
+                    config_prompts = get_private_message_prompts(message.author.id)
 
             memory_messages = self.memory_messages_by_channel_id.get(message.channel.id, [])
             config = ChatRequestConfig(config_prompts=config_prompts,
