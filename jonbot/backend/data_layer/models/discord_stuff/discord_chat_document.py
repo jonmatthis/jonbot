@@ -134,9 +134,12 @@ class DiscordChatDocument(BaseModel):
 
     @classmethod
     def from_dict(cls, chat_dict: dict):
+        if "_id" in chat_dict:
+            del chat_dict["_id"]
         messages = [DiscordMessageDocument(**message_dict) for message_dict in chat_dict["messages"]]
         couplets = [ChatCouplet.from_dict(couplet_dict) for couplet_dict in chat_dict["couplets"]]
         cls._validate_messages(message_documents=messages)
         chat_dict["messages"] = messages
         chat_dict["couplets"] = couplets
+
         return cls(**chat_dict)
