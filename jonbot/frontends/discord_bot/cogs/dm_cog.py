@@ -1,14 +1,8 @@
 import asyncio
-import tempfile
-from datetime import datetime
 from typing import TYPE_CHECKING
 
 import discord
 
-from jonbot.backend.data_layer.models.context_route import ContextRoute
-from jonbot.frontends.discord_bot.handlers.should_process_message import (
-    NEW_CHAT_MESSAGE_PREFIX_TEXT,
-)
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
@@ -31,11 +25,10 @@ class DMCog(discord.Cog):
         input_type=bool,
         required=False,
     )
-
     async def send_dms(
-        self,
-        ctx: discord.ApplicationContext,
-        test: bool = True) -> discord.Message:
+            self,
+            ctx: discord.ApplicationContext,
+            test: bool = True) -> discord.Message:
 
         # Specify the user_id of the 'test' user.
         allowed_user = 362711467104927744
@@ -44,7 +37,7 @@ class DMCog(discord.Cog):
         if ctx.author.id != allowed_user:
             return await ctx.send("Sorry, you do not have permission to use this command.")
 
-        initial_message = "Hello there! How are you doing today?"
+        initial_message = "Hello there! How are you doing today? How has the class been going for you? What are some of the most intersting things you've learned so far?"
         users_to_message = [362711467104927744] if test else [member.id for member in ctx.guild.members]
 
         message_queue = asyncio.Queue()

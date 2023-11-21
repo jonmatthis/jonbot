@@ -24,7 +24,10 @@ def this_message_is_from_a_bot(message: discord.Message) -> bool:
 
 
 def this_message_is_in_a_bot_config_channel(message: discord.Message) -> bool:
-    return BOT_CONFIG_CHANNEL_NAME in message.channel.name
+    try:
+        return BOT_CONFIG_CHANNEL_NAME in message.channel.name
+    except Exception as e:
+        return False
 
 
 # def check_if_transcribed_audio_message(message: discord.Message) -> bool:

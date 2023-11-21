@@ -4,6 +4,8 @@ from typing import List, Union, Dict
 
 import discord
 from discord.ext import commands
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate
 
 from jonbot.api_interface.api_client.api_client import ApiClient
 from jonbot.api_interface.api_client.get_or_create_api_client import (
@@ -37,8 +39,7 @@ from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 logger = get_jonbot_logger()
 
-
-BASE_CLASSBOT_PROMPT: """
+BASE_CLASSBOT_PROMPT = """
 You are a teaching assistant for the graduate-level university course: `Neural Control of Real-World Human Movement`. 
 
 You are an expert in modern pedagogy and androgogy - your favorite books on teaching are Paolo Friere's `Pedagogy of the Oppressed` and Bell Hooks' `Teaching to Transgress.`
@@ -69,24 +70,34 @@ The course promotes interdisciplinary collaboration and introduces modern techni
     Do not try to steer the conversation back to the Course material if the student wants to talk about something else! Let the student drive the conversation!            
 """
 
-def get_private_message_prompts(user_id: int) ->str:
-    student_interests_base_path = Path().home() /"syncthing_folders" /"jon_main_syncthing"/"jonbot_data"/"classbot_database"/"student_interests"/"organized_results"
+
+def create_simple_summary_chain():
+    llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo-16k")
+    prompt = ChatPromptTemplate.from_template("Summarize this text: {text}")
+    chain = prompt | llm
+    return chain
+
+
+def get_private_message_prompts(user_id: int) -> str:
+    student_interests_base_path = Path(
+        __file__).parent.parent.parent / "backend" / "data_layer" / "student_interests" / "organized_results"
     file_name = f"student_{user_id}_interests_organized.md"
     student_topics_file_path = student_interests_base_path / file_name
+    dm_config = f"{BASE_CLASSBOT_PROMPT}\n\n"
     if not student_topics_file_path.is_file():
         logger.error(f"Cannot find topics file for this user: {user_id}...")
         return ""
 
     with open(student_topics_file_path, "r") as file:
         content = file.read()
-        split_content = content.split("TOPICS")
-        if len(split_content) > 1:
-            topics_of_interest =  split_content[1:]
+        chain = create_simple_summary_chain()
+        summarized_text = chain.invoke({"text": content})
+        dm_config += (f"\n\nThis student has expressed interests in these topics: "
+                      f"\n\n {summarized_text} "
+                      f"\n\n Check in with them about how they are doing,"
+                      f" how the class has been going for them")
+        return dm_config
 
-            return f"{BASE_CLASSBOT_PROMPT}\n\n This student has expressed interests in these topics: \n\n {topics_of_interest} \n\n Check in with them about how they are doing, how the class has been going for them"
-        else:
-            logger.warning("No 'TOPICS' keyword found in the file")
-            return ""
 
 class MyDiscordBot(commands.Bot):
     def __init__(
@@ -247,8 +258,8 @@ class MyDiscordBot(commands.Bot):
             if hasattr(message, "guild") and message.guild is not None:
                 config_prompts = self.config_messages_by_guild_id.get(message.guild.id, {})
 
-            if str(message.channel.type).lower() != "private":
-                if  "classbot" in self._database_name or "jonbot" in self._database_name:
+            if str(message.channel.type).lower() == "private":
+                if "classbot" in self._database_name or "jonbot" in self._database_name:
                     config_prompts = get_private_message_prompts(message.author.id)
 
             memory_messages = self.memory_messages_by_channel_id.get(message.channel.id, [])
