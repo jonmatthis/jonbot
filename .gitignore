@@ -183,3 +183,5 @@ quine_output/
 /jonbot/system/bot_tomls/*.toml
 !jonbot/system/bot_tomls/_sample_config.toml
 
+/jonbot/backend/data_layer/analysis/vector_embeddings/chroma_persistence/
+/jonbot/backend/data_layer/analysis/vector_embeddings/document_tree.json
