@@ -23,31 +23,35 @@ class ChatbotPrompt(ChatPromptTemplate):
         if config_prompts is None:
             config_prompts = ""
 
-        system_prompt = PromptTemplate(
-            template=system_prompt_template,
-            input_variables=[
-                "main_task",
-                "rules_for_living",
-                "personality",
-                "formatting",
-                "context_description",
-                "config_prompts",
-                # "vectorstore_memory"
-            ],
-        )
-        partial_system_prompt = system_prompt.partial(
-            main_task=DEFAULT_MAIN_TASK,
-            rules_for_living=DEFAULT_RULES_FOR_LIVING,
-            personality=DEFAULT_PERSONALITY,
-            formatting=DEFAULT_FORMATTING_INSTRUCTIONS,
-            context_description=context_description_string,
-            config_prompts=config_prompts,
+        if config_prompts != "":
+            system_prompt = PromptTemplate(
+                template=system_prompt_template,
+                input_variables=[
+                    "main_task",
+                    "rules_for_living",
+                    "personality",
+                    "formatting",
+                    "context_description",
+                    "config_prompts",
+                    # "vectorstore_memory"
+                ],
+            )
+            partial_system_prompt = system_prompt.partial(
+                main_task=DEFAULT_MAIN_TASK,
+                rules_for_living=DEFAULT_RULES_FOR_LIVING,
+                personality=DEFAULT_PERSONALITY,
+                formatting=DEFAULT_FORMATTING_INSTRUCTIONS,
+                context_description=context_description_string,
+                config_prompts=config_prompts,
 
-        )
+            )
 
-        system_message_prompt = SystemMessagePromptTemplate(
-            prompt=partial_system_prompt,
-        )
+            system_message_prompt = SystemMessagePromptTemplate(
+                prompt=partial_system_prompt,
+            )
+        else:
+            system_template = ""
+            system_message_prompt = SystemMessagePromptTemplate.from_template(system_template)
 
         human_template = "{human_input}"
         human_message_prompt = HumanMessagePromptTemplate.from_template(human_template)

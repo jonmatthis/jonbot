@@ -2,19 +2,20 @@ import asyncio
 from typing import Dict, Any
 
 from jonbot import logger
+from jonbot.backend.data_layer.database.get_mongo_database_manager import get_mongo_database_manager
 from jonbot.backend.data_layer.database.mongo_database import MongoDatabaseManager
-from jonbot.backend.data_layer.models.discord_stuff.discord_chat_document import DiscordChatDocument
 from jonbot.system.environment_variables import CHATS_COLLECTION_NAME
 
 
-async def get_chats(mongo_database_manager: MongoDatabaseManager,
-                    database_name: str,
+async def get_chats(database_name: str,
+                    mongo_database_manager: MongoDatabaseManager = None,
                     query: Dict = None,
                     collection_name: str = CHATS_COLLECTION_NAME) -> Dict[str, Dict[str, Any]]:
     try:
         if query is None:
             query = {}
-        # mongo_database = await get_mongo_database_manager()
+        if mongo_database_manager is None:
+            mongo_database_manager = await get_mongo_database_manager()
 
         logger.info(f"Getting collection: {collection_name} in database: {database_name}")
         collection = mongo_database_manager.get_collection(database_name=database_name,

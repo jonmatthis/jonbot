@@ -21,7 +21,7 @@ from jonbot.backend.data_layer.models.voice_to_text_request import VoiceToTextRe
 from jonbot.frontends.discord_bot.cogs.bot_config_cog.bot_config_cog import BotConfigCog
 from jonbot.frontends.discord_bot.cogs.chat_cog import ChatCog
 from jonbot.frontends.discord_bot.cogs.dm_cog import DMCog
-from jonbot.frontends.discord_bot.cogs.experimental.pycord_pages_example_cog import PageTestCog
+from jonbot.frontends.discord_bot.cogs.dump_chat_cog import DumpChatCog
 from jonbot.frontends.discord_bot.cogs.server_scraper_cog import ServerScraperCog
 from jonbot.frontends.discord_bot.handlers.discord_message_responder import (
     DiscordMessageResponder,
@@ -124,15 +124,17 @@ class MyDiscordBot(commands.Bot):
 
         self._chat_cog = ChatCog(bot=self)
         self._dm_cog = DMCog(bot=self)
+        self._dump_chat_cog = DumpChatCog(bot=self)
         self._server_scraping_cog = ServerScraperCog(database_operations=self._database_operations)
         self._bot_config_cog = BotConfigCog(bot=self)
-        self._pages_test_cog = PageTestCog(bot=self)
+        # self._pages_test_cog = PageTestCog(bot=self)
 
         self.add_cog(self._chat_cog)
         self.add_cog(self._dm_cog)
+        self.add_cog(self._dump_chat_cog)
         self.add_cog(self._server_scraping_cog)
         self.add_cog(self._bot_config_cog)
-        self.add_cog(self._pages_test_cog)
+        # self.add_cog(self._pages_test_cog)
 
         # self.add_cog(VoiceChannelCog(bot=self))
 
@@ -247,7 +249,9 @@ class MyDiscordBot(commands.Bot):
             respond_to_this_text: str,
     ) -> List[discord.Message]:
         try:
-            await self._bot_config_cog.gather_config_messages(channel=message.channel)
+            if message.channel.category is not None:
+                if not message.channel.category.id in [1176532527977082931, 1176526146842665031]:
+                    await self._bot_config_cog.gather_config_messages(channel=message.channel)
 
             message_responder = DiscordMessageResponder(message_prefix=self.local_message_prefix,
                                                         bot_name=self.user.name, )
@@ -263,7 +267,7 @@ class MyDiscordBot(commands.Bot):
                     config_prompts = get_private_message_prompts(message.author.id)
 
             memory_messages = self.memory_messages_by_channel_id.get(message.channel.id, [])
-            config = ChatRequestConfig(config_prompts=config_prompts,
+            config = ChatRequestConfig(config_prompts=config_prompts if len(config_prompts) > 0 else "",
                                        memory_messages=memory_messages)
 
             chat_request = ChatRequest.from_discord_message(
