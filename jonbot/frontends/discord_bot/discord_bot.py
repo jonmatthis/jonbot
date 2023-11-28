@@ -23,6 +23,7 @@ from jonbot.frontends.discord_bot.cogs.chat_cog import ChatCog
 from jonbot.frontends.discord_bot.cogs.dm_cog import DMCog
 from jonbot.frontends.discord_bot.cogs.dump_chat_cog import DumpChatCog
 from jonbot.frontends.discord_bot.cogs.server_scraper_cog import ServerScraperCog
+from jonbot.frontends.discord_bot.cogs.vector_search_cog import VectorSearchCog
 from jonbot.frontends.discord_bot.handlers.discord_message_responder import (
     DiscordMessageResponder,
 )
@@ -127,6 +128,9 @@ class MyDiscordBot(commands.Bot):
         self._dump_chat_cog = DumpChatCog(bot=self)
         self._server_scraping_cog = ServerScraperCog(database_operations=self._database_operations)
         self._bot_config_cog = BotConfigCog(bot=self)
+        self._vector_search_cog = VectorSearchCog(bot=self,
+                                                  database_name=self._database_name,
+                                                  persistence_directory=f"{environment_config.BOT_NICK_NAME}_vector_store_persistence", )
         # self._pages_test_cog = PageTestCog(bot=self)
 
         self.add_cog(self._chat_cog)
@@ -134,6 +138,7 @@ class MyDiscordBot(commands.Bot):
         self.add_cog(self._dump_chat_cog)
         self.add_cog(self._server_scraping_cog)
         self.add_cog(self._bot_config_cog)
+        self.add_cog(self._vector_search_cog)
         # self.add_cog(self._pages_test_cog)
 
         # self.add_cog(VoiceChannelCog(bot=self))

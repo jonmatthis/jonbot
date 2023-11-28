@@ -61,7 +61,7 @@ class DiscordChatDocument(BaseModel):
 
         instance = cls(
             messages=message_documents,
-            # couplets=cls.to_couplets(message_documents),
+            couplets=cls.to_couplets(message_documents),
             created_at=Timestamp.from_datetime(parent_message.created_at),
             last_accessed=Timestamp.now(),
             owner_id=parent_message.author.id,
@@ -84,8 +84,12 @@ class DiscordChatDocument(BaseModel):
 
     def _to_text(self):
         text = ""
-        for couplet in self.couplets:
-            text += f"[{couplet.text}],\n\n"
+        if self.couplets is not None:
+            for couplet in self.couplets:
+                text += f"[{couplet.as_text}],\n\n"
+        else:
+            for message in self.messages:
+                text += f"[{message.content}],\n\n"
         return text
 
     @classmethod

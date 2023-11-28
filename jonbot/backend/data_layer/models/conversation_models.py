@@ -219,7 +219,7 @@ class ChatCouplet(BaseModel):
         return human_message_text
 
     def dict(self, *args, **kwargs):
-        return {"text": self.text,
+        return {"text": self.as_text,
                 "human_message": self.human_message.dict() if self.human_message is not None else "",
                 "ai_message": self.ai_message.dict() if self.ai_message is not None else ""}
 

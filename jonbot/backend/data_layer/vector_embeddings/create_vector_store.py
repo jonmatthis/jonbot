@@ -15,7 +15,7 @@ from jonbot.backend.data_layer.vector_embeddings.plot_vector_clusters import vis
 
 async def create_vector_store(chats: Dict[str, DiscordChatDocument],
                               collection_name: str,
-                              persistence_directory: str) -> Tuple[Chroma, Dict[str, Any]]:
+                              persistence_directory: str) -> Tuple[Chroma, Dict[str, Any], Dict[str, Any]]:
     print("Creating vector store from {collection_name} collection with {len(all_entries)} entries")
     document_tree = {}
     document_tree["speakers"] = {}
@@ -34,6 +34,11 @@ async def create_vector_store(chats: Dict[str, DiscordChatDocument],
     all_documents_list.extend(all_category_documents_list)
     all_documents_list.extend(all_chat_documents_list)
     all_documents_list.extend(all_couplet_documents_list)
+
+    word_count = {}
+    word_count["bot"] = 0
+    word_count["human"] = 0
+    word_count["speakers"] = {}
 
     for chat_id, chat in chats.items():
         # get the first non-bot speaker
@@ -71,14 +76,17 @@ async def create_vector_store(chats: Dict[str, DiscordChatDocument],
 
         # save each couplet
         for couplet_number, couplet in enumerate(chat.couplets):
-            if couplet.as_text == "":
-                continue
-            if not couplet.human_message:
+
+            if not couplet.human_message or not couplet.ai_message or couplet.as_text == "":
                 continue
 
             speaker_id = couplet.human_message.author_id
             if speaker_id != 0:
                 if speaker_id not in document_tree["speakers"]:
+                    word_count["speakers"][speaker_id] = {}
+                    word_count["speakers"][speaker_id]["bot"] = 0
+                    word_count["speakers"][speaker_id]["human"] = 0
+
                     speaker_document = Document(page_content="",
                                                 metadata={"speaker_id": speaker_id,
                                                           "source": f"speaker_id: {speaker_id}",
@@ -90,7 +98,13 @@ async def create_vector_store(chats: Dict[str, DiscordChatDocument],
                         speaker_document)  # relying on pass-by-reference weirdness to keep this up to date
 
                 document_tree["speakers"][speaker_id].page_content += f"_____\n\n{couplet.as_text}_____\n\n"
+                word_count["speakers"][speaker_id]["bot"] += len(
+                    couplet.ai_message.content.replace("\n", "").split(' '))
+                word_count["speakers"][speaker_id]["human"] += len(
+                    couplet.human_message.content.replace("\n", "").split(' '))
 
+                word_count["bot"] += len(couplet.ai_message.content.replace("\n", "").split(' '))
+                word_count["human"] += len(couplet.human_message.content.replace("\n", "").split(' '))
                 couplet_document = Document(page_content=couplet.as_text,
                                             metadata={"source": couplet.human_message.jump_url,
                                                       "type": "couplet",
@@ -150,7 +164,7 @@ async def create_vector_store(chats: Dict[str, DiscordChatDocument],
 
     document_tree_dict = recurse_tree(document_tree)
 
-    return vector_store, document_tree_dict
+    return vector_store, document_tree_dict, word_count
 
 
 async def plot_vectorstore_data(vector_store: Chroma):
@@ -176,33 +190,51 @@ async def plot_vectorstore_data(vector_store: Chroma):
                           metadatas=collection["metadatas"])
 
 
+VECTOR_STORE = None
+
+
+async def get_or_create_vectorstore(chroma_persistence_directory: str,
+                                    database_name: str,
+                                    server_id: int,
+                                    chroma_collection_name: str,
+                                    document_tree_json_name="document_tree.json",
+                                    word_count_json_name="word_counts.json") -> Chroma:
+    global VECTOR_STORE
+    if VECTOR_STORE is None:
+        if not Path(document_tree_json_name).exists():
+            chats_out = await get_chats(database_name=database_name,
+                                        query={"server_id": server_id})
+            chat_documents = {key: DiscordChatDocument.from_dict(chat_dict) for key, chat_dict in chats_out.items()}
+            VECTOR_STORE, document_tree_dict, word_counts = await create_vector_store(chats=chat_documents,
+                                                                                      collection_name=chroma_collection_name,
+                                                                                      persistence_directory=chroma_persistence_directory)
+
+            with open(document_tree_json_name, "w", encoding="utf-8") as f:
+                json.dump(document_tree_dict, f, ensure_ascii=False, indent=4)
+
+            with open(word_count_json_name, "w", encoding="utf-8") as f:
+                json.dump(word_counts, f, ensure_ascii=False, indent=4)
+
+        else:
+            VECTOR_STORE = Chroma(persist_directory=chroma_persistence_directory,
+                                  embedding_function=OpenAIEmbeddings(),
+                                  collection_name=chroma_collection_name)
+
+    return VECTOR_STORE
+
+
 if __name__ == "__main__":
     database_name_in = "classbot_database"
-    server_id = 1150736235430686720
+    server_id_outer = 1150736235430686720
 
-    chroma_collection_name = "classbot_vector_store"
-    chroma_persistence_directory = "chroma_persistence"
-    document_tree_json_name = "document_tree.json"
+    vector_store_outer = asyncio.run(get_or_create_vectorstore(chroma_collection_name="classbot_vector_store",
+                                                               chroma_persistence_directory="classbot_chroma_persistence",
+                                                               server_id=server_id_outer,
+                                                               database_name=database_name_in
+                                                               )
+                                     )
 
-    chats_out = asyncio.run(get_chats(database_name=database_name_in,
-                                      query={"server_id": server_id}))
-
-    if not Path(document_tree_json_name).exists():
-        chat_documents = {key: DiscordChatDocument.from_dict(chat_dict) for key, chat_dict in chats_out.items()}
-        vector_store_outer, document_tree_dict = asyncio.run(create_vector_store(chats=chat_documents,
-                                                                                 collection_name=chroma_collection_name,
-                                                                                 persistence_directory=chroma_persistence_directory))
-
-        with open(document_tree_json_name, "w", encoding="utf-8") as f:
-            json.dump(document_tree_dict, f, ensure_ascii=False, indent=4)
-
-    else:
-        vector_store_outer = Chroma(persist_directory=chroma_persistence_directory,
-                                    embedding_function=OpenAIEmbeddings(),
-                                    collection_name=chroma_collection_name)
-
-    filter = {"metadata: {type": {"$eq": "couplet"}}
-    relevant_documents = vector_store_outer.similarity_search("wow that's cool",
+    relevant_documents = vector_store_outer.similarity_search("tell me about the center of mass",
                                                               k=4)
 
     for document in relevant_documents:

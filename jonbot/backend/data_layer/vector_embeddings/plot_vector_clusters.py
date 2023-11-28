@@ -10,7 +10,7 @@ def visualize_clusters_3d(embeddings: np.ndarray,
                           text_contents: List[str],
                           metadatas=List[Dict[str, Any]]):
     tsne = TSNE(n_components=3,
-                random_state=42,
+                random_state=2,
                 perplexity=5)
     embeddings_3d = tsne.fit_transform(embeddings)
 

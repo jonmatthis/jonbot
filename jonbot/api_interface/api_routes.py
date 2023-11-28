@@ -29,6 +29,8 @@ UPSERT_CHATS_ENDPOINT = "/upsert_chats"
 
 GET_CONTEXT_MEMORY_ENDPOINT = "/get_context_memory"
 
+VECTOR_SEARCH_ENDPOINT = "/vector_search"
+
 
 def register_api_routes(
         app: FastAPI,
