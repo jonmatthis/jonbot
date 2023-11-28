@@ -10,7 +10,7 @@ from langchain.vectorstores import Chroma
 
 from jonbot.backend.data_layer.analysis.get_chats import get_chats
 from jonbot.backend.data_layer.models.discord_stuff.discord_chat_document import DiscordChatDocument
-from jonbot.backend.data_layer.vector_embeddings.plot_vector_clusters import visualize_clusters_3d
+from jonbot.backend.data_layer.vector_embeddings.plot_vector_clusters_3d import visualize_clusters_3d
 
 
 async def create_vector_store(chats: Dict[str, DiscordChatDocument],
@@ -233,11 +233,11 @@ if __name__ == "__main__":
                                                                database_name=database_name_in
                                                                )
                                      )
-
-    relevant_documents = vector_store_outer.similarity_search("tell me about the center of mass",
-                                                              k=4)
+    relevant_documents = vector_store_outer.similarity_search("tell me about the center of mass", k=4)
 
     for document in relevant_documents:
-        print(f"______________________\n\n{document}______________________\n\n")
+        print(f"______________________\n\n"
+              f"{document}\n\n"
+              f"______________________\n\n")
 
     asyncio.run(plot_vectorstore_data(vector_store_outer))

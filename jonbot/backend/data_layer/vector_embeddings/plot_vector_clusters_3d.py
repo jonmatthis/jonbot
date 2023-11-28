@@ -3,6 +3,7 @@ from typing import List, Any, Dict
 import numpy as np
 import pandas as pd
 import plotly.express as px
+from plotly import io as pio
 from sklearn.manifold import TSNE
 
 
@@ -18,28 +19,16 @@ def visualize_clusters_3d(embeddings: np.ndarray,
     df['text_contents'] = text_contents
     df['category_name'] = [metadata["category_name"] for metadata in metadatas]
     df['channel_name'] = [metadata["channel_name"] for metadata in metadatas]
+    df['thread_name'] = [metadata["thread_name"] for metadata in metadatas]
 
-    sizes = []
-    try:
-        for metadata in metadatas:
-            if metadata['type'] == 'couplet':
-                sizes.append(1)
-            elif metadata['type'] == 'chat':
-                sizes.append(2)
-            elif metadata['type'] == 'channel':
-                sizes.append(4)
-            else:
-                sizes.append(8)
-        df['sizes'] = sizes
-    except Exception as e:
-        print(e)
     fig = px.scatter_3d(df,
                         x='Dimension 1',
                         y='Dimension 2',
                         z='Dimension 3',
                         color='channel_name',
                         symbol='category_name',
-                        size='sizes',
-                        # hover_data=['text_contents']
+                        hover_name='thread_name',
                         )
+    pio.write_html(fig, "vector_store_output_3d.html")
+
     fig.show()
