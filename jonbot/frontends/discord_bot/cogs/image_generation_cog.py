@@ -77,12 +77,26 @@ class ImageGeneratorCog(discord.Cog):
         image_url = self.image_generator.generate_image(response.content)
         self.image_generator.download_and_save_image(image_url)
 
+        message = await ctx.send(file=discord.File('pic.png'))
         # Return a message with the query and the image as an attachment
-        await ctx.send(f"Image for: \n\n ```\n\n {response.content}\n\n```\n\n", file=discord.File('pic.png'))
+        generation_prompt_string = f"Image generated with prompt: \n\n ```\n\n{response.content}\n\n```"
+        if len(generation_prompt_string.split(" ")) < 1800:
+            await message.edit(content=generation_prompt_string)
+        else:
+            filename = 'generation_prompt.txt'
+            with open(filename, 'w', encoding="utf-8") as file:
+                file.write(chat_string)
+
+            await ctx.send(file=discord.File(filename))
+        chat_text_file_name = 'chat.txt'
+        with open(chat_text_file_name, 'w', encoding="utf-8") as file:
+            file.write(chat_string)
+
+        await ctx.send(file=discord.File(chat_text_file_name))
 
     async def _get_chat_string(self,
                                channel: discord.abc.Messageable,
-                               list_length: int = 100
+                               list_length: int = 50
                                ) -> str:
         channel_messages = []
         try:
