@@ -131,6 +131,8 @@ class MyDiscordBot(commands.Bot):
         self._vector_search_cog = VectorSearchCog(bot=self,
                                                   database_name=self._database_name,
                                                   persistence_directory=f"{environment_config.BOT_NICK_NAME}_vector_store_persistence", )
+        # self._daily_message_cog = DailyMessageCog(bot=self, user_ids=[362711467104927744])
+        # self._image_generator = ImageGeneratorCog(bot=self)
         # self._pages_test_cog = PageTestCog(bot=self)
 
         self.add_cog(self._chat_cog)
@@ -139,6 +141,8 @@ class MyDiscordBot(commands.Bot):
         self.add_cog(self._server_scraping_cog)
         self.add_cog(self._bot_config_cog)
         self.add_cog(self._vector_search_cog)
+        # self.add_cog(self._daily_message_cog)
+        # self.add_cog(self._image_generator)
         # self.add_cog(self._pages_test_cog)
 
         # self.add_cog(VoiceChannelCog(bot=self))

@@ -1,12 +1,11 @@
 from typing import Any
 
 from langchain.chat_models import ChatOpenAI
-from pydantic import BaseModel
 
 CONVERSATION_HISTORY_MAX_TOKENS = 1000
 
 
-class ChatbotConversationMemoryConfig(BaseModel):
+class ChatbotConversationMemoryConfig:
     memory_key: str = "chat_memory"
     input_key: str = "human_input"
     llm: Any = ChatOpenAI(temperature=0,
