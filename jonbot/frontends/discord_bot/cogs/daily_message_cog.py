@@ -1,12 +1,12 @@
 from typing import List
 
+import discord
 from discord.ext import commands, tasks
 
 
 class DailyMessageCog(commands.Cog):
     def __init__(self, bot, user_ids: List[int]):
         self.bot = bot
-        self.send_daily_message.start()
         self.user_ids = user_ids
 
     def cog_unload(self):
@@ -18,10 +18,12 @@ class DailyMessageCog(commands.Cog):
             user = await self.bot.fetch_user(user_id)
             await user.send("This is a daily message")
 
-    @commands.command()
+    @discord.slash_command(name="start", description="Starts sending a daily message")
     async def start(self, ctx):
+        await ctx.respond("Starting daily message")
         self.send_daily_message.start()
 
-    @commands.command()
+    @discord.slash_command(name="stop", description="Stops sending a daily message")
     async def stop(self, ctx):
+        await ctx.respond("Stopping daily message")
         self.send_daily_message.cancel()

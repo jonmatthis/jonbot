@@ -20,8 +20,11 @@ from jonbot.backend.data_layer.models.user_stuff.memory.context_memory_document 
 from jonbot.backend.data_layer.models.voice_to_text_request import VoiceToTextRequest
 from jonbot.frontends.discord_bot.cogs.bot_config_cog.bot_config_cog import BotConfigCog
 from jonbot.frontends.discord_bot.cogs.chat_cog import ChatCog
+from jonbot.frontends.discord_bot.cogs.daily_message_cog import DailyMessageCog
 from jonbot.frontends.discord_bot.cogs.dm_cog import DMCog
 from jonbot.frontends.discord_bot.cogs.dump_chat_cog import DumpChatCog
+from jonbot.frontends.discord_bot.cogs.experimental.pycord_pages_example_cog import PageTestCog
+from jonbot.frontends.discord_bot.cogs.image_generation_cog import ImageGeneratorCog
 from jonbot.frontends.discord_bot.cogs.server_scraper_cog import ServerScraperCog
 from jonbot.frontends.discord_bot.cogs.vector_search_cog import VectorSearchCog
 from jonbot.frontends.discord_bot.handlers.discord_message_responder import (
@@ -131,9 +134,9 @@ class MyDiscordBot(commands.Bot):
         self._vector_search_cog = VectorSearchCog(bot=self,
                                                   database_name=self._database_name,
                                                   persistence_directory=f"{environment_config.BOT_NICK_NAME}_vector_store_persistence", )
-        # self._daily_message_cog = DailyMessageCog(bot=self, user_ids=[362711467104927744])
-        # self._image_generator = ImageGeneratorCog(bot=self)
-        # self._pages_test_cog = PageTestCog(bot=self)
+        self._daily_message_cog = DailyMessageCog(bot=self, user_ids=[362711467104927744])
+        self._image_generator = ImageGeneratorCog(bot=self)
+        self._pages_test_cog = PageTestCog(bot=self)
 
         self.add_cog(self._chat_cog)
         self.add_cog(self._dm_cog)
@@ -141,9 +144,9 @@ class MyDiscordBot(commands.Bot):
         self.add_cog(self._server_scraping_cog)
         self.add_cog(self._bot_config_cog)
         self.add_cog(self._vector_search_cog)
-        # self.add_cog(self._daily_message_cog)
-        # self.add_cog(self._image_generator)
-        # self.add_cog(self._pages_test_cog)
+        self.add_cog(self._daily_message_cog)
+        self.add_cog(self._image_generator)
+        self.add_cog(self._pages_test_cog)
 
         # self.add_cog(VoiceChannelCog(bot=self))
 
