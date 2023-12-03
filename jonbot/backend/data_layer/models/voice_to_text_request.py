@@ -1,12 +1,15 @@
+from typing import Optional, Dict, Any
+
 from pydantic import BaseModel
 
 
 class VoiceToTextRequest(BaseModel):
-    audio_file_url: str
+    audio_source: str
     prompt: str = None
     response_format: str = None
     temperature: float = None
     language: str = None
+    metadata: Optional[Dict[Any, Any]] = None
 
 
 class VoiceToTextResponse(BaseModel):

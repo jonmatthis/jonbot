@@ -1,10 +1,13 @@
 import mimetypes
 import os
 from pathlib import Path
+from pprint import pprint
+from typing import Optional, Literal
+from urllib.parse import urlparse
 
 import aiofiles
 import aiohttp
-from moviepy.video.io.VideoFileClip import VideoFileClip
+from moviepy.editor import VideoFileClip
 from openai import AsyncOpenAI
 from pydub import AudioSegment
 
@@ -15,87 +18,98 @@ from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 logger = get_jonbot_logger()
 
 
-def save_mp3_from_video(original_file_path, mp3_file_path):
-    video = VideoFileClip(str(original_file_path))
-    audio = video.audio
-    audio.write_audiofile(str(mp3_file_path))
-    video.close()
-    audio.close()
+async def download_file(session, url, destination_path):
+    async with session.get(url) as response:
+        response.raise_for_status()  # Will raise an exception for non-200 responses
+        async with aiofiles.open(destination_path, mode="wb") as file:
+            await file.write(await response.read())
 
 
-def save_mp3_from_audio(original_file_path, mp3_file_path):
-    format_name = original_file_path.suffix.lstrip('.')
-    audio = AudioSegment.from_file(str(original_file_path), format=format_name)
-    audio.export(mp3_file_path, format="mp3")
+def convert_to_mp3(original_path, target_path):
+    mimetype = mimetypes.guess_type(original_path)[0]
+    if 'video' in mimetype:
+        with VideoFileClip(str(original_path)) as video:
+            video.audio.write_audiofile(str(target_path))
+    elif 'audio' in mimetype:
+        audio = AudioSegment.from_file(str(original_path), format=original_path.suffix.lstrip('.'))
+        audio.export(target_path, format="mp3")
+    else:
+        raise ValueError(f"Unsupported file format: {mimetype}")
 
 
-async def transcribe_audio_function(
-        audio_file_url: str,
-        prompt: str = None,
-        response_format: str = None,
-        temperature: float = None,
-        language: str = None,
-) -> VoiceToTextResponse:
-    file_name = "audio-file"
-    file_extension = audio_file_url.split(".")[-1]  # Get the audio file extension from the URL
-    file_extension = file_extension.split("?")[0]  # Remove any query parameters
-    original_file_name = f"{file_name}.{file_extension}"
-    original_file_path = Path(get_temp_folder()) / original_file_name
+async def send_transcription_request(audio_path: str,
+                                     model: str = "whisper-1",
+                                     prompt: str = None,
+                                     temperature: float = 0,
+                                     response_format: Literal[
+                                         "json", "text", "srt", "verbose_json", "vtt"] = "verbose_json",
+                                     language: Optional[str] = None) -> dict:
+    client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    with open(audio_path, "rb") as audio_file:
+        response = await client.audio.transcriptions.create(file=audio_file,
+                                                            model=model,
+                                                            prompt=prompt,
+                                                            response_format=response_format,
+                                                            temperature=temperature,
+                                                            language=language)
+    if not response:
+        raise Exception("Transcription request returned None.")
+    return response
 
-    mp3_file_name = f"{file_name}.mp3"
-    mp3_file_path = Path(get_temp_folder()) / mp3_file_name
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(audio_file_url) as response:
-                if response.status == 200:
-                    async with aiofiles.open(original_file_path, mode="wb") as file:
-                        await file.write(await response.read())
-                    logger.info("Audio file downloaded successfully.")
-                else:
-                    logger.info("Audio file failed to download.")
-                    raise Exception("Audio file failed to download.")
 
-        mimetype = mimetypes.guess_type(original_file_path)[0]
+async def transcribe_audio(audio_source: str,
+                           model: str = "whisper-1",
+                           prompt: str = None,
+                           temperature: float = 0,
+                           response_format: Literal["json", "text", "srt", "verbose_json", "vtt"] = "verbose_json",
+                           language: Optional[str] = None,
+                           ) -> VoiceToTextResponse:
+    parsed_source = urlparse(audio_source)
+    is_url = parsed_source.scheme in ('http', 'https')
+    temp_folder = get_temp_folder()
 
-        # Convert to mp3 based on its format
-        if mimetype and 'video' in mimetype:
-            save_mp3_from_video(original_file_path, mp3_file_path)
-        elif mimetype and 'audio' in mimetype:
-            save_mp3_from_audio(original_file_path, mp3_file_path)
+    temp_original_path = Path(temp_folder) / f"audio-file{Path(audio_source).suffix}"
+    temp_mp3_path = Path(temp_folder) / "audio-file.mp3"
+
+    async with aiohttp.ClientSession() as session:
+        if is_url:
+            await download_file(session, audio_source, temp_original_path)
+        elif not Path(audio_source).exists():
+            raise FileNotFoundError(f"Audio file not found at {audio_source}")
         else:
-            raise ValueError(f"Unsupported file format: {mimetype}")
+            temp_original_path = Path(audio_source)
 
-        if not Path(mp3_file_path).exists():
-            raise FileNotFoundError(
-                f"Could not find mp3 file at {mp3_file_path} - failed to extract audio from this URL: {audio_file_url}")
+        convert_to_mp3(temp_original_path, temp_mp3_path)
+        response = await send_transcription_request(audio_path=str(temp_mp3_path),
+                                                    model=model,
+                                                    prompt=prompt,
+                                                    temperature=temperature,
+                                                    response_format=response_format,
+                                                    # language=language
+                                                    )
+    # delete temp files
+    if is_url:
+        # delete downloaded file if it was a url, otherwise it was a local file and we don't want to delete it
+        os.remove(temp_original_path)
+    os.remove(temp_mp3_path)
+    return VoiceToTextResponse(text=response.text, success=True, mp3_file_path=str(temp_mp3_path),
+                               metadata=response.dict())
 
-        client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-        with open(mp3_file_path, "rb") as audio_file:
-            # Call OpenAI's Whisper model for transcription
-            transcription_response = await client.audio.transcriptions.create(
-                model="whisper-1",
-                file=audio_file,
-                prompt=prompt,
-                response_format=response_format,
-                temperature=temperature,
-                language=language,
-            )
+if __name__ == "__main__":
+    import asyncio
+    from dotenv import load_dotenv
 
-        if transcription_response:
-            logger.success(
-                f"Transcription successful! {transcription_response.text}"
-            )
-        else:
-            raise Exception("Transcription request returned None.")
+    load_dotenv()
 
-        os.remove(original_file_path)  # Remove the original audio file
-
-        return VoiceToTextResponse(
-            text=transcription_response.text,
-            success=True,
-            mp3_file_path=str(mp3_file_path),
+    response = asyncio.run(
+        transcribe_audio(
+            audio_source=r"C:\Users\jonma\Downloads\5294aef968868b1b82e4a3627712a259.mp4",
+            prompt="This is a transcript from Bisam in Ghaza, Palestine",
+            response_format="verbose_json",
+            temperature=0.9,
+            language="en-US",
         )
-    except Exception as e:
-        logger.exception(f"An error occurred while transcribing: {str(e)}")
-        raise
+    )
+
+    pprint(response, indent=4)

@@ -2,10 +2,12 @@ import asyncio
 import os
 import random
 import string
+import time
 from io import BytesIO
 from pathlib import Path
 from typing import Optional, Literal
 
+import openai
 import requests
 from PIL import Image
 from dotenv import load_dotenv
@@ -27,16 +29,38 @@ class ImageGenerator:
     async def generate_image(self,
                              prompt: str,
                              size: Literal["1024x1024", "1792x1024", "1024x1792"] = "1024x1024",
-                             quality: Literal["standard", "hd"] = "hd",
+                             quality: Literal["standard", "hd"] = "standard",
                              style: Literal["vivid", "natural"] = "vivid",
                              n: int = 1) -> str:
+        while True:
+            try:
+                response = await self.client.images.generate(model="dall-e-3",
+                                                             prompt=prompt,
+                                                             size=size,
+                                                             quality=quality,
+                                                             style=style,
+                                                             n=n)
+                break
+            except openai.BadRequestError as e:
+                if e.code == "content_policy_violation":
+                    time.sleep(1)  # sleep it for a sec to make sure we don't send too many naughty requests in a row
+                    logger.warning(
+                        f"Prompt raised a 'content policy violation' error when generating an image with prompt: \n\n `{prompt}`\n\n - adjusting prompt and trying again")
+                    completion = await self.client.chat.completions.create(
+                        model="gpt-3.5-turbo",
+                        messages=[
+                            {"role": "system",
+                             "content": "This prompt raised a 'content policy violation' error when generating an image. "
+                                        "Please minimally edit the prompt to remove content that may violate OpenAI's "
+                                        "content policy (remove political, violent, sexual themes, etc). Make only minor changes, you will have another chance to try again "
+                                        "if it gets rejected again"},
+                            {"role": "user", "content": prompt},
+                        ],
+                        max_tokens=len(prompt)
+                    )
+                    prompt = completion.choices[0].message.content
+                    logger.info(f"Trying again with prompt: \n\n {prompt}\n\n")
 
-        response = await self.client.images.generate(model="dall-e-3",
-                                                     prompt=prompt,
-                                                     size=size,
-                                                     quality=quality,
-                                                     style=style,
-                                                     n=n)
         filename = await self.get_file_name_from_prompt(prompt)
         self.download_and_save_image(url=response.data[0].url, filename=filename)
 
@@ -80,7 +104,6 @@ class ImageGenerator:
         while Path(filename).exists():
             file_name_iteration += 1
             filename = base_filename + f"_{file_name_iteration}.png"
-        self.latest_image_path = self.download_and_save_image(response.data[0].url, filename)
 
         image_path = self.download_and_save_image(response.data[0].url, filename)
         return image_path

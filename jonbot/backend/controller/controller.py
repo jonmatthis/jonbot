@@ -1,8 +1,6 @@
 from typing import AsyncIterable, Dict
 
-from jonbot.backend.ai.audio_transcription.transcribe_audio import (
-    transcribe_audio_function,
-)
+from jonbot.backend.ai.audio_transcription.transcribe_audio import transcribe_audio
 from jonbot.backend.ai.chatbot.chatbot import (
     Chatbot,
 )
@@ -28,7 +26,7 @@ class Controller:
     async def transcribe_audio(
             voice_to_text_request: VoiceToTextRequest,
     ) -> VoiceToTextResponse:
-        response = await transcribe_audio_function(**voice_to_text_request.dict())
+        response = await transcribe_audio(**voice_to_text_request.dict())
         if response is None:
             raise Exception(f"Transcription failed for audio: {voice_to_text_request}")
         return response
