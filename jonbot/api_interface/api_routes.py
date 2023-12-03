@@ -1,7 +1,12 @@
-from typing import Optional, TYPE_CHECKING
+import asyncio
+import base64
+import json
+from typing import Optional, TYPE_CHECKING, Any
 
 from fastapi import FastAPI
+from langchain_core.callbacks import AsyncCallbackHandler
 from starlette.responses import StreamingResponse
+from starlette.websockets import WebSocket
 
 from jonbot.backend.controller.controller import Controller
 from jonbot.backend.data_layer.models.conversation_models import ChatRequest
@@ -30,6 +35,22 @@ UPSERT_CHATS_ENDPOINT = "/upsert_chats"
 GET_CONTEXT_MEMORY_ENDPOINT = "/get_context_memory"
 
 VECTOR_SEARCH_ENDPOINT = "/vector_search"
+
+CHAT_STATELESS_ENDPOINT = "/chat_stateless"
+
+
+class StreamingPassthroughToWebsocketHandler(AsyncCallbackHandler):
+    def __init__(self, websocket, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.websocket = websocket
+
+    async def on_llm_new_token(self, token: str, **kwargs: Any) -> None:
+        token_output = {"type": "token", "content": token}
+        try:
+            await self.websocket.send_text(json.dumps(token_output))
+        except Exception as e:
+            logger.debug(f"Failed to send token: {token}, error: {str(e)}")
+        pass
 
 
 def register_api_routes(
@@ -87,3 +108,86 @@ def register_api_routes(
             request: UpsertDiscordChatsRequest,
     ) -> UpsertResponse:
         return await database_operations.upsert_discord_chats(request=request)
+
+    @app.websocket(CHAT_STATELESS_ENDPOINT)
+    async def chat_stateless_endpoint(websocket: WebSocket):
+
+        user_id = websocket.query_params.get('id')
+        crude_api_token = websocket.query_params.get('token')
+        decoded_crude_api_token = base64.b64decode(crude_api_token.encode()).decode()
+
+        if decoded_crude_api_token != 'ggbotapi-1199299301957388239120':
+            await websocket.close(code=1000)
+            return
+
+        await websocket.accept()
+        try:
+            while True:
+                raw = await websocket.receive_text()
+
+                logger.info(f"Received on socket: {raw}")
+
+                data = json.loads(raw)
+
+                from langchain.llms import OpenAI
+                from langchain.chat_models import ChatOpenAI
+                from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+
+                model = OpenAI(
+                    model_name=data['config']['model_name'],
+                    temperature=data['config']['temperature'],
+                    streaming=True,
+                    callbacks=[StreamingPassthroughToWebsocketHandler(websocket=websocket)],
+                    verbose=True
+                )
+
+                logger.info(f"System prompt: {data['system_prompts']}")
+
+                system_prompt = "\n\n".join(data['system_prompts']) + "\n\n--------\n\n"
+
+                from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+                prompt = ChatPromptTemplate.from_messages([
+                    ("system", system_prompt),
+                    MessagesPlaceholder(variable_name="history"),
+                    ("human", "{input}")
+                ])
+
+                # build up the memory
+                from langchain.memory import ConversationTokenBufferMemory, ConversationBufferWindowMemory
+                # memory = ConversationTokenBufferMemory(
+                memory = ConversationBufferWindowMemory(
+                    # llm = model,
+                    k=10,
+                    return_messages=True,
+                    # max_token_limit=4000
+                )
+
+                for msg in data['conversation_history']:
+                    if msg["role"] == 'human':
+                        memory.chat_memory.add_user_message(msg["content"])
+                    elif msg["role"] == 'ai':
+                        memory.chat_memory.add_ai_message(msg["content"])
+
+                logger.info(f"Memory contents: {memory.load_memory_variables({})}")
+
+                from langchain.chains import ConversationChain
+                chain = ConversationChain(
+                    llm=model,
+                    memory=memory,
+                    prompt=prompt,
+                    verbose=True
+                )
+
+                # ai_response = await chain.apredict(input=data["new_user_input"] + "\nAI: ")
+
+                ai_response = "wowwweeee!!"
+                logger.info(f"Response: {ai_response}")
+
+                # response = controller.get_response_from_chatbot(chat_request=chat_request)
+                response = {'type': 'ai_response', 'content': ai_response}
+
+                asyncio.create_task(websocket.send_text(json.dumps(response)))
+
+        except Exception as e:
+            logger.error(f"Error on websocket: {str(e)}")
+            logger.trace(f"Error on websocket: {str(e)}", exc_info=True)
