@@ -1,0 +1,3 @@
+[submodule "jonbot/frontends/llm_lab_vuejs"]
+	path = jonbot/frontends/llm_lab_vuejs
+	url = https://github.com/jonmatthis/LLM-lab.git
