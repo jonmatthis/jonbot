@@ -60,6 +60,16 @@ class Chatbot:
             database_name=database_name,
             context_route=self.context_route,
         )
+        self._available_models = {"gpt-4-1106-preview": ChatOpenAI(temperature=config.temperature,
+                                                                   model_name="gpt-4-1106-preview",
+                                                                   verbose=True),
+                                  "gpt-4": ChatOpenAI(temperature=config.temperature,
+                                                      model_name="gpt-4",
+                                                      verbose=True),
+                                  "gpt-3.5-turbo-16k": ChatOpenAI(temperature=config.temperature,
+                                                                  model_name="gpt-3.5-turbo-16k",
+                                                                  verbose=True),
+                                  }
 
     @classmethod
     async def from_context_route(
@@ -119,11 +129,20 @@ class Chatbot:
             logger.error(f"Memory not configured!")
             raise Exception("Memory not configured!")
 
-        self.model = ChatOpenAI(
-            temperature=config.temperature,
-            model_name=config.model_name,
-            verbose=True,
-        )
+        fallbacks = []
+
+        if config.model_name == "gpt-4-1106-preview":
+            fallbacks.append(self._available_models["gpt-4"])
+        fallbacks.append(self._available_models["gpt-3.5-turbo-16k"])
+
+        self.model = self._available_models[config.model_name]
+
+        if config.temperature != self.model.temperature:
+            self.model.temperature = config.temperature
+            fallbacks = [model for model in fallbacks if model.temperature == config.temperature]
+
+        self.model.with_fallbacks(fallbacks)
+
         self.prompt = ChatbotPrompt.build(
             chat_history_placeholder_name=self.chat_history_placeholder_name,
             context_description_string=self.conversation_context_description.text,

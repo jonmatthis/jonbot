@@ -282,6 +282,9 @@ class MyDiscordBot(commands.Bot):
             config = ChatRequestConfig(config_prompts=config_prompts if len(config_prompts) > 0 else "",
                                        memory_messages=memory_messages)
 
+            if not "classbot" in self._database_name:
+                config.model_name = "gpt-4-1106-preview"
+
             chat_request = ChatRequest.from_discord_message(
                 message=message,
                 reply_message=reply_messages[-1],

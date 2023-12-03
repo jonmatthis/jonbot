@@ -47,7 +47,10 @@ class ImageGenerator:
                                                      n=n)
         filename = await self.get_file_name_from_prompt(prompt)
         self.download_and_save_image(url=response.data[0].url, filename=filename)
-        return response.data[0].url
+
+        if not Path(self.latest_image_path).exists():
+            raise FileNotFoundError(f"Image was not saved to {self.latest_image_path}")
+        return str(self.latest_image_path)
 
     def download_and_save_image(self, url: str, filename: str):
         response = requests.get(url)
@@ -69,6 +72,8 @@ class ImageGenerator:
         filename = "generated_image"
         if completion.choices[0].message.content != "":
             filename = completion.choices[0].message.content.split(".")[0]
+            if len(filename) > 50:
+                filename = filename[:50]
             filename = filename.replace(" ", "_")
             filename = filename.replace("\n", "")
             filename = filename.replace(":", "")

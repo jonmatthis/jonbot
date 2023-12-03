@@ -1,10 +1,10 @@
 import discord
 from discord import Forbidden
-from jonbot.frontends.discord_bot.cogs.image_generator import ImageGenerator
 from langchain.chat_models import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 
 from jonbot import logger
+from jonbot.backend.ai.image_generation.image_generator import ImageGenerator
 
 
 class ImageGeneratorCog(discord.Cog):
@@ -14,15 +14,22 @@ class ImageGeneratorCog(discord.Cog):
 
     @discord.slash_command(name="image", help="Generates an image based on the given query string")
     async def generate_image(self, ctx, query: str):
+        message = await ctx.send(f"Generating image for `{query}`....")
         # Use the ImageGenerator class to generate, download, and save the image
-        image_url = self.image_generator.generate_image(query)
-        self.image_generator.download_and_save_image(image_url)
+        image_filename = await self.image_generator.generate_image(query)
 
         # Return a message with the query and the image as an attachment
-        await ctx.send(f"Image for `{query}`", file=discord.File('pic.png'))
+        await message.edit(content=f"Image for \n\n ```\n\n{query}\n\n```\n\n", file=discord.File(image_filename))
 
     @discord.slash_command(name="dream_this_chat",
                            help="summarize this chat and generate an image based on the summary")
+    @discord.option(
+        name="temperature",
+        description="the temperature to use for the image generation (higher temperature = more randomness)",
+        input_type=float,
+        required=False,
+        default=.7
+    )
     @discord.option(
         name="summary_prompt",
         description="the prompt that will beused to convert this chat into an image generation prompt",
@@ -30,8 +37,12 @@ class ImageGeneratorCog(discord.Cog):
         required=False,
         default="Use this text as a starting point to  generate a beautiful, complex, and detailed prompt for an image generation AI"
     )
-    async def dream_this_chat(self, ctx,
-                              summary_prompt: str = "Use this text as a starting point to  generate a beautiful, complex, and detailed prompt for an image generation AI"):
+    async def dream_this_chat(self,
+                              ctx,
+                              summary_prompt: str = "Use this text as a starting point to generate a beautiful, complex, and detailed prompt for an image generation AI",
+                              temperature: float = .7,
+                              ):
+        response_message = await ctx.send(f"Generating image for chat in `{ctx.channel.name}`....")
         chat_string = await self._get_chat_string(ctx.channel)
 
         prompt_template = (summary_prompt +
@@ -40,31 +51,31 @@ class ImageGeneratorCog(discord.Cog):
                            "\n\n++++++++++"
                            "\n\n Remember, your job is to " + summary_prompt +
                            "\n\n Do not include any text in your response other than the summary"
+                           "\n\n Keep your answer less than 1900 characters"
                            )
 
-        llm = ChatOpenAI(temperature=.7, model_name="gpt-3.5-turbo-16k")
+        llm = ChatOpenAI(temperature=temperature,
+                         model_name="gpt-4-1106-preview")
+
         prompt = ChatPromptTemplate.from_template(prompt_template)
         chain = prompt | llm
         response = await chain.ainvoke(input={"text": chat_string})
-        image_url = self.image_generator.generate_image(response.content)
-        self.image_generator.download_and_save_image(image_url)
 
-        message = await ctx.send(file=discord.File('pic.png'))
-        # Return a message with the query and the image as an attachment
-        generation_prompt_string = f"Image generated with prompt: \n\n ```\n\n{response.content}\n\n```"
-        if len(generation_prompt_string.split(" ")) < 1800:
-            await message.edit(content=generation_prompt_string)
-        else:
-            filename = 'generation_prompt.txt'
-            with open(filename, 'w', encoding="utf-8") as file:
-                file.write(chat_string)
+        # if len(response.content) > 1800:
+        #     prompt_for_message = response.content[:1800] + "...\n (prompt truncated due to Discord's limit)"
+        # else:
+        #     prompt_for_message = response.content
+        #
+        # response_message_content = f"Image generation prompt: \n\n ```\n\n{prompt_for_message}\n\n```\n\n||\n\ngenerating image......"
+        #
+        # await response_message.edit(content=response_message_content)
 
-            await ctx.send(file=discord.File(filename))
-        chat_text_file_name = 'chat.txt'
-        with open(chat_text_file_name, 'w', encoding="utf-8") as file:
-            file.write(chat_string)
+        image_filename = await self.image_generator.generate_image(response.content)
 
-        await ctx.send(file=discord.File(chat_text_file_name))
+        # response_message_content = response_message_content.split("||")[0]
+
+        await response_message.edit(content="",
+                                    file=discord.File(image_filename))
 
     async def _get_chat_string(self,
                                channel: discord.abc.Messageable,
@@ -80,7 +91,5 @@ class ImageGeneratorCog(discord.Cog):
         except Forbidden:
             logger.warning(f"Missing permissions to scrape channel: {channel}")
 
-        chat_string = ""
-        for message in channel_messages:
-            chat_string += message.content + "\n\n"
+        chat_string = "\n\n".join([f"{message.content}" for message in channel_messages])
         return chat_string
