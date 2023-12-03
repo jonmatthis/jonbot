@@ -21,25 +21,17 @@ class ImageGenerator:
         self.image_save_path = Path(get_base_data_folder_path()) / "generated_images"
         load_dotenv()
         # self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
         self.client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     async def generate_image(self,
-                             prompt: str = "an otherworldly entity, madness to behold (but otherwise kuwaii af)",
-                             size: Optional[
-                                 Literal["256x256", "512x512", "1024x1024", "1792x1024", "1024x1792"]] = "1024x1024",
+                             prompt: str,
+                             size: Literal["1024x1024", "1792x1024", "1024x1792"] = "1024x1024",
                              quality: Literal["standard", "hd"] = "hd",
-                             model: str = "dall-e-3",
                              style: Literal["vivid", "natural"] = "vivid",
-                             n: int = 1):
-        if model == "dall-e-3" and not n == 1:
-            logger.warning(f"Model {model} does not support n={n} > 1. Setting n=1")
-            n = 1
+                             n: int = 1) -> str:
 
-        if model == "dall-e-2":
-            # TODO - do stuff to make things compatible with dall-e-2
-            pass
-
-        response = await self.client.images.generate(model=model,
+        response = await self.client.images.generate(model="dall-e-3",
                                                      prompt=prompt,
                                                      size=size,
                                                      quality=quality,
@@ -52,12 +44,75 @@ class ImageGenerator:
             raise FileNotFoundError(f"Image was not saved to {self.latest_image_path}")
         return str(self.latest_image_path)
 
-    def download_and_save_image(self, url: str, filename: str):
+    async def edit_image(self,
+                         base_image_path: str,
+                         prompt: str,
+                         mask_path: Optional[str] = None,
+                         n: int = 1,
+                         size: Literal["1024x1024", "1792x1024", "1024x1792"] = "1024x1024") -> str:
+        temp_file_name = "temp.png"
+        og_filename = Path(base_image_path).name
+        if mask_path is None:
+            # convert image to RGBA and save to temp file
+            img = Image.open(base_image_path)
+            img = img.convert("RGBA")
+            tmp_img = Image.new("RGBA", img.size, (0, 0, 0, 0))
+            tmp_img.paste(img)
+
+            tmp_img.save(temp_file_name)
+            base_image_path = temp_file_name
+        else:
+            raise NotImplementedError("Masked image editing is not yet implemented")
+
+        with open(base_image_path, "rb") as image_file:
+            response = await self.client.images.edit(image=image_file,
+                                                     prompt=prompt,
+                                                     n=n,
+                                                     size=size
+
+                                                     )
+        if Path(temp_file_name).exists():
+            os.remove(temp_file_name)
+
+        base_filename = og_filename.split(".")[0] + "_edit"
+        filename = base_filename + ".png"
+        file_name_iteration = 0
+        while Path(filename).exists():
+            file_name_iteration += 1
+            filename = base_filename + f"_{file_name_iteration}.png"
+        self.latest_image_path = self.download_and_save_image(response.data[0].url, filename)
+
+        image_path = self.download_and_save_image(response.data[0].url, filename)
+        return image_path
+
+    async def create_image_variation(self,
+                                     base_image_path: str,
+                                     n: int = 1,
+                                     size: Literal["1024x1024", "1792x1024", "1024x1792"] = "1024x1024") -> str:
+        with open(base_image_path, "rb") as image_file:
+            response = await self.client.images.create_variation(
+                image=image_file,
+                n=n,
+                size=size
+            )
+        og_filename = Path(base_image_path).name
+        base_filename = og_filename.split(".")[0] + "_variation"
+        filename = base_filename + ".png"
+        file_name_iteration = 0
+        while Path(filename).exists():
+            file_name_iteration += 1
+            filename = base_filename + f"_{file_name_iteration}.png"
+        image_path = self.download_and_save_image(response.data[0].url, filename)
+
+        return image_path
+
+    def download_and_save_image(self, url: str, filename: str) -> Path:
         response = requests.get(url)
         img = Image.open(BytesIO(response.content))
         self.image_save_path.mkdir(parents=True, exist_ok=True)  # creates directory if it doesn't exist
         self.latest_image_path = self.image_save_path / filename
         img.save(self.latest_image_path)
+        return self.latest_image_path
 
     async def get_file_name_from_prompt(self, prompt: str) -> str:
         logger.info(f"Generating filename from prompt: {prompt}")
@@ -93,5 +148,18 @@ class ImageGenerator:
 
 if __name__ == '__main__':
     image_generator = ImageGenerator()
-    image_url = asyncio.run(image_generator.generate_image())
+    image_path = asyncio.run(
+        image_generator.generate_image(
+            prompt="an otherworldly entity, madness to behold (but otherwise kuwaii af) - put it on the ground in a forest"))
     image_generator.display_image()
+
+    variation_image_path = asyncio.run(
+        image_generator.create_image_variation(base_image_path=image_path))
+    image_generator.display_image()
+
+    edited_image_path = asyncio.run(
+        image_generator.edit_image(base_image_path=image_path,
+                                   prompt=" add a bunch of kittens running all over the place (and some dinosaurs)"))
+
+    image_generator.display_image()
+    print("done!")

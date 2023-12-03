@@ -4,8 +4,8 @@ from pathlib import Path
 
 import aiofiles
 import aiohttp
-import openai
 from moviepy.video.io.VideoFileClip import VideoFileClip
+from openai import AsyncOpenAI
 from pydub import AudioSegment
 
 from jonbot.backend.data_layer.models.voice_to_text_request import VoiceToTextResponse
@@ -69,9 +69,11 @@ async def transcribe_audio_function(
             raise FileNotFoundError(
                 f"Could not find mp3 file at {mp3_file_path} - failed to extract audio from this URL: {audio_file_url}")
 
+        client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
         with open(mp3_file_path, "rb") as audio_file:
             # Call OpenAI's Whisper model for transcription
-            transcription_response = openai.Audio.transcribe(
+            transcription_response = await client.audio.transcriptions.create(
                 model="whisper-1",
                 file=audio_file,
                 prompt=prompt,
@@ -82,7 +84,7 @@ async def transcribe_audio_function(
 
         if transcription_response:
             logger.success(
-                f"Transcription successful! {transcription_response['text']}"
+                f"Transcription successful! {transcription_response.text}"
             )
         else:
             raise Exception("Transcription request returned None.")
@@ -92,7 +94,6 @@ async def transcribe_audio_function(
         return VoiceToTextResponse(
             text=transcription_response.text,
             success=True,
-            response_time_ms=transcription_response.response_ms,
             mp3_file_path=str(mp3_file_path),
         )
     except Exception as e:
