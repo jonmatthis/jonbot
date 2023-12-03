@@ -183,12 +183,5 @@ quine_output/
 /jonbot/system/bot_tomls/*.toml
 !jonbot/system/bot_tomls/_sample_config.toml
 
-/jonbot/backend/data_layer/analysis/vector_embeddings/chroma_persistence/
-/jonbot/backend/data_layer/analysis/vector_embeddings/document_tree.json
-/jonbot/backend/data_layer/vector_embeddings/chroma_persistence/a6c138bf-5bf7-4861-9d7f-d3fea5f18835/data_level0.bin
-/jonbot/backend/data_layer/vector_embeddings/chroma_persistence/a6c138bf-5bf7-4861-9d7f-d3fea5f18835/header.bin
-/jonbot/backend/data_layer/vector_embeddings/chroma_persistence/a6c138bf-5bf7-4861-9d7f-d3fea5f18835/index_metadata.pickle
-/jonbot/backend/data_layer/vector_embeddings/chroma_persistence/a6c138bf-5bf7-4861-9d7f-d3fea5f18835/length.bin
-/jonbot/backend/data_layer/vector_embeddings/chroma_persistence/a6c138bf-5bf7-4861-9d7f-d3fea5f18835/link_lists.bin
-/jonbot/backend/data_layer/vector_embeddings/chroma_persistence/chroma.sqlite3
-/jonbot/backend/data_layer/vector_embeddings/document_tree.json
+*chroma_persistence/
+*.png

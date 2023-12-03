@@ -1,38 +1,10 @@
-import os
-from io import BytesIO
-
 import discord
-import requests
-from PIL import Image
 from discord import Forbidden
-from dotenv import load_dotenv
+from jonbot.frontends.discord_bot.cogs.image_generator import ImageGenerator
 from langchain.chat_models import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
-from openai import OpenAI
 
 from jonbot import logger
-
-
-class ImageGenerator:
-    def __init__(self):
-        load_dotenv()
-        self.client = OpenAI()
-
-    def generate_image(self, prompt="an otherworldly entity, madness to behold (but kuwaii af)",
-                       size="1024x1024", quality="standard", n=1):
-        response = self.client.images.generate(model="dall-e-3", prompt=prompt, size=size, quality=quality, n=n)
-        return response.data[0].url
-
-    def download_and_save_image(self, url):
-        response = requests.get(url)
-        img = Image.open(BytesIO(response.content))
-        img.save("pic.png")
-
-    def display_image(self):
-        if os.name == 'nt':
-            os.system("start pic.png")
-        else:
-            os.system("xdg-open pic.png")
 
 
 class ImageGeneratorCog(discord.Cog):
@@ -112,10 +84,3 @@ class ImageGeneratorCog(discord.Cog):
         for message in channel_messages:
             chat_string += message.content + "\n\n"
         return chat_string
-
-
-if __name__ == '__main__':
-    image_generator = ImageGenerator()
-    image_url = image_generator.generate_image()
-    image_generator.download_and_save_image(image_url)
-    image_generator.display_image()
