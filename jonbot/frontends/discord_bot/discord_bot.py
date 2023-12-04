@@ -347,7 +347,7 @@ class MyDiscordBot(commands.Bot):
                         await responder.add_text_to_reply_message(reply_message_content)
 
                     voice_to_text_request = VoiceToTextRequest(
-                        audio_file_url=attachment.url
+                        audio_source=attachment.url
                     )
 
                     response = await self._api_client.send_request_to_api(

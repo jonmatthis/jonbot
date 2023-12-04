@@ -63,12 +63,15 @@ async def transcribe_audio(audio_source: str,
                            temperature: float = 0,
                            response_format: Literal["json", "text", "srt", "verbose_json", "vtt"] = "verbose_json",
                            language: Optional[str] = None,
+                           **kwargs,
                            ) -> VoiceToTextResponse:
     parsed_source = urlparse(audio_source)
     is_url = parsed_source.scheme in ('http', 'https')
     temp_folder = get_temp_folder()
 
-    temp_original_path = Path(temp_folder) / f"audio-file{Path(audio_source).suffix}"
+    audio_file_name =  f"audio-file{Path(audio_source).suffix}"
+    audio_file_name = audio_file_name.split("?")[0]
+    temp_original_path = Path(temp_folder) / audio_file_name
     temp_mp3_path = Path(temp_folder) / "audio-file.mp3"
 
     async with aiohttp.ClientSession() as session:
