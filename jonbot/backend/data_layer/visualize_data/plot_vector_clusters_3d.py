@@ -17,23 +17,23 @@ def visualize_clusters_3d(embeddings: np.ndarray,
                 perplexity=5)
     embeddings_3d = tsne.fit_transform(embeddings)
 
-    # get all chat id
-    chat_ids = [metadata["chat_id"] for metadata in metadatas]
-    # get unique chat ids
-    unique_chat_ids = list(set(chat_ids))
-    couplets_by_chatid = {}
-    for chat_id in unique_chat_ids:
-        #get all the entries that have the same chat id
-        for metadata in metadatas:
-            if metadata["chat_id"] == chat_id:
-                if not chat_id in couplets_by_chatid:
-                    couplets_by_chatid[chat_id] = []
-                couplets_by_chatid[chat_id].append(metadata["couplet"])
-
-    # go through each entry in couplets_by_chatid and re-order the entries according to `metadatas['couplet_number']`
-    for chat_id, couplets in couplets_by_chatid.items():
-        couplets_by_chatid[chat_id] = sorted(couplets, key=lambda x: x["couplet_number"])
-
+    # # get all chat id
+    # chat_ids = [metadata["chat_id"] for metadata in metadatas]
+    # # get unique chat ids
+    # unique_chat_ids = list(set(chat_ids))
+    # couplets_by_chatid = {}
+    # for chat_id in unique_chat_ids:
+    #     #get all the entries that have the same chat id
+    #     for metadata in metadatas:
+    #         if metadata["chat_id"] == chat_id:
+    #             if not chat_id in couplets_by_chatid:
+    #                 couplets_by_chatid[chat_id] = []
+    #             couplets_by_chatid[chat_id].append(metadata["couplet"])
+    #
+    # # go through each entry in couplets_by_chatid and re-order the entries according to `metadatas['couplet_number']`
+    # for chat_id, couplets in couplets_by_chatid.items():
+    #     couplets_by_chatid[chat_id] = sorted(couplets, key=lambda x: x["couplet_number"])
+    #
 
 
     df = pd.DataFrame(embeddings_3d, columns=['Dimension 1', 'Dimension 2', 'Dimension 3'])

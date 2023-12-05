@@ -192,16 +192,13 @@ async def get_or_create_vectorstore(chroma_persistence_directory: str,
         vector_store = Chroma(persist_directory=chroma_persistence_directory,
                               embedding_function=OpenAIEmbeddings(),
                               collection_name=chroma_collection_name)
-        if not Path(document_tree_json_name).exists():
-            chats_out = await get_chats(database_name=database_name,
-                                        query={"server_id": server_id})
-            chat_documents = {key: DiscordChatDocument.from_dict(chat_dict) for key, chat_dict in chats_out.items()}
-            vector_store, document_tree_dict, word_counts = await create_vector_store(chats=chat_documents,
-                                                                                      collection_name=chroma_collection_name,
-                                                                                      persistence_directory=chroma_persistence_directory)
-
-
-
+    else:
+        chats_out = await get_chats(database_name=database_name,
+                                    query={"server_id": server_id})
+        chat_documents = {key: DiscordChatDocument.from_dict(chat_dict) for key, chat_dict in chats_out.items()}
+        vector_store, document_tree_dict, word_counts = await create_vector_store(chats=chat_documents,
+                                                                                  collection_name=chroma_collection_name,
+                                                                                  persistence_directory=chroma_persistence_directory)
 
     return vector_store
 
