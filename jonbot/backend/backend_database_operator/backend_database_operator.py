@@ -35,6 +35,9 @@ class BackendDatabaseOperations(BaseModel):
         if success:
             return UpsertResponse(success=True)
         else:
+            logger.error(
+                f"Error occurred while upserting {len(request.data)} chats to database: {request.database_name}"
+            )
             return UpsertResponse(success=False)
 
     async def upsert_discord_messages(

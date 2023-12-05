@@ -10,7 +10,7 @@ from langchain.vectorstores import Chroma
 
 from jonbot.backend.data_layer.analysis.get_chats import get_chats
 from jonbot.backend.data_layer.models.discord_stuff.discord_chat_document import DiscordChatDocument
-from jonbot.backend.data_layer.vector_embeddings.plot_vector_clusters_3d import visualize_clusters_3d
+from jonbot.backend.data_layer.visualize_data.plot_vector_clusters_3d import visualize_clusters_3d
 
 
 async def create_vector_store(chats: Dict[str, DiscordChatDocument],
@@ -169,28 +169,16 @@ async def create_vector_store(chats: Dict[str, DiscordChatDocument],
 
 async def plot_vectorstore_data(vector_store: Chroma):
     collection = vector_store._collection.get(include=["embeddings", "documents", "metadatas"])
-    # vector_stores = await get_or_create_student_message_vector_store()
-    # embeddings = []
 
-    # for student_name, vector_store in vector_stores.items():
-    #     collection = vector_store._collection.get(include=["embeddings", "documents", "metadatas"])
-    #     embeddings.extend(collection["embeddings"])
-    #     labels.extend([split_string(document, 30) for document in collection["documents"]])
     labels = []
     for metadata in collection["metadatas"]:
         labels.append(f"{metadata['channel_name']}")
     embeddings_npy = np.asarray(collection["embeddings"])
 
-    # visualize_clusters_2d(embeddings=embeddings_npy,
-    #                       labels=labels,
-    #                       n_clusters=5)
-
     visualize_clusters_3d(embeddings=embeddings_npy,
                           text_contents=collection["documents"],
                           metadatas=collection["metadatas"])
 
-
-VECTOR_STORE = None
 
 
 async def get_or_create_vectorstore(chroma_persistence_directory: str,
@@ -199,28 +187,23 @@ async def get_or_create_vectorstore(chroma_persistence_directory: str,
                                     chroma_collection_name: str,
                                     document_tree_json_name="document_tree.json",
                                     word_count_json_name="word_counts.json") -> Chroma:
-    global VECTOR_STORE
-    if VECTOR_STORE is None:
+
+    if Path(chroma_persistence_directory).exists():
+        vector_store = Chroma(persist_directory=chroma_persistence_directory,
+                              embedding_function=OpenAIEmbeddings(),
+                              collection_name=chroma_collection_name)
         if not Path(document_tree_json_name).exists():
             chats_out = await get_chats(database_name=database_name,
                                         query={"server_id": server_id})
             chat_documents = {key: DiscordChatDocument.from_dict(chat_dict) for key, chat_dict in chats_out.items()}
-            VECTOR_STORE, document_tree_dict, word_counts = await create_vector_store(chats=chat_documents,
+            vector_store, document_tree_dict, word_counts = await create_vector_store(chats=chat_documents,
                                                                                       collection_name=chroma_collection_name,
                                                                                       persistence_directory=chroma_persistence_directory)
 
-            with open(document_tree_json_name, "w", encoding="utf-8") as f:
-                json.dump(document_tree_dict, f, ensure_ascii=False, indent=4)
 
-            with open(word_count_json_name, "w", encoding="utf-8") as f:
-                json.dump(word_counts, f, ensure_ascii=False, indent=4)
 
-        else:
-            VECTOR_STORE = Chroma(persist_directory=chroma_persistence_directory,
-                                  embedding_function=OpenAIEmbeddings(),
-                                  collection_name=chroma_collection_name)
 
-    return VECTOR_STORE
+    return vector_store
 
 
 if __name__ == "__main__":

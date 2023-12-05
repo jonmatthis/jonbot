@@ -59,22 +59,28 @@ class DiscordDatabaseOperations:
         if len(chat_documents) == 0:
             raise ValueError("Cannot upsert 0 chats")
         try:
-            request = UpsertDiscordChatsRequest.from_discord_chat_documents(
-                documents=chat_documents, database_name=self._database_name
-            )
-
-            logger.info(
-                f"Sending database upsert request for {len(request.data)} messages to database: {request.database_name}"
-            )
-
-            response = await self._api_client.send_request_to_api(
-                endpoint_name=UPSERT_CHATS_ENDPOINT, data=request.dict()
-            )
-            if not response["success"]:
-                raise Exception(
-                    f"Error occurred while sending `upsert_messages` request for"
-                    f" database: {self._database_name}  at endpoint: {UPSERT_MESSAGES_ENDPOINT}"
+            for chat_document in chat_documents:
+                for couplet in chat_document.couplets:
+                    if couplet.ai_message == "":
+                        raise ValueError(
+                            f"Cannot upsert chat with empty ai_message. Chat: {chat_document.dict()}"
+                        )
+                request = UpsertDiscordChatsRequest.from_discord_chat_documents(
+                    documents=[chat_document], database_name=self._database_name
                 )
+
+                logger.info(
+                    f"Sending database upsert request for {len(request.data)} messages to database: {request.database_name}"
+                )
+
+                response = await self._api_client.send_request_to_api(
+                    endpoint_name=UPSERT_CHATS_ENDPOINT, data=request.dict()
+                )
+                if not response["success"]:
+                    raise Exception(
+                        f"Error occurred while sending `upsert_messages` request for"
+                        f" database: {self._database_name}  at endpoint: {UPSERT_MESSAGES_ENDPOINT}"
+                    )
 
         except Exception as e:
             logger.exception(e)

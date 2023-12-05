@@ -261,7 +261,7 @@ class MyDiscordBot(commands.Bot):
             respond_to_this_text: str,
     ) -> List[discord.Message]:
         try:
-            if message.channel.category is not None:
+            if hasattr(message.channel, "category"):
                 if not message.channel.category.id in [1176532527977082931, 1176526146842665031]:
                     await self._bot_config_cog.gather_config_messages(channel=message.channel)
 

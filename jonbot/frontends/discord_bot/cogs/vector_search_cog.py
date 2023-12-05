@@ -40,7 +40,7 @@ class VectorSearchCog(discord.Cog):
     async def vector_search(self,
                             ctx: discord.ApplicationContext,
                             query: str,
-                            number_of_results: int = 10,
+                            number_of_results: int = 4,
                             ) -> None:
         thing = await ctx.send(f"Searching for {query}...")
 

@@ -19,6 +19,7 @@ class ApiClient:
     async def send_request_to_api(
             self, endpoint_name: str, data: dict = None, method: str = "POST"
     ) -> dict:
+
         try:
             endpoint_url = ApiRoute.from_endpoint(
                 host_name=self.api_host_name, endpoint=endpoint_name

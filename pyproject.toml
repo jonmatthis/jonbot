@@ -45,6 +45,7 @@ matplotlib = "^3.8.2"
 plotly-express = "^0.4.1"
 natsort = "^8.4.0"
 opencv-contrib-python = "^4.8.1.78"
+dash = "^2.14.2"
 
 [tool.poetry.group.dev.dependencies]
 bumpver = "^2023.1125"

@@ -126,15 +126,15 @@ class ServerScraperCog(commands.Cog):
             logger.info(f"Awaiting {len(upsert_tasks)} tasks to upsert messages to database...")
             await asyncio.gather(*upsert_tasks)
 
-        reply_embed_description = await self._update_reply_message_embed(
-            channel_message_count_string="",
-            total_server_messages_count=total_server_messages,
-            embed_title=reply_embed_title,
-            embed_message=reply_embed_description,
-            reply_message=reply_message,
-            done=True)
-        if not len(all_messages) == total_server_messages:
-            raise ValueError("Total messages scraped does not match total messages upserted!")
+            reply_embed_description = await self._update_reply_message_embed(
+                channel_message_count_string="",
+                total_server_messages_count=total_server_messages,
+                embed_title=reply_embed_title,
+                embed_message=reply_embed_description,
+                reply_message=reply_message,
+                done=True)
+            if not len(all_messages) == total_server_messages:
+                raise ValueError("Total messages scraped does not match total messages upserted!")
 
         logger.success(f"Finished scraping server: {ctx.guild.name}!\n "
                        f"{reply_embed_description}"
@@ -153,10 +153,10 @@ class ServerScraperCog(commands.Cog):
         new_embed_description += channel_message_count_string
 
         new_embed_description += f"{total_server_messages_string} {total_server_messages_count}"
-        if not done:
-            new_embed_description += scraping_next_channel_string
-        else:
+        if done:
             new_embed_description += "\n\nDone!"
+        else:
+            new_embed_description += scraping_next_channel_string
 
         await reply_message.edit(embed=discord.Embed(
             title=embed_title,

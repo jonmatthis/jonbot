@@ -128,11 +128,13 @@ class DiscordChatDocument(BaseModel):
             for human_message in human_messages:
                 human_message_ids.append(human_message.message_id)
                 if human_message_ids[-1] not in ai_parent_ids:
-                    couplets.append(ChatCouplet.from_tuple((human_message, None)))
+                    pass
+                    # couplets.append(ChatCouplet.from_tuple((human_message, None)))
 
             for ai_message in ai_messages:
                 if ai_message.parent_message_id not in ai_parent_ids:
-                    couplets.append(ChatCouplet.from_tuple((None, ai_message)))
+                    pass
+                    # couplets.append(ChatCouplet.from_tuple((None, ai_message)))
 
         return couplets
 

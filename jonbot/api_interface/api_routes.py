@@ -107,7 +107,11 @@ def register_api_routes(
     async def upsert_chats_endpoint(
             request: UpsertDiscordChatsRequest,
     ) -> UpsertResponse:
-        return await database_operations.upsert_discord_chats(request=request)
+        response =  await database_operations.upsert_discord_chats(request=request)
+        if not response.success:
+            logger.error(f"Failed to upsert chats: {request}")
+        return response
+
 
     @app.websocket(CHAT_STATELESS_ENDPOINT)
     async def chat_stateless_endpoint(websocket: WebSocket):
