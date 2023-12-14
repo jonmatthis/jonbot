@@ -11,8 +11,8 @@ from jonbot.api_interface.api_client.api_client import ApiClient
 from jonbot.api_interface.api_client.get_or_create_api_client import (
     get_or_create_api_client,
 )
-from jonbot.api_interface.api_routes import CHAT_ENDPOINT, VOICE_TO_TEXT_ENDPOINT
-from jonbot.backend.data_layer.models.conversation_models import ChatRequest, ChatRequestConfig
+from jonbot.api_interface.api_routes import CHAT_ENDPOINT, VOICE_TO_TEXT_ENDPOINT, IMAGE_CHAT_ENDPOINT
+from jonbot.backend.data_layer.models.conversation_models import ChatRequest, ChatRequestConfig, ImageChatRequest
 from jonbot.backend.data_layer.models.discord_stuff.environment_config.discord_environment import (
     DiscordEnvironmentConfig,
 )
@@ -193,8 +193,8 @@ class MyDiscordBot(commands.Bot):
 
                 if len(message.attachments) > 0:
                     logger.debug(f"Message has attachments: {message.attachments}")
-                    text_to_reply_to += await self.handle_attachments(message=message,
-                                                                      messages_to_upsert=messages_to_upsert)
+                    text_to_reply_to += await self.handle_audio_attachments(message=message,
+                                                                            messages_to_upsert=messages_to_upsert)
 
             if "thread" not in str(message.channel.type).lower() and str(message.channel.type).lower() != "private":
                 logger.info("Message is not in a thread (or forum post) - "
@@ -214,9 +214,9 @@ class MyDiscordBot(commands.Bot):
         finally:
             await self._database_operations.upsert_messages(messages=messages_to_upsert)
 
-    async def handle_attachments(self,
-                                 message: discord.Message,
-                                 messages_to_upsert: List[discord.Message] = None, ) -> str:
+    async def handle_audio_attachments(self,
+                                       message: discord.Message,
+                                       messages_to_upsert: List[discord.Message] = None, ) -> str:
         attachment_text = ""
         for attachment in message.attachments:
             if "audio" in attachment.content_type or "video" in attachment.content_type:
@@ -227,6 +227,7 @@ class MyDiscordBot(commands.Bot):
 
                 new_text_to_reply_to = audio_response_dict["transcription_text"]
                 attachment_text += f"\n\n{new_text_to_reply_to}"
+
             else:
                 new_text_to_reply_to = await self.handle_text_attachments(attachment=attachment)
                 attachment_text += f"\n\n{new_text_to_reply_to}"
@@ -240,7 +241,7 @@ class MyDiscordBot(commands.Bot):
         message_text = f"In reply to message from {reply_message.author}, with content:\n ```\n{reply_message.content}\n```\n"
 
         if include_attachments and len(reply_message.attachments) > 0:
-            message_text += await self.handle_attachments(message=reply_message)
+            message_text += await self.handle_audio_attachments(message=reply_message)
 
         return message_text
 
@@ -285,6 +286,12 @@ class MyDiscordBot(commands.Bot):
             if not "classbot" in self._database_name:
                 config.model_name = "gpt-4-1106-preview"
 
+            async def callback(
+                    token: str, responder: DiscordMessageResponder = message_responder
+            ):
+                logger.trace(f"FRONTEND received token: `{repr(token)}`")
+                await responder.add_token_to_queue(token=token)
+
             chat_request = ChatRequest.from_discord_message(
                 message=message,
                 reply_message=reply_messages[-1],
@@ -293,36 +300,44 @@ class MyDiscordBot(commands.Bot):
                 config=config,
             )
 
-            async def callback(
-                    token: str, responder: DiscordMessageResponder = message_responder
-            ):
-                logger.trace(f"FRONTEND received token: `{repr(token)}`")
-                await responder.add_token_to_queue(token=token)
+            if len(message.attachments) > 0:
+                logger.debug(f"Message has attachments: {message.attachments}")
+                for attachment in message.attachments:
+                    if "image" in attachment.content_type:
+                        chat_request = ImageChatRequest(**chat_request.dict(),
+                                                        image_url=attachment.url,
+                                                        text=respond_to_this_text)
 
-            try:
-                response_tokens = await self._api_client.send_request_to_api_streaming(
-                    endpoint_name=CHAT_ENDPOINT,
-                    data=chat_request.dict(),
-                    callbacks=[callback],
-                )
+                    logger.debug(f"Sending image chat request: {chat_request}")
+                    response = await self._api_client.send_request_to_api(
+                        endpoint_name=IMAGE_CHAT_ENDPOINT,
+                        data=chat_request.dict(),
+                    )
+                    await message_responder.add_token_to_queue(token=response["text"])
+                else:
+                    try:
+                        response_tokens = await self._api_client.send_request_to_api_streaming(
+                            endpoint_name=CHAT_ENDPOINT,
+                            data=chat_request.dict(),
+                            callbacks=[callback],
+                        )
+                    except Exception as e:
+                        await message_responder.add_token_to_queue(
+                            f"  --  \n!!!\n> `Oh no! An error while streaming reply...`"
+                        )
+
                 await message_responder.shutdown()
                 await self._update_memory_emojis(message=message)
 
                 return await message_responder.get_reply_messages()
 
-            except Exception as e:
-                await message_responder.add_token_to_queue(
-                    f"  --  \n!!!\n> `Oh no! An error while streaming reply...`"
-                )
-                await message_responder.shutdown()
-                raise
 
         except Exception as e:
             logger.exception(f"Error occurred while handling text message: {str(e)}")
             raise
 
     async def handle_audio_message(self, message: discord.Message) -> Dict[str, Union[str, List[discord.Message]]]:
-        logger.info(f"Received voice memo from user: {message.author}")
+        logger.info(f"Received AUDIO message from user: {message.author}")
         try:
             reply_message_content = (
                 f"Transcribing audio from user `{message.author}`\n"

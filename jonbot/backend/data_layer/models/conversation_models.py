@@ -98,6 +98,9 @@ class ChatRequestConfig(BaseModel):
     config_prompts: Optional[str] = None
     memory_messages: Optional[List[DiscordMessageDocument]] = None
 
+
+
+
     @classmethod
     def from_kwargs(cls, **kwargs):
         build_dict = {}
@@ -177,6 +180,10 @@ class ChatRequest(BaseModel):
             **kwargs
         )
 
+class ImageChatRequest(ChatRequest):
+    text: str
+    image_url: str
+    model_name: str = "gpt-4-vision-preview"
 
 class ChatCouplet(BaseModel):
     human_message: Optional[DiscordMessageDocument]
@@ -233,3 +240,4 @@ class ChatCouplet(BaseModel):
             ai_message = DiscordMessageDocument(**couplet_dict["ai_message"])
         return cls(human_message=human_message,
                    ai_message=ai_message)
+

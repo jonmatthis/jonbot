@@ -26,6 +26,6 @@ async def get_chatbot(
         )
 
     chatbot = existing_chatbots[context_path]
-    chatbot.apply_config_and_build_chain(config=chat_request.config)
+    await chatbot.apply_config_and_build_chain(config=chat_request.config)
 
     return chatbot

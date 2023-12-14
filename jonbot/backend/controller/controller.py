@@ -1,5 +1,8 @@
 from typing import AsyncIterable, Dict
 
+from langchain.chat_models import ChatOpenAI
+from langchain_core.messages import HumanMessage, AIMessage
+
 from jonbot.backend.ai.audio_transcription.transcribe_audio import transcribe_audio
 from jonbot.backend.ai.chatbot.chatbot import (
     Chatbot,
@@ -10,7 +13,7 @@ from jonbot.backend.ai.chatbot.get_chatbot import (
 from jonbot.backend.backend_database_operator.backend_database_operator import (
     BackendDatabaseOperations,
 )
-from jonbot.backend.data_layer.models.conversation_models import ChatRequest
+from jonbot.backend.data_layer.models.conversation_models import ChatRequest, ImageChatRequest
 from jonbot.backend.data_layer.models.voice_to_text_request import VoiceToTextRequest, VoiceToTextResponse
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
@@ -51,3 +54,32 @@ class Controller:
             yield response
 
         logger.info(f"Chat stream request complete: {chat_request}")
+
+    async def analyze_image(self, image_chat_request: ImageChatRequest) -> AIMessage:
+        logger.info(f"Received image analysis request: {image_chat_request}")
+
+        chat = ChatOpenAI(model="gpt-4-vision-preview",
+                          max_tokens=1000,
+                          temperature=image_chat_request.config.temperature,
+                          verbose=True)
+        response = await chat.ainvoke(
+            [
+                HumanMessage(
+                    content=[
+                        {"type": "text", "text": "What is this image showing"},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": image_chat_request.image_url,
+                                "detail": "auto",
+                            },
+                        },
+                    ]
+                )
+            ]
+        )
+        logger.info(f"Image analysis request complete, response: {response}")
+        return response
+
+
+

@@ -5,16 +5,18 @@ from typing import Optional, TYPE_CHECKING, Any
 
 from fastapi import FastAPI
 from langchain_core.callbacks import AsyncCallbackHandler
+from langchain_core.messages import AIMessage
 from starlette.responses import StreamingResponse
 from starlette.websockets import WebSocket
 
 from jonbot.backend.controller.controller import Controller
-from jonbot.backend.data_layer.models.conversation_models import ChatRequest
+from jonbot.backend.data_layer.models.conversation_models import ChatRequest, ImageChatRequest
 from jonbot.backend.data_layer.models.database_request_response_models import UpsertDiscordMessagesRequest, \
     UpsertResponse, ContextMemoryDocumentRequest, UpsertDiscordChatsRequest
 from jonbot.backend.data_layer.models.health_check_status import HealthCheckResponse
 from jonbot.backend.data_layer.models.user_stuff.memory.context_memory_document import ContextMemoryDocument
 from jonbot.backend.data_layer.models.voice_to_text_request import VoiceToTextRequest, VoiceToTextResponse
+
 from jonbot.system.setup_logging.get_logger import get_jonbot_logger
 
 if TYPE_CHECKING:
@@ -27,6 +29,7 @@ logger = get_jonbot_logger()
 HEALTH_ENDPOINT = "/health"
 
 CHAT_ENDPOINT = "/chat"
+IMAGE_CHAT_ENDPOINT = "/image_chat"
 VOICE_TO_TEXT_ENDPOINT = "/voice_to_text"
 
 UPSERT_MESSAGES_ENDPOINT = "/upsert_messages"
@@ -96,6 +99,11 @@ def register_api_routes(
             controller.get_response_from_chatbot(chat_request=chat_request),
             media_type="text/event-stream",
         )
+
+    @app.post(IMAGE_CHAT_ENDPOINT)
+    async def image_analysis_endpoint(image_analysis_request: ImageChatRequest) -> AIMessage:
+        logger.info(f"Received image analysis request: {image_analysis_request}")
+        return await controller.analyze_image(image_chat_request=image_analysis_request)
 
     @app.post(UPSERT_MESSAGES_ENDPOINT)
     async def upsert_messages_endpoint(

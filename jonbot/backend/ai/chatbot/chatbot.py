@@ -165,7 +165,6 @@ class Chatbot:
                   }
         response_message = ""
         try:
-
             async for token in self.chain.astream(inputs, {"tags": self.tags}):
                 logger.trace(f"Yielding token: {repr(token.content)}")
                 response_message += token.content
