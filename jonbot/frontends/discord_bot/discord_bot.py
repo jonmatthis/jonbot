@@ -313,7 +313,7 @@ class MyDiscordBot(commands.Bot):
                         endpoint_name=IMAGE_CHAT_ENDPOINT,
                         data=chat_request.dict(),
                     )
-                    await message_responder.add_token_to_queue(token=response["text"])
+                    await message_responder.add_token_to_queue(token=response["content"])
                 else:
                     try:
                         response_tokens = await self._api_client.send_request_to_api_streaming(
