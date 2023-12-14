@@ -207,10 +207,12 @@ class MyDiscordBot(commands.Bot):
                     message=message,
                     respond_to_this_text=text_to_reply_to
                 )
-                messages_to_upsert.extend(response_messages)
+                if response_messages:
+                    messages_to_upsert.extend(response_messages)
 
         except Exception as e:
             await self.send_error_response(exception=e, message=messages_to_upsert[-1])
+            logger.exception(f"Error occurred while handling message: {str(e)}")
         finally:
             await self._database_operations.upsert_messages(messages=messages_to_upsert)
 
@@ -314,27 +316,31 @@ class MyDiscordBot(commands.Bot):
                         data=chat_request.dict(),
                     )
                     await message_responder.add_token_to_queue(token=response["content"])
-                else:
-                    try:
-                        response_tokens = await self._api_client.send_request_to_api_streaming(
-                            endpoint_name=CHAT_ENDPOINT,
-                            data=chat_request.dict(),
-                            callbacks=[callback],
-                        )
-                    except Exception as e:
-                        await message_responder.add_token_to_queue(
-                            f"  --  \n!!!\n> `Oh no! An error while streaming reply...`"
-                        )
 
-                await message_responder.shutdown()
-                await self._update_memory_emojis(message=message)
 
-                return await message_responder.get_reply_messages()
+            try:
+                response_tokens = await self._api_client.send_request_to_api_streaming(
+                    endpoint_name=CHAT_ENDPOINT,
+                    data=chat_request.dict(),
+                    callbacks=[callback],
+                )
+            except Exception as e:
+                await message_responder.add_token_to_queue(
+                    f"  --  \n!!!\n> `Oh no! An error while streaming reply...`"
+                )
+
+
+            await message_responder.shutdown()
+            await self._update_memory_emojis(message=message)
+
+            return await message_responder.get_reply_messages()
+
 
 
         except Exception as e:
             logger.exception(f"Error occurred while handling text message: {str(e)}")
             raise
+
 
     async def handle_audio_message(self, message: discord.Message) -> Dict[str, Union[str, List[discord.Message]]]:
         logger.info(f"Received AUDIO message from user: {message.author}")
