@@ -185,3 +185,4 @@ quine_output/
 
 *chroma_persistence/
 *.png
+*bot_config.toml
