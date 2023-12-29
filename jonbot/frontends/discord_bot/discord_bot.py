@@ -310,12 +310,16 @@ class MyDiscordBot(commands.Bot):
                                                         image_url=attachment.url,
                                                         text=respond_to_this_text)
 
-                    logger.debug(f"Sending image chat request: {chat_request}")
-                    response = await self._api_client.send_request_to_api(
-                        endpoint_name=IMAGE_CHAT_ENDPOINT,
-                        data=chat_request.dict(),
-                    )
-                    await message_responder.add_token_to_queue(token=response["content"])
+                        logger.debug(f"Sending image chat request: {chat_request}")
+                        response = await self._api_client.send_request_to_api(
+                            endpoint_name=IMAGE_CHAT_ENDPOINT,
+                            data=chat_request.dict(),
+                        )
+                        await message.reply(content=response["content"])
+                        await message_responder.shutdown()
+                        await self._update_memory_emojis(message=message)
+
+                        return await message_responder.get_reply_messages()
 
 
             try:

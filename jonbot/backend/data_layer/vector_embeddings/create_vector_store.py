@@ -199,7 +199,6 @@ async def get_or_create_vectorstore(chroma_persistence_directory: str,
         vector_store, document_tree_dict, word_counts = await create_vector_store(chats=chat_documents,
                                                                                   collection_name=chroma_collection_name,
                                                                                   persistence_directory=chroma_persistence_directory)
-
     return vector_store
 
 

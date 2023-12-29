@@ -115,6 +115,8 @@ def allowed_to_reply_to_message(message: discord.Message,
 
         server_data = None
         for server_name, details in discord_config.SERVERS_DETAILS.items():
+            if len(details) < 1:
+                continue
             if message.guild.id == details["SERVER_ID"]:
                 server_data = details
                 break
